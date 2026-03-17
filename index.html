@@ -9,7 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; }
+        body { font-family: 'Montserrat', sans-serif; }
         
         .preview-card { border-radius: 0.5rem; box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1); width: 100%; height: auto; }
         .drop-zone { transition: all 0.3s ease; }
@@ -27,26 +27,27 @@
         .pac-item:hover { background-color: #f8fafc; }
     </style>
 </head>
-<body class="text-slate-800 relative pb-12 min-h-screen lg:h-screen flex flex-col lg:overflow-hidden">
 
-    <div class="bg-slate-900 text-white p-4 flex justify-between items-center shadow-md shrink-0 z-20 sticky top-0">
+<body class="bg-slate-50 text-slate-800 lg:h-screen lg:flex lg:flex-col lg:overflow-hidden relative pb-12 lg:pb-0">
+
+    <div class="bg-slate-900 text-white p-4 flex justify-between items-center shadow-md sticky top-0 z-40 shrink-0">
         <div class="flex items-center gap-3">
             <div class="w-2 h-6 bg-[#D4AF37]"></div>
-            <div class="font-semibold tracking-[0.2em] text-sm text-slate-100">MOBILLIO LUXE <span class="text-[#D4AF37] font-bold text-xs ml-2">MAX QUALITY</span></div>
+            <div class="font-semibold tracking-[0.2em] text-xs sm:text-sm text-slate-100">MOBILLIO LUXE <span class="text-[#D4AF37] font-bold text-[10px] sm:text-xs ml-1 sm:ml-2">MAX QUALITY</span></div>
         </div>
         <button onclick="openSettings()" class="text-xs tracking-wider uppercase text-slate-300 hover:text-white transition flex items-center gap-2">
             ⚙️ API Settings
         </button>
     </div>
 
-    <div class="flex-1 flex flex-col lg:flex-row lg:overflow-hidden" id="mainAppContent" style="display: none;">
+    <div class="block lg:flex lg:flex-1 lg:flex-row lg:overflow-hidden w-full" id="mainAppContent" style="display: none;">
         
-        <div class="w-full lg:w-[450px] xl:w-[500px] bg-white shadow-xl z-10 lg:overflow-y-auto flex flex-col shrink-0 border-b lg:border-b-0 lg:border-r border-slate-200">
-            <div class="p-6 space-y-6">
+        <div class="block w-full lg:w-[450px] xl:w-[500px] bg-white shadow-xl z-10 lg:h-full lg:overflow-y-auto shrink-0 border-b lg:border-b-0 lg:border-r border-slate-200">
+            <div class="p-5 lg:p-6 space-y-6">
                 
                 <div>
-                    <h1 class="text-2xl font-light text-slate-900 tracking-tight mb-1">Bulk Geotagger</h1>
-                    <p class="text-slate-500 text-xs leading-relaxed">Global settings apply to images missing EXIF data. Export runs at 100% maximum quality.</p>
+                    <h1 class="text-xl sm:text-2xl font-light text-slate-900 tracking-tight mb-1">Bulk Geotagger</h1>
+                    <p class="text-slate-500 text-[11px] sm:text-xs leading-relaxed">Global settings apply to images missing EXIF data. Export runs at 100% maximum quality.</p>
                 </div>
 
                 <div id="dropZone" class="drop-zone border-2 border-dashed border-slate-300 rounded-lg p-6 text-center bg-slate-50 cursor-pointer hover:border-[#D4AF37] transition">
@@ -55,7 +56,7 @@
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"></path></svg>
                     </div>
                     <p class="text-xs font-bold text-slate-700 tracking-widest uppercase">Select Photos</p>
-                    <p class="text-[10px] text-slate-400 mt-1">Or tap to choose from gallery</p>
+                    <p class="text-[10px] text-slate-400 mt-1">Tap to select from gallery</p>
                 </div>
 
                 <div class="space-y-5 relative">
@@ -95,8 +96,8 @@
                             <input type="text" id="lng" class="w-full border-b border-slate-300 p-2 text-sm text-slate-500 bg-transparent outline-none" readonly>
                         </div>
                         <div class="col-span-2 flex gap-2 mt-1">
-                            <button onclick="getLocation()" class="flex-1 border border-slate-300 hover:bg-slate-50 text-slate-600 text-[10px] font-bold uppercase tracking-widest py-2 transition rounded-sm">📍 My GPS</button>
-                            <button onclick="openMap()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 text-[10px] font-bold uppercase tracking-widest py-2 transition rounded-sm">🗺️ Pick Map</button>
+                            <button onclick="getLocation()" class="flex-1 border border-slate-300 hover:bg-slate-50 text-slate-600 text-[10px] font-bold uppercase tracking-widest py-3 transition rounded-sm">📍 My GPS</button>
+                            <button onclick="openMap()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 text-[10px] font-bold uppercase tracking-widest py-3 transition rounded-sm">🗺️ Pick Map</button>
                         </div>
                         <div class="col-span-2 mt-2">
                             <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Fallback Timestamp</label>
@@ -112,19 +113,20 @@
             </div>
         </div>
 
-        <div class="flex-1 bg-slate-200/50 p-6 lg:overflow-y-auto min-h-[500px] lg:min-h-0">
-            <div id="placeholder-text" class="h-full flex flex-col items-center justify-center text-slate-400">
+        <div class="block w-full lg:flex-1 bg-slate-100 p-4 lg:p-6 lg:h-full lg:overflow-y-auto min-h-[60vh] lg:min-h-0 relative" id="previewSection">
+            <div id="placeholder-text" class="h-full flex flex-col items-center justify-center text-slate-400 py-20 lg:py-0">
                 <svg class="w-16 h-16 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"></path></svg>
                 <h3 class="text-lg font-light tracking-widest uppercase text-center">Grid Preview</h3>
                 <p class="text-xs mt-2 text-center px-4">Upload multiple images to see them processed here.</p>
             </div>
+            
             <div id="previewGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-max hidden">
             </div>
         </div>
     </div>
     
     <div id="setupState" class="fixed inset-0 bg-slate-50 z-50 flex items-center justify-center p-4">
-        <div class="max-w-md w-full mx-auto bg-white p-10 shadow-lg border border-slate-200 text-center rounded-lg">
+        <div class="max-w-md w-full mx-auto bg-white p-8 sm:p-10 shadow-lg border border-slate-200 text-center rounded-lg">
             <h2 class="text-xl font-light text-slate-800 mb-2 tracking-widest uppercase">API Authentication</h2>
             <p class="text-slate-500 text-sm mb-8 leading-relaxed">Securely enter your Google Maps API key locally to unlock Autocomplete capabilities.</p>
             <button onclick="openSettings()" class="w-full bg-slate-900 hover:bg-black text-white text-sm tracking-[0.1em] uppercase py-3 transition rounded-sm">Configure</button>
@@ -169,13 +171,22 @@
             const savedKey = localStorage.getItem('gmaps_api_key');
             if (savedKey) {
                 document.getElementById('setupState').style.display = 'none';
-                document.getElementById('mainAppContent').style.display = 'flex';
+                // Show as flex on desktop, block on mobile via inline styles reset
+                document.getElementById('mainAppContent').style.display = window.innerWidth >= 1024 ? 'flex' : 'block';
                 loadGoogleMapsScript(savedKey);
             } else {
                 document.getElementById('setupState').style.display = 'flex';
                 document.getElementById('mainAppContent').style.display = 'none';
             }
         }
+
+        // Handle resize layout toggle
+        window.addEventListener('resize', () => {
+            const savedKey = localStorage.getItem('gmaps_api_key');
+            if(savedKey && document.getElementById('mainAppContent').style.display !== 'none') {
+                document.getElementById('mainAppContent').style.display = window.innerWidth >= 1024 ? 'flex' : 'block';
+            }
+        });
 
         function openSettings() { document.getElementById('apiKeyInput').value = localStorage.getItem('gmaps_api_key') || ''; document.getElementById('settingsModal').classList.add('active'); }
         function closeSettings() { document.getElementById('settingsModal').classList.remove('active'); }
@@ -326,7 +337,7 @@
             if(e.target.files.length) processMultipleFiles(e.target.files); 
         });
 
-        // THE NaN FIX: Safely parse rational objects from Mobile EXIF into raw decimals
+        // Parse rational objects from Mobile EXIF into raw decimals
         function parseExifToDecimal(tag, ref) {
             if (!tag) return null;
             let d = tag[0].numerator ? tag[0].numerator / tag[0].denominator : tag[0];
@@ -472,7 +483,6 @@
 
                 const formattedDate = formatFullDate(useDate);
 
-                // Math Layout (Simplified now that the map is gone)
                 const margin = canvas.width * 0.03; 
                 const cardWidth = canvas.width - (margin * 2);
                 const padding = canvas.width * 0.02;
@@ -504,34 +514,29 @@
                 let textStartX = margin + padding;
                 ctx.fillStyle = '#D4AF37'; 
                 ctx.fillRect(textStartX, startY + padding, canvas.width * 0.006, textBlockHeight);
-                textStartX += (canvas.width * 0.02); // Add gap between line and text
+                textStartX += (canvas.width * 0.02); 
 
                 // --- TEXT FITTING AND DRAWING ---
                 let currentY = startY + padding;
                 ctx.textBaseline = 'top'; ctx.textAlign = 'left'; 
                 
-                // Calculate available text width for auto-scaling
                 const availableTextWidth = (margin + cardWidth) - textStartX - padding;
 
-                // 1. Fit & Draw Title
                 const finalTitleSize = getFitFont(ctx, gTitle, titleSize, 600, 'Montserrat', availableTextWidth);
                 ctx.fillStyle = '#FFFFFF'; 
                 ctx.fillText(gTitle, textStartX, currentY);
 
-                // 2. Fit & Draw Address
                 currentY += finalTitleSize + lineGap;
                 const finalAddrSize = getFitFont(ctx, gAddress, dataSize, 400, 'Montserrat', availableTextWidth);
                 ctx.fillStyle = '#f8fafc';
                 ctx.fillText(gAddress, textStartX, currentY);
 
-                // 3. Fit & Draw Coordinates
                 currentY += finalAddrSize + lineGap;
                 const coordString = `Lat ${useLat}° Long ${useLng}°`;
                 const finalCoordSize = getFitFont(ctx, coordString, dataSize, 400, 'Montserrat', availableTextWidth);
                 ctx.fillStyle = '#cbd5e1'; 
                 ctx.fillText(coordString, textStartX, currentY);
 
-                // 4. Fit & Draw Timestamp
                 currentY += finalCoordSize + lineGap;
                 const finalDateSize = getFitFont(ctx, formattedDate, dataSize, 400, 'Montserrat', availableTextWidth);
                 ctx.fillStyle = '#FFFFFF';
@@ -547,6 +552,13 @@
             }
             
             updateExportButton();
+            
+            // AUTO-SCROLL FIX FOR MOBILE UX
+            if (window.innerWidth < 1024 && batchData.length > 0) {
+                setTimeout(() => {
+                    document.getElementById('previewSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 300);
+            }
         }
 
         // --- SMART EXPORT LOGIC ---
