@@ -166,15 +166,11 @@
         let batchData = []; 
         let geocoder, map, marker, autocomplete;
         let tempLatLng = null;
-        let debounceTimer; // Controls the typing delay
+        let debounceTimer; 
 
-        // --- PERFORMANCE OPTIMIZATION (DEBOUNCE) ---
-        // This function waits 400ms after you stop typing before rendering the images
         function debouncedRenderBatch() {
             clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
-                renderBatch();
-            }, 400); 
+            debounceTimer = setTimeout(() => { renderBatch(); }, 400); 
         }
 
         function checkApiKey() {
@@ -239,8 +235,6 @@
                 if(projName) document.getElementById('locTitle').value = `${projName}`;
                 
                 if(map) { map.setCenter(loc); marker.setPosition(loc); }
-                
-                // Places Autocomplete is a deliberate selection, so we render immediately
                 renderBatch(); 
             });
         }
@@ -345,12 +339,20 @@
             if(e.target.files.length) processMultipleFiles(e.target.files); 
         });
 
+        // --- BULLETPROOF EXIF FIX ---
+        // Safely checks if corrupted empty arrays exist (like 0/0) and forces 'null' to allow Global Fallbacks
         function parseExifToDecimal(tag, ref) {
-            if (!tag) return null;
-            let d = tag[0].numerator ? tag[0].numerator / tag[0].denominator : tag[0];
-            let m = tag[1].numerator ? tag[1].numerator / tag[1].denominator : tag[1];
-            let s = tag[2].numerator ? tag[2].numerator / tag[2].denominator : tag[2];
+            if (!tag || !tag.length) return null;
+            
+            let d = tag[0].numerator !== undefined ? tag[0].numerator / (tag[0].denominator || 1) : Number(tag[0]);
+            let m = tag[1] && tag[1].numerator !== undefined ? tag[1].numerator / (tag[1].denominator || 1) : Number(tag[1] || 0);
+            let s = tag[2] && tag[2].numerator !== undefined ? tag[2].numerator / (tag[2].denominator || 1) : Number(tag[2] || 0);
+            
             let dd = d + (m / 60) + (s / 3600);
+            
+            // If the math results in 'Not a Number', destroy it so the Global Fallback can take over
+            if (isNaN(dd)) return null; 
+            
             if (ref === "S" || ref === "W") dd = dd * -1;
             return dd.toFixed(6);
         }
@@ -393,10 +395,7 @@
                                 finalDataURL: null 
                             });
                             filesProcessed++;
-                            // Only trigger a single render when the very last image in the batch finishes loading
-                            if (filesProcessed === totalFiles) {
-                                renderBatch();
-                            }
+                            if (filesProcessed === totalFiles) renderBatch();
                         }
                         img.src = event.target.result;
                     }
@@ -482,8 +481,14 @@
             for (let i = 0; i < batchData.length; i++) {
                 const item = batchData[i];
                 
-                const useLat = item.exif.lat || gLat || "N/A";
-                const useLng = item.exif.lng || gLng || "N/A";
+                // --- FALLBACK OVERRIDE ---
+                // Double-checks that a "NaN" string didn't somehow slip through
+                let useLat = item.exif.lat;
+                if (!useLat || useLat === "NaN") useLat = gLat || "N/A";
+                
+                let useLng = item.exif.lng;
+                if (!useLng || useLng === "NaN") useLng = gLng || "N/A";
+                
                 const useDate = item.exif.date || gDate;
                 
                 const canvas = document.createElement('canvas');
