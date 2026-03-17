@@ -27,6 +27,11 @@
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        /* Styling for Google Places Autocomplete Dropdown to match our theme */
+        .pac-container { font-family: 'Montserrat', sans-serif; border-radius: 0.5rem; border: 1px solid #e2e8f0; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .pac-item { padding: 10px; font-size: 14px; cursor: pointer; }
+        .pac-item:hover { background-color: #f8fafc; }
     </style>
 </head>
 <body class="text-slate-800 relative pb-12">
@@ -67,11 +72,12 @@
                     </div>
 
                     <div class="bg-slate-50 p-4 border border-slate-200">
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-2">Smart Location Engine</label>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-2">Smart Location Search</label>
                         <div class="flex gap-2">
-                            <input type="text" id="smartSearch" placeholder="Type a place OR paste a Maps link..." class="w-full border border-slate-300 p-3 text-sm focus:ring-1 focus:ring-[#D4AF37] outline-none transition bg-white">
-                            <button onclick="executeSmartSearch()" class="bg-slate-900 hover:bg-slate-800 text-white px-5 text-sm font-medium transition flex items-center justify-center">FIND</button>
+                            <input type="text" id="smartSearch" placeholder="Type a place to search..." class="w-full border border-slate-300 p-3 text-sm focus:ring-1 focus:ring-[#D4AF37] outline-none transition bg-white">
+                            <button onclick="executeSmartSearch()" class="bg-slate-900 hover:bg-slate-800 text-white px-5 text-sm font-medium transition flex items-center justify-center" title="Click to process pasted Google Maps Links">FIND</button>
                         </div>
+                        <p class="text-[10px] text-slate-400 mt-2">Start typing for suggestions, or paste a Maps URL and click FIND.</p>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
@@ -103,7 +109,7 @@
                 </div>
 
                 <button onclick="downloadImage()" class="w-full bg-[#D4AF37] hover:bg-[#c4a030] text-white font-medium tracking-[0.1em] py-4 rounded-sm transition shadow-lg text-sm uppercase">
-                    Export Glassmorphism Photo
+                    Export Geotagged Photo
                 </button>
             </div>
 
@@ -118,7 +124,7 @@
         <div id="setupState" class="text-center py-20">
             <div class="max-w-md mx-auto bg-white p-10 shadow-sm border border-slate-200">
                 <h2 class="text-xl font-light text-slate-800 mb-2 tracking-widest uppercase">API Authentication</h2>
-                <p class="text-slate-500 text-sm mb-8 leading-relaxed">Securely enter your Google Maps API key locally to unlock the Smart Location Engine and Satellite Maps.</p>
+                <p class="text-slate-500 text-sm mb-8 leading-relaxed">Securely enter your Google Maps API key locally to unlock Autocomplete and Satellite Maps.</p>
                 <button onclick="openSettings()" class="w-full bg-slate-900 hover:bg-black text-white text-sm tracking-[0.1em] uppercase py-3 transition">Configure</button>
             </div>
         </div>
@@ -156,7 +162,7 @@
 
     <script>
         // --- API & INITIALIZATION LOGIC ---
-        let geocoder, map, marker;
+        let geocoder, map, marker, autocomplete;
         let tempLatLng = null;
 
         function checkApiKey() {
@@ -182,7 +188,8 @@
             if (!document.getElementById('gmaps-script')) {
                 const script = document.createElement('script');
                 script.id = 'gmaps-script';
-                script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initMap`;
+                // Added &libraries=places to enable Autocomplete suggestions
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initMap`;
                 script.async = true; script.defer = true;
                 document.head.appendChild(script);
             }
@@ -191,18 +198,39 @@
         function initMap() {
             geocoder = new google.maps.Geocoder();
             const defaultLoc = { lat: -1.2921, lng: 36.8219 };
+            
+            // Initialize the modal Map
             map = new google.maps.Map(document.getElementById("googleMap"), {
                 zoom: 12, center: defaultLoc, mapTypeId: 'hybrid', disableDefaultUI: true, zoomControl: true
             });
             marker = new google.maps.Marker({ position: defaultLoc, map: map, draggable: true, animation: google.maps.Animation.DROP });
             map.addListener("click", (e) => marker.setPosition(e.latLng));
             marker.addListener("position_changed", () => { tempLatLng = { lat: marker.getPosition().lat(), lng: marker.getPosition().lng() }; });
+
+            // Initialize Google Places Autocomplete on the Smart Search input
+            const searchInput = document.getElementById('smartSearch');
+            autocomplete = new google.maps.places.Autocomplete(searchInput);
+            autocomplete.addListener('place_changed', () => {
+                const place = autocomplete.getPlace();
+                if (!place.geometry || !place.geometry.location) return; // User hit enter without selecting
+                
+                const loc = place.geometry.location;
+                document.getElementById('lat').value = loc.lat().toFixed(6);
+                document.getElementById('lng').value = loc.lng().toFixed(6);
+                document.getElementById('locAddress').value = place.formatted_address;
+                
+                // Extract City/Locality for the title
+                let projName = place.address_components?.find(c => c.types.includes('locality'))?.long_name || place.name || "";
+                if(projName) document.getElementById('locTitle').value = `${projName}`;
+                
+                if(map) { map.setCenter(loc); marker.setPosition(loc); }
+                updateCanvas();
+            });
         }
 
         window.onload = checkApiKey;
 
         // --- SMART FORMATTERS ---
-        // Generates: "Thursday, 12/03/2026 04:40 PM GMT +03:00"
         function formatFullDate(dateStr) {
             if(!dateStr) return "Invalid Date";
             const d = new Date(dateStr);
@@ -226,6 +254,7 @@
             return `${dayName}, ${dd}/${mm}/${yyyy} ${strTime} GMT ${offsetSign}${offsetHours}:${offsetMins}`;
         }
 
+        // Handles manually clicking FIND (mostly for pasted URLs)
         function executeSmartSearch() {
             if(!geocoder) return alert("Google Maps API loading...");
             const query = document.getElementById('smartSearch').value.trim();
@@ -238,23 +267,29 @@
             const match = query.match(coordRegex);
 
             if (match) {
+                // Success: Extracted coordinates from a long map URL
                 const lat = parseFloat(match[1]).toFixed(6); const lng = parseFloat(match[2]).toFixed(6);
                 document.getElementById('lat').value = lat; document.getElementById('lng').value = lng;
                 fetchAddressFromCoords(lat, lng);
+            } else if (query.startsWith('http://') || query.startsWith('https://')) {
+                // Warning for short URLs
+                document.getElementById('loadingOverlay').classList.add('hidden');
+                document.getElementById('loadingOverlay').classList.remove('flex');
+                alert("It looks like you pasted a shortened link.\n\nPlease OPEN the link in your browser first to let the map load, then copy the FULL, long URL from the address bar (containing an '@' symbol) and paste it here.");
             } else {
+                // Fallback: If they typed text and hit FIND without clicking a dropdown suggestion
                 geocoder.geocode({ address: query }, (results, status) => {
                     if (status === "OK" && results[0]) {
                         const loc = results[0].geometry.location;
                         document.getElementById('lat').value = loc.lat().toFixed(6);
                         document.getElementById('lng').value = loc.lng().toFixed(6);
                         document.getElementById('locAddress').value = results[0].formatted_address;
-                        // Build project name from city/county if possible
                         let projName = results[0].address_components.find(c => c.types.includes('locality'))?.long_name || "";
-                        if(projName) document.getElementById('locTitle').value = `${projName} Site`;
+                        if(projName) document.getElementById('locTitle').value = `${projName}`;
                         
                         if(map) { map.setCenter(loc); marker.setPosition(loc); }
                         updateCanvas();
-                    } else { alert("Could not find location."); }
+                    } else { alert("Could not find location. Try selecting a suggestion from the dropdown."); }
                     document.getElementById('loadingOverlay').classList.add('hidden');
                     document.getElementById('loadingOverlay').classList.remove('flex');
                 });
@@ -286,7 +321,7 @@
                 if (status === "OK" && results[0]) {
                     document.getElementById('locAddress').value = results[0].formatted_address;
                 }
-                updateCanvas(); // Updates UI and triggers Map Thumbnail fetch
+                updateCanvas();
             });
         }
 
@@ -371,7 +406,7 @@
             closeMap();
         }
 
-        // --- GLASSMORPHISM LUXE & MAP THUMBNAIL RENDERING ---
+        // --- PERFECT SQUARE MAP & GLASSMORPHISM RENDERING ---
         function drawRoundedRect(ctx, x, y, width, height, radius) {
             ctx.beginPath(); ctx.moveTo(x + radius, y); ctx.lineTo(x + width - radius, y);
             ctx.quadraticCurveTo(x + width, y, x + width, y + radius); ctx.lineTo(x + width, y + height - radius);
@@ -380,7 +415,6 @@
             ctx.quadraticCurveTo(x, y, x + radius, y); ctx.closePath();
         }
 
-        // Intermediary function: fetch the satellite map before drawing
         function updateCanvas() {
             if (!uploadedImage) return;
             const lat = document.getElementById('lat').value;
@@ -389,15 +423,14 @@
 
             if (lat && lng && lat !== "N/A" && apiKey) {
                 const mapImg = new Image();
-                mapImg.crossOrigin = "Anonymous"; // Crucial for allowing canvas to download the result!
-                // Request a 400x400 square satellite map with a red pin
+                mapImg.crossOrigin = "Anonymous"; // Allows canvas to draw the static map
                 const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=16&size=400x400&maptype=satellite&markers=color:red%7C${lat},${lng}&key=${apiKey}`;
                 
                 mapImg.onload = function() { drawFinalCanvas(mapImg); };
-                mapImg.onerror = function() { drawFinalCanvas(null); }; // Draw without map if it fails
+                mapImg.onerror = function() { drawFinalCanvas(null); }; 
                 mapImg.src = mapUrl;
             } else {
-                drawFinalCanvas(null); // Draw without map
+                drawFinalCanvas(null);
             }
         }
 
@@ -405,99 +438,96 @@
             canvas.width = uploadedImage.width; canvas.height = uploadedImage.height;
             ctx.drawImage(uploadedImage, 0, 0);
 
-            const title = document.getElementById('locTitle').value || "PROJECT UNNAMED";
-            const address = document.getElementById('locAddress').value || "Awaiting Location Data";
+            const title = document.getElementById('locTitle').value || "LOCATION REPORT";
+            const address = document.getElementById('locAddress').value || "Pending Address";
             const lat = document.getElementById('lat').value || "N/A";
             const lng = document.getElementById('lng').value || "N/A";
-            
-            // Generate perfect timestamp
             const formattedDate = formatFullDate(dateTimeInput.value);
 
-            // Layout Math
+            // Precision Layout Math
             const margin = canvas.width * 0.03; 
             const cardWidth = canvas.width - (margin * 2);
-            const padding = canvas.width * 0.025;
+            const padding = canvas.width * 0.02;
             const radius = canvas.width * 0.01; 
             
-            const titleSize = Math.floor(canvas.width * 0.035); // Larger Title
-            const dataSize = Math.floor(canvas.width * 0.02);   // Clearer Data
-            
-            // Calculate card height based on elements
-            const cardHeight = (padding * 2) + titleSize + (dataSize * 3) + (canvas.width * 0.03);
-            const startY = canvas.height - cardHeight - margin;
+            // Text sizing proportional to image
+            const titleSize = Math.floor(canvas.width * 0.030); 
+            const dataSize = Math.floor(canvas.width * 0.018);   
+            const lineGap = canvas.width * 0.01;
 
-            // 1. Glassmorphism Card
+            // Calculate the exact height of the text block (4 lines of text)
+            const textBlockHeight = titleSize + (dataSize * 3) + (lineGap * 3);
+            
+            // Card height is text block + top/bottom padding
+            const cardHeight = textBlockHeight + (padding * 2);
+            const startY = canvas.height - cardHeight - margin;
+            
+            // Map Size is strictly forced to match the textBlockHeight = PERFECT SQUARE
+            const mapSize = textBlockHeight;
+
+            // 1. Draw Glassmorphism Base
             ctx.save();
             drawRoundedRect(ctx, margin, startY, cardWidth, cardHeight, radius);
             ctx.clip();
-            ctx.filter = 'blur(16px) brightness(60%)'; 
+            ctx.filter = 'blur(20px) brightness(60%)'; 
             ctx.drawImage(uploadedImage, 0, 0, canvas.width, canvas.height);
             ctx.filter = 'none';
-            ctx.fillStyle = 'rgba(15, 23, 42, 0.65)'; // Darker Slate tint for high contrast text
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.65)'; 
             ctx.fillRect(margin, startY, cardWidth, cardHeight);
             ctx.restore(); 
 
+            // White border around entire card
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
             ctx.lineWidth = Math.max(1, canvas.width * 0.002);
             drawRoundedRect(ctx, margin, startY, cardWidth, cardHeight, radius);
             ctx.stroke();
 
-            // 2. Map Thumbnail (Left side)
+            // 2. Draw Perfect Square Map Thumbnail
             let textStartX = margin + padding;
             if (satelliteImg) {
-                const mapSize = cardHeight - (padding * 2); // Square map
                 ctx.save();
-                drawRoundedRect(ctx, margin + padding, startY + padding, mapSize, mapSize, radius);
+                drawRoundedRect(ctx, textStartX, startY + padding, mapSize, mapSize, radius);
                 ctx.clip();
-                ctx.drawImage(satelliteImg, margin + padding, startY + padding, mapSize, mapSize);
+                ctx.drawImage(satelliteImg, textStartX, startY + padding, mapSize, mapSize);
                 ctx.restore();
                 
-                // Add a delicate white border to the map thumbnail
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-                drawRoundedRect(ctx, margin + padding, startY + padding, mapSize, mapSize, radius);
+                // Map border
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                drawRoundedRect(ctx, textStartX, startY + padding, mapSize, mapSize, radius);
                 ctx.stroke();
 
-                textStartX += mapSize + padding; // Shift text right
+                textStartX += mapSize + (padding * 1.5); // Push text to the right of the map
             } else {
-                // If no map, just draw a gold accent line
                 ctx.fillStyle = '#D4AF37'; 
-                ctx.fillRect(margin + padding, startY + padding, canvas.width * 0.004, cardHeight - (padding * 2));
-                textStartX += (canvas.width * 0.01);
+                ctx.fillRect(textStartX, startY + padding, canvas.width * 0.004, mapSize);
+                textStartX += (canvas.width * 0.015);
             }
 
-            // 3. Text Layout (Matching Sample Exactness)
+            // 3. Draw Text Block (Aligned precisely with map height)
             let currentY = startY + padding;
 
-            // Title (Large)
             ctx.textBaseline = 'top'; ctx.textAlign = 'left'; 
+            
+            // Line 1: Title
             ctx.fillStyle = '#FFFFFF'; 
-            ctx.font = `500 ${titleSize}px 'Montserrat', sans-serif`;
+            ctx.font = `600 ${titleSize}px 'Montserrat', sans-serif`;
             ctx.fillText(title, textStartX, currentY);
 
-            currentY += titleSize + (canvas.width * 0.015);
-
-            // Flag + Address (Line 1)
+            // Line 2: Address
+            currentY += titleSize + lineGap;
             ctx.font = `400 ${dataSize}px 'Montserrat', sans-serif`; 
-            ctx.fillText(`🇰🇪 ${address}`, textStartX, currentY);
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillText(address, textStartX, currentY);
 
-            // Coordinates (Line 2)
-            currentY += dataSize + (canvas.width * 0.008);
-            ctx.fillStyle = '#cbd5e1'; // Slightly muted
+            // Line 3: Coordinates
+            currentY += dataSize + lineGap;
+            ctx.fillStyle = '#cbd5e1'; 
             ctx.fillText(`Lat ${lat}° Long ${lng}°`, textStartX, currentY);
 
-            // Timestamp (Line 3)
-            currentY += dataSize + (canvas.width * 0.008);
-            ctx.fillStyle = '#FFFFFF'; // Bright white
+            // Line 4: Timestamp
+            currentY += dataSize + lineGap;
+            ctx.fillStyle = '#FFFFFF';
             ctx.fillText(formattedDate, textStartX, currentY);
-
-            // Branding Top Right (Optional but looks great)
-            ctx.textAlign = 'right'; 
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)'; 
-            if(ctx.letterSpacing !== undefined) { ctx.letterSpacing = "2px"; }
-            ctx.font = `600 ${dataSize * 0.8}px 'Montserrat', sans-serif`;
-            ctx.fillText("GPS MAP CAMERA • MOBILLIO", margin + cardWidth - padding, startY + padding);
-            if(ctx.letterSpacing !== undefined) { ctx.letterSpacing = "0px"; }
-            ctx.textAlign = 'left';
         }
 
         function downloadImage() {
