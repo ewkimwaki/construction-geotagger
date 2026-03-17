@@ -32,7 +32,7 @@
     <div class="bg-slate-900 text-white p-4 flex justify-between items-center shadow-md shrink-0 z-20">
         <div class="flex items-center gap-3">
             <div class="w-2 h-6 bg-[#D4AF37]"></div>
-            <div class="font-semibold tracking-[0.2em] text-sm text-slate-100">MOBILLIO LUXE <span class="text-slate-500 font-light text-xs ml-2">BULK EDITION</span></div>
+            <div class="font-semibold tracking-[0.2em] text-sm text-slate-100">MOBILLIO LUXE <span class="text-[#D4AF37] font-bold text-xs ml-2">MAX QUALITY</span></div>
         </div>
         <button onclick="openSettings()" class="text-xs tracking-wider uppercase text-slate-300 hover:text-white transition flex items-center gap-2">
             ⚙️ API Settings
@@ -46,7 +46,7 @@
                 
                 <div>
                     <h1 class="text-2xl font-light text-slate-900 tracking-tight mb-1">Bulk Geotagger</h1>
-                    <p class="text-slate-500 text-xs leading-relaxed">Global settings apply to images missing EXIF data. Images with native GPS will use their own precise coordinates.</p>
+                    <p class="text-slate-500 text-xs leading-relaxed">Global settings apply to images missing EXIF data. Export runs at 100% maximum quality.</p>
                 </div>
 
                 <div id="dropZone" class="drop-zone border-2 border-dashed border-slate-300 rounded-lg p-6 text-center bg-slate-50 cursor-pointer hover:border-[#D4AF37] transition">
@@ -107,7 +107,7 @@
 
                 <button id="exportBtn" onclick="exportBatchAsZip()" class="w-full bg-[#D4AF37] hover:bg-[#c4a030] text-white font-medium tracking-widest py-4 rounded-sm transition shadow-md text-xs uppercase flex justify-center items-center gap-2 opacity-50 cursor-not-allowed" disabled>
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                    <span id="exportBtnText">Export Batch as ZIP</span>
+                    <span id="exportBtnText">Export 100% Quality ZIP</span>
                 </button>
             </div>
         </div>
@@ -118,9 +118,8 @@
                 <h3 class="text-lg font-light tracking-widest uppercase">Grid Preview</h3>
                 <p class="text-xs mt-2">Upload multiple images to see them processed here.</p>
             </div>
-            
             <div id="previewGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-max hidden">
-                </div>
+            </div>
         </div>
     </div>
     
@@ -161,11 +160,9 @@
     </div>
 
     <script>
-        // --- STATE MANAGEMENT FOR BULK BATCH ---
-        let batchData = []; // Array to hold { file, originalImg, exifData, finalDataURL }
-        let staticMapCache = {}; // Cache to avoid duplicate API calls for same coordinates
-
-        // --- API & INITIALIZATION LOGIC ---
+        // --- STATE MANAGEMENT ---
+        let batchData = []; 
+        let staticMapCache = {}; 
         let geocoder, map, marker, autocomplete;
         let tempLatLng = null;
 
@@ -224,7 +221,7 @@
                 if(projName) document.getElementById('locTitle').value = `${projName}`;
                 
                 if(map) { map.setCenter(loc); marker.setPosition(loc); }
-                renderBatch(); // Re-render the entire batch with new global fallback
+                renderBatch(); 
             });
         }
 
@@ -315,7 +312,7 @@
                 if (status === "OK" && results[0]) {
                     document.getElementById('locAddress').value = results[0].formatted_address;
                 }
-                renderBatch(); // Update the whole batch
+                renderBatch(); 
             });
         }
 
@@ -336,19 +333,15 @@
             return dd;
         }
 
-        // Read all dropped files into the queue
         function processMultipleFiles(files) {
             document.getElementById('placeholder-text').classList.add('hidden');
             document.getElementById('previewGrid').classList.remove('hidden');
             
-            // Enable export button
             const btn = document.getElementById('exportBtn');
             btn.disabled = false;
             btn.classList.remove('opacity-50', 'cursor-not-allowed');
             
-            // Convert FileList to Array and process
             Array.from(files).forEach((file, index) => {
-                // Read EXIF Data for EACH file
                 EXIF.getData(file, function() {
                     let fileExif = { lat: null, lng: null, date: null };
                     
@@ -367,20 +360,17 @@
                         fileExif.date = `${dateParts}T${timeParts}`;
                     }
 
-                    // Load Image object
                     const reader = new FileReader();
                     reader.onload = function(event) {
                         const img = new Image();
                         img.onload = function() {
-                            // Add to our global batch array
                             batchData.push({
-                                id: Date.now() + index, // unique ID
+                                id: Date.now() + index,
                                 originalName: file.name,
                                 originalImg: img,
                                 exif: fileExif,
-                                finalDataURL: null // Will be generated by renderBatch
+                                finalDataURL: null 
                             });
-                            // Trigger re-render of the grid
                             renderBatch();
                         }
                         img.src = event.target.result;
@@ -421,9 +411,19 @@
             closeMap();
         }
 
+        // --- DYNAMIC FONT SIZING ENGINE (FIXES THE MISSING "T") ---
+        function getFitFont(ctx, text, startSize, weight, fontFam, maxWidth) {
+            let size = startSize;
+            ctx.font = `${weight} ${size}px '${fontFam}', sans-serif`;
+            // Shrink font size loop if the text is wider than the allowed space
+            while(ctx.measureText(text).width > maxWidth && size > 10) {
+                size -= 1;
+                ctx.font = `${weight} ${size}px '${fontFam}', sans-serif`;
+            }
+            return size; // Returns the final safe size
+        }
+
         // --- BATCH RENDERING ENGINE ---
-        
-        // Cache helper for Static Maps
         function getStaticMap(lat, lng, apiKey) {
             return new Promise((resolve) => {
                 if(!lat || !lng || lat==="N/A" || !apiKey) return resolve(null);
@@ -434,7 +434,7 @@
                 const mapImg = new Image();
                 mapImg.crossOrigin = "Anonymous"; 
                 mapImg.onload = function() { 
-                    staticMapCache[cacheKey] = mapImg; // Save to cache
+                    staticMapCache[cacheKey] = mapImg; 
                     resolve(mapImg); 
                 };
                 mapImg.onerror = function() { resolve(null); }; 
@@ -450,14 +450,12 @@
             ctx.quadraticCurveTo(x, y, x + radius, y); ctx.closePath();
         }
 
-        // Loops through all uploaded images and draws them
         async function renderBatch() {
             const grid = document.getElementById('previewGrid');
             grid.innerHTML = ''; // Clear grid
 
             const apiKey = localStorage.getItem('gmaps_api_key');
             
-            // Global Fallbacks
             const gTitle = document.getElementById('locTitle').value || "LOCATION REPORT";
             const gAddress = document.getElementById('locAddress').value || "Address Unavailable";
             const gLat = document.getElementById('lat').value;
@@ -467,25 +465,17 @@
             for (let i = 0; i < batchData.length; i++) {
                 const item = batchData[i];
                 
-                // 1. Determine Data (EXIF vs Global Fallback)
                 const useLat = item.exif.lat || gLat || "N/A";
                 const useLng = item.exif.lng || gLng || "N/A";
                 const useDate = item.exif.date || gDate;
                 
-                // Note: If an image has its own EXIF GPS, we realistically need a Reverse Geocode for its specific address. 
-                // To prevent hitting the Google API limit 50 times in 1 second, we will use the Global Address as the fallback for all,
-                // but display the precise EXIF coordinates on the image itself.
-                
-                // 2. Fetch/Retrieve cached Map
                 const satelliteImg = await getStaticMap(useLat, useLng, apiKey);
 
-                // 3. Create off-screen canvas to draw
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 canvas.width = item.originalImg.width; 
                 canvas.height = item.originalImg.height;
                 
-                // Draw Base Image
                 ctx.drawImage(item.originalImg, 0, 0);
 
                 const formattedDate = formatFullDate(useDate);
@@ -503,7 +493,7 @@
                 const startY = canvas.height - cardHeight - margin;
                 const mapSize = textBlockHeight;
 
-                // Glassmorphism
+                // Glassmorphism Base
                 ctx.save();
                 drawRoundedRect(ctx, margin, startY, cardWidth, cardHeight, radius);
                 ctx.clip();
@@ -536,30 +526,40 @@
                     textStartX += (canvas.width * 0.015);
                 }
 
+                // --- TEXT FITTING AND DRAWING ---
                 let currentY = startY + padding;
                 ctx.textBaseline = 'top'; ctx.textAlign = 'left'; 
                 
+                // Calculate exactly how much width we have left for text
+                const availableTextWidth = (margin + cardWidth) - textStartX - padding;
+
+                // 1. Fit & Draw Title
+                const finalTitleSize = getFitFont(ctx, gTitle, titleSize, 600, 'Montserrat', availableTextWidth);
                 ctx.fillStyle = '#FFFFFF'; 
-                ctx.font = `600 ${titleSize}px 'Montserrat', sans-serif`;
                 ctx.fillText(gTitle, textStartX, currentY);
 
-                currentY += titleSize + lineGap;
-                ctx.font = `400 ${dataSize}px 'Montserrat', sans-serif`; 
+                // 2. Fit & Draw Address
+                currentY += finalTitleSize + lineGap;
+                const finalAddrSize = getFitFont(ctx, gAddress, dataSize, 400, 'Montserrat', availableTextWidth);
                 ctx.fillStyle = '#f8fafc';
                 ctx.fillText(gAddress, textStartX, currentY);
 
-                currentY += dataSize + lineGap;
+                // 3. Fit & Draw Coordinates
+                currentY += finalAddrSize + lineGap;
+                const coordString = `Lat ${useLat}° Long ${useLng}°`;
+                const finalCoordSize = getFitFont(ctx, coordString, dataSize, 400, 'Montserrat', availableTextWidth);
                 ctx.fillStyle = '#cbd5e1'; 
-                ctx.fillText(`Lat ${useLat}° Long ${useLng}°`, textStartX, currentY);
+                ctx.fillText(coordString, textStartX, currentY);
 
-                currentY += dataSize + lineGap;
+                // 4. Fit & Draw Timestamp
+                currentY += finalCoordSize + lineGap;
+                const finalDateSize = getFitFont(ctx, formattedDate, dataSize, 400, 'Montserrat', availableTextWidth);
                 ctx.fillStyle = '#FFFFFF';
                 ctx.fillText(formattedDate, textStartX, currentY);
 
-                // Save Final Data URL to batch array
-                item.finalDataURL = canvas.toDataURL('image/jpeg', 0.90);
+                // MAXIMUM QUALITY (1.0) EXPORT FIX 
+                item.finalDataURL = canvas.toDataURL('image/jpeg', 1.0);
 
-                // Append visual preview to grid using an <img> tag for performance
                 const imgElem = document.createElement('img');
                 imgElem.src = item.finalDataURL;
                 imgElem.className = 'preview-card';
@@ -567,32 +567,29 @@
             }
         }
 
-        // --- BULK EXPORT VIA JSZIP ---
         async function exportBatchAsZip() {
             if (batchData.length === 0) return alert("Please upload images first.");
             
             const btn = document.getElementById('exportBtn');
             const btnText = document.getElementById('exportBtnText');
             btn.disabled = true;
-            btnText.innerText = "ZIPPING FILES...";
+            btnText.innerText = "ZIPPING HIGH-RES FILES...";
 
             const zip = new JSZip();
-            const folder = zip.folder("MobillioLuxe_Batch_Geotags");
+            const folder = zip.folder("MobillioLuxe_Max_Quality");
 
             batchData.forEach((item, index) => {
-                // Remove the 'data:image/jpeg;base64,' part
                 const base64Data = item.finalDataURL.split(',')[1];
-                // Name file elegantly
                 folder.file(`Geotag_${index + 1}_${item.originalName}`, base64Data, {base64: true});
             });
 
             zip.generateAsync({type:"blob"}).then(function(content) {
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(content);
-                link.download = `MobillioLuxe_Geotags_${Date.now()}.zip`;
+                link.download = `MobillioLuxe_MaxRes_Batch_${Date.now()}.zip`;
                 link.click();
                 
-                btnText.innerText = "Export Batch as ZIP";
+                btnText.innerText = "Export 100% Quality ZIP";
                 btn.disabled = false;
             });
         }
