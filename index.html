@@ -171,7 +171,6 @@
             const savedKey = localStorage.getItem('gmaps_api_key');
             if (savedKey) {
                 document.getElementById('setupState').style.display = 'none';
-                // Show as flex on desktop, block on mobile via inline styles reset
                 document.getElementById('mainAppContent').style.display = window.innerWidth >= 1024 ? 'flex' : 'block';
                 loadGoogleMapsScript(savedKey);
             } else {
@@ -180,7 +179,6 @@
             }
         }
 
-        // Handle resize layout toggle
         window.addEventListener('resize', () => {
             const savedKey = localStorage.getItem('gmaps_api_key');
             if(savedKey && document.getElementById('mainAppContent').style.display !== 'none') {
@@ -237,7 +235,6 @@
 
         window.onload = checkApiKey;
 
-        // --- SMART FORMATTERS ---
         function formatFullDate(dateStr) {
             if(!dateStr) return "Invalid Date";
             const d = new Date(dateStr);
@@ -301,7 +298,6 @@
             }
         }
 
-        // --- BULK FILE HANDLING ---
         const imageInput = document.getElementById('imageInput');
         const dropZone = document.getElementById('dropZone');
 
@@ -337,7 +333,6 @@
             if(e.target.files.length) processMultipleFiles(e.target.files); 
         });
 
-        // Parse rational objects from Mobile EXIF into raw decimals
         function parseExifToDecimal(tag, ref) {
             if (!tag) return null;
             let d = tag[0].numerator ? tag[0].numerator / tag[0].denominator : tag[0];
@@ -437,7 +432,6 @@
             }
         }
 
-        // --- DYNAMIC FONT SIZING ENGINE ---
         function getFitFont(ctx, text, startSize, weight, fontFam, maxWidth) {
             let size = startSize;
             ctx.font = `${weight} ${size}px '${fontFam}', sans-serif`;
@@ -448,7 +442,6 @@
             return size; 
         }
 
-        // --- BATCH RENDERING ENGINE ---
         function drawRoundedRect(ctx, x, y, width, height, radius) {
             ctx.beginPath(); ctx.moveTo(x + radius, y); ctx.lineTo(x + width - radius, y);
             ctx.quadraticCurveTo(x + width, y, x + width, y + radius); ctx.lineTo(x + width, y + height - radius);
@@ -494,7 +487,6 @@
                 const cardHeight = textBlockHeight + (padding * 2);
                 const startY = canvas.height - cardHeight - margin;
 
-                // Glassmorphism Base
                 ctx.save();
                 drawRoundedRect(ctx, margin, startY, cardWidth, cardHeight, radius);
                 ctx.clip();
@@ -510,13 +502,11 @@
                 drawRoundedRect(ctx, margin, startY, cardWidth, cardHeight, radius);
                 ctx.stroke();
 
-                // Draw Gold Accent Line
                 let textStartX = margin + padding;
                 ctx.fillStyle = '#D4AF37'; 
                 ctx.fillRect(textStartX, startY + padding, canvas.width * 0.006, textBlockHeight);
                 textStartX += (canvas.width * 0.02); 
 
-                // --- TEXT FITTING AND DRAWING ---
                 let currentY = startY + padding;
                 ctx.textBaseline = 'top'; ctx.textAlign = 'left'; 
                 
@@ -542,7 +532,6 @@
                 ctx.fillStyle = '#FFFFFF';
                 ctx.fillText(formattedDate, textStartX, currentY);
 
-                // MAXIMUM QUALITY EXPORT (1.0 = 100% resolution preservation)
                 item.finalDataURL = canvas.toDataURL('image/jpeg', 1.0);
 
                 const imgElem = document.createElement('img');
@@ -552,16 +541,8 @@
             }
             
             updateExportButton();
-            
-            // AUTO-SCROLL FIX FOR MOBILE UX
-            if (window.innerWidth < 1024 && batchData.length > 0) {
-                setTimeout(() => {
-                    document.getElementById('previewSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 300);
-            }
         }
 
-        // --- SMART EXPORT LOGIC ---
         function exportBatch() {
             if (batchData.length === 0) return alert("Please upload images first.");
             
@@ -570,7 +551,6 @@
             btn.disabled = true;
 
             if (batchData.length < 5) {
-                // Direct Download for 1-4 files
                 btnText.innerText = "DOWNLOADING...";
                 batchData.forEach((item, index) => {
                     setTimeout(() => {
@@ -587,7 +567,6 @@
                 setTimeout(() => { updateExportButton(); }, batchData.length * 500 + 500);
 
             } else {
-                // ZIP Download for 5+ files
                 btnText.innerText = "ZIPPING HIGH-RES FILES...";
                 const zip = new JSZip();
                 const folder = zip.folder("MobillioLuxe_Max_Quality");
