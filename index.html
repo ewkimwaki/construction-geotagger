@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Construction Progress Geotagger</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Ensures the canvas preview fits within the screen but maintains its original aspect ratio */
+        #preview-canvas {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen text-gray-800">
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <header class="mb-8 border-b pb-4">
+            <h1 class="text-3xl font-bold text-blue-900">Site Photo Geotagger</h1>
+            <p class="text-gray-600">Upload a photo, enter location details, and download the stamped image for reporting.</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <div class="bg-white p-6 rounded-lg shadow-md lg:col-span-1 space-y-4">
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">1. Upload Site Photo</label>
+                    <input type="file" id="imageInput" accept="image/*" class="w-full border border-gray-300 rounded p-2 text-sm">
+                </div>
+
+                <hr class="my-4">
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Location Title (e.g., Olenguruone, Nakuru)</label>
+                    <input type="text" id="locTitle" placeholder="Project Site Name" class="w-full border border-gray-300 rounded p-2 text-sm" oninput="updateCanvas()">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Detailed Address / Plus Code</label>
+                    <input type="text" id="locAddress" placeholder="Specific street or plot number" class="w-full border border-gray-300 rounded p-2 text-sm" oninput="updateCanvas()">
+                </div>
+
+                <div class="bg-blue-50 p-3 rounded border border-blue-100 mt-2">
+                    <label class="block text-sm font-medium text-blue-800 mb-1">Smart Coordinate Extraction</label>
+                    <p class="text-xs text-blue-600 mb-2">Paste a Google Maps link here to auto-fill Lat/Long</p>
+                    <input type="text" id="gmapsLink" placeholder="https://maps.google.com/..." class="w-full border border-gray-300 rounded p-2 text-sm mb-2" oninput="extractCoordinates()">
+                    
+                    <div class="flex gap-2">
+                        <div class="w-1/2">
+                            <label class="block text-xs text-gray-600">Latitude</label>
+                            <input type="text" id="lat" placeholder="-0.573492" class="w-full border border-gray-300 rounded p-2 text-sm" oninput="updateCanvas()">
+                        </div>
+                        <div class="w-1/2">
+                            <label class="block text-xs text-gray-600">Longitude</label>
+                            <input type="text" id="lng" placeholder="35.614589" class="w-full border border-gray-300 rounded p-2 text-sm" oninput="updateCanvas()">
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Date & Time</label>
+                    <input type="text" id="dateTime" placeholder="e.g., Thursday, 12/03/2026 04:40 PM" class="w-full border border-gray-300 rounded p-2 text-sm" oninput="updateCanvas()">
+                </div>
+
+                <button onclick="downloadImage()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded transition duration-200 mt-4 shadow">
+                    Download Stamped Photo
+                </button>
+            </div>
+
+            <div class="lg:col-span-2 bg-gray-200 rounded-lg flex items-center justify-center p-4 shadow-inner min-h-[400px]">
+                <canvas id="preview-canvas" class="hidden"></canvas>
+                <p id="placeholder-text" class="text-gray-500 font-medium">Upload an image to see the preview</p>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const imageInput = document.getElementById('imageInput');
+        const canvas = document.getElementById('preview-canvas');
+        const ctx = canvas.getContext('2d');
+        const placeholderText = document.getElementById('placeholder-text');
+        
+        let uploadedImage = null;
+
+        // Listen for image upload
+        imageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                uploadedImage = new Image();
+                uploadedImage.onload = function() {
+                    // Reveal canvas and hide placeholder
+                    canvas.classList.remove('hidden');
+                    placeholderText.classList.add('hidden');
+                    // Pre-fill date field with current time if empty
+                    if(!document.getElementById('dateTime').value) {
+                        const now = new Date();
+                        document.getElementById('dateTime').value = now.toLocaleString('en-GB', { weekday: 'long', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) + ' EAT';
+                    }
+                    updateCanvas();
+                }
+                uploadedImage.src = event.target.result;
+            }
+            reader.readAsDataURL(file);
+        });
+
+        // Function to extract coordinates from a pasted Google Maps URL
+        function extractCoordinates() {
+            const url = document.getElementById('gmapsLink').value;
+            // Regex to find @lat,long or ?q=lat,long patterns
+            const regex = /@(-?\d+\.\d+),(-?\d+\.\d+)|q=(-?\d+\.\d+),(-?\d+\.\d+)/;
+            const match = url.match(regex);
+            
+            if (match) {
+                // Determine which capture groups matched
+                const lat = match[1] || match[3];
+                const lng = match[2] || match[4];
+                document.getElementById('lat').value = lat;
+                document.getElementById('lng').value = lng;
+                updateCanvas();
+            }
+        }
+
+        // Main function to draw the image and overlay
+        function updateCanvas() {
+            if (!uploadedImage) return;
+
+            // 1. Set canvas dimensions to match the actual image resolution
+            canvas.width = uploadedImage.width;
+            canvas.height = uploadedImage.height;
+
+            // 2. Draw the original photo
+            ctx.drawImage(uploadedImage, 0, 0);
+
+            // 3. Setup overlay variables based on image size to ensure scaling is correct
+            const overlayHeight = canvas.height * 0.20; // Overlay takes bottom 20%
+            const startY = canvas.height - overlayHeight;
+            const paddingX = canvas.width * 0.03;
+
+            // 4. Draw the semi-transparent black background
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+            ctx.fillRect(0, startY, canvas.width, overlayHeight);
+
+            // 5. Setup text styles
+            ctx.fillStyle = '#ffffff';
+            ctx.textBaseline = 'top';
+
+            // Get user inputs
+            const title = document.getElementById('locTitle').value || "Location Title";
+            const address = document.getElementById('locAddress').value || "Detailed Address";
+            const lat = document.getElementById('lat').value || "0.000000";
+            const lng = document.getElementById('lng').value || "0.000000";
+            const date = document.getElementById('dateTime').value || "Date & Time";
+
+            // 6. Draw Title (Largest font)
+            const titleFontSize = Math.floor(overlayHeight * 0.25);
+            ctx.font = `bold ${titleFontSize}px Arial, sans-serif`;
+            let currentY = startY + (overlayHeight * 0.1);
+            ctx.fillText(title, paddingX, currentY);
+
+            // 7. Draw Address (Medium font)
+            const subFontSize = Math.floor(overlayHeight * 0.15);
+            ctx.font = `normal ${subFontSize}px Arial, sans-serif`;
+            currentY += titleFontSize + (overlayHeight * 0.05);
+            ctx.fillText(address, paddingX, currentY);
+
+            // 8. Draw Coordinates (Medium font)
+            currentY += subFontSize + (overlayHeight * 0.05);
+            ctx.fillText(`Lat ${lat}° Long ${lng}°`, paddingX, currentY);
+
+            // 9. Draw Date/Time (Medium font)
+            currentY += subFontSize + (overlayHeight * 0.05);
+            ctx.fillText(date, paddingX, currentY);
+            
+            // 10. Draw Watermark/Logo on the right side
+            ctx.textAlign = 'right';
+            ctx.font = `bold ${subFontSize}px Arial, sans-serif`;
+            ctx.fillStyle = '#60A5FA'; // Tailwind Blue-400
+            ctx.fillText("Site Progress Tracker", canvas.width - paddingX, startY + (overlayHeight * 0.1));
+            // Reset alignment for next draws
+            ctx.textAlign = 'left';
+        }
+
+        // Function to trigger download of the finished image
+        function downloadImage() {
+            if (!uploadedImage) {
+                alert("Please upload an image first.");
+                return;
+            }
+            
+            // Convert canvas to a data URL and trigger download
+            const dataURL = canvas.toDataURL('image/jpeg', 0.9);
+            const link = document.createElement('a');
+            link.download = 'Geotagged_Site_Photo.jpg';
+            link.href = dataURL;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
