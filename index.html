@@ -54,8 +54,8 @@
                     <div class="mx-auto h-8 w-8 text-[#D4AF37] mb-3">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"></path></svg>
                     </div>
-                    <p class="text-xs font-bold text-slate-700 tracking-widest uppercase">Select Multiple Photos</p>
-                    <p class="text-[10px] text-slate-400 mt-1">Or drag and drop a folder</p>
+                    <p class="text-xs font-bold text-slate-700 tracking-widest uppercase">Select Photos</p>
+                    <p class="text-[10px] text-slate-400 mt-1">Or drag and drop</p>
                 </div>
 
                 <div class="space-y-5 relative">
@@ -105,9 +105,9 @@
                     </div>
                 </div>
 
-                <button id="exportBtn" onclick="exportBatchAsZip()" class="w-full bg-[#D4AF37] hover:bg-[#c4a030] text-white font-medium tracking-widest py-4 rounded-sm transition shadow-md text-xs uppercase flex justify-center items-center gap-2 opacity-50 cursor-not-allowed" disabled>
+                <button id="exportBtn" onclick="exportBatch()" class="w-full bg-[#D4AF37] hover:bg-[#c4a030] text-white font-medium tracking-widest py-4 rounded-sm transition shadow-md text-xs uppercase flex justify-center items-center gap-2 opacity-50 cursor-not-allowed" disabled>
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                    <span id="exportBtnText">Export 100% Quality ZIP</span>
+                    <span id="exportBtnText">EXPORT PHOTOS</span>
                 </button>
             </div>
         </div>
@@ -126,7 +126,7 @@
     <div id="setupState" class="absolute inset-0 bg-slate-50 z-50 flex items-center justify-center">
         <div class="max-w-md mx-auto bg-white p-10 shadow-lg border border-slate-200 text-center rounded-lg">
             <h2 class="text-xl font-light text-slate-800 mb-2 tracking-widest uppercase">API Authentication</h2>
-            <p class="text-slate-500 text-sm mb-8 leading-relaxed">Securely enter your Google Maps API key locally to unlock Bulk Processing and Maps.</p>
+            <p class="text-slate-500 text-sm mb-8 leading-relaxed">Securely enter your Google Maps API key locally to unlock Autocomplete capabilities.</p>
             <button onclick="openSettings()" class="w-full bg-slate-900 hover:bg-black text-white text-sm tracking-[0.1em] uppercase py-3 transition rounded-sm">Configure</button>
         </div>
     </div>
@@ -162,7 +162,6 @@
     <script>
         // --- STATE MANAGEMENT ---
         let batchData = []; 
-        let staticMapCache = {}; 
         let geocoder, map, marker, autocomplete;
         let tempLatLng = null;
 
@@ -327,19 +326,20 @@
             if(e.target.files.length) processMultipleFiles(e.target.files); 
         });
 
-        function convertDMSToDD(degrees, minutes, seconds, direction) {
-            let dd = degrees + (minutes / 60) + (seconds / 3600);
-            if (direction === "S" || direction === "W") dd = dd * -1;
-            return dd;
+        // THE NaN FIX: Safely parse rational objects from Mobile EXIF into raw decimals
+        function parseExifToDecimal(tag, ref) {
+            if (!tag) return null;
+            let d = tag[0].numerator ? tag[0].numerator / tag[0].denominator : tag[0];
+            let m = tag[1].numerator ? tag[1].numerator / tag[1].denominator : tag[1];
+            let s = tag[2].numerator ? tag[2].numerator / tag[2].denominator : tag[2];
+            let dd = d + (m / 60) + (s / 3600);
+            if (ref === "S" || ref === "W") dd = dd * -1;
+            return dd.toFixed(6);
         }
 
         function processMultipleFiles(files) {
             document.getElementById('placeholder-text').classList.add('hidden');
             document.getElementById('previewGrid').classList.remove('hidden');
-            
-            const btn = document.getElementById('exportBtn');
-            btn.disabled = false;
-            btn.classList.remove('opacity-50', 'cursor-not-allowed');
             
             Array.from(files).forEach((file, index) => {
                 EXIF.getData(file, function() {
@@ -350,8 +350,8 @@
                     const dateTimeOriginal = EXIF.getTag(this, "DateTimeOriginal");
 
                     if (latDMS && lngDMS) {
-                        fileExif.lat = convertDMSToDD(latDMS[0], latDMS[1], latDMS[2], latRef).toFixed(6);
-                        fileExif.lng = convertDMSToDD(lngDMS[0], lngDMS[1], lngDMS[2], lngRef).toFixed(6);
+                        fileExif.lat = parseExifToDecimal(latDMS, latRef);
+                        fileExif.lng = parseExifToDecimal(lngDMS, lngRef);
                     }
                     if (dateTimeOriginal) {
                         const parts = dateTimeOriginal.split(' ');
@@ -411,37 +411,33 @@
             closeMap();
         }
 
-        // --- DYNAMIC FONT SIZING ENGINE (FIXES THE MISSING "T") ---
+        function updateExportButton() {
+            const btn = document.getElementById('exportBtn');
+            const btnText = document.getElementById('exportBtnText');
+            if (batchData.length === 0) return;
+            
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            
+            if (batchData.length < 5) {
+                btnText.innerText = `DOWNLOAD ${batchData.length} PHOTO${batchData.length > 1 ? 'S' : ''}`;
+            } else {
+                btnText.innerText = `ZIP & EXPORT ${batchData.length} PHOTOS`;
+            }
+        }
+
+        // --- DYNAMIC FONT SIZING ENGINE ---
         function getFitFont(ctx, text, startSize, weight, fontFam, maxWidth) {
             let size = startSize;
             ctx.font = `${weight} ${size}px '${fontFam}', sans-serif`;
-            // Shrink font size loop if the text is wider than the allowed space
             while(ctx.measureText(text).width > maxWidth && size > 10) {
                 size -= 1;
                 ctx.font = `${weight} ${size}px '${fontFam}', sans-serif`;
             }
-            return size; // Returns the final safe size
+            return size; 
         }
 
         // --- BATCH RENDERING ENGINE ---
-        function getStaticMap(lat, lng, apiKey) {
-            return new Promise((resolve) => {
-                if(!lat || !lng || lat==="N/A" || !apiKey) return resolve(null);
-                
-                const cacheKey = `${lat}_${lng}`;
-                if(staticMapCache[cacheKey]) return resolve(staticMapCache[cacheKey]);
-
-                const mapImg = new Image();
-                mapImg.crossOrigin = "Anonymous"; 
-                mapImg.onload = function() { 
-                    staticMapCache[cacheKey] = mapImg; 
-                    resolve(mapImg); 
-                };
-                mapImg.onerror = function() { resolve(null); }; 
-                mapImg.src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=16&size=400x400&maptype=satellite&markers=color:red%7C${lat},${lng}&key=${apiKey}`;
-            });
-        }
-
         function drawRoundedRect(ctx, x, y, width, height, radius) {
             ctx.beginPath(); ctx.moveTo(x + radius, y); ctx.lineTo(x + width - radius, y);
             ctx.quadraticCurveTo(x + width, y, x + width, y + radius); ctx.lineTo(x + width, y + height - radius);
@@ -450,12 +446,10 @@
             ctx.quadraticCurveTo(x, y, x + radius, y); ctx.closePath();
         }
 
-        async function renderBatch() {
+        function renderBatch() {
             const grid = document.getElementById('previewGrid');
             grid.innerHTML = ''; // Clear grid
 
-            const apiKey = localStorage.getItem('gmaps_api_key');
-            
             const gTitle = document.getElementById('locTitle').value || "LOCATION REPORT";
             const gAddress = document.getElementById('locAddress').value || "Address Unavailable";
             const gLat = document.getElementById('lat').value;
@@ -469,8 +463,6 @@
                 const useLng = item.exif.lng || gLng || "N/A";
                 const useDate = item.exif.date || gDate;
                 
-                const satelliteImg = await getStaticMap(useLat, useLng, apiKey);
-
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 canvas.width = item.originalImg.width; 
@@ -480,7 +472,7 @@
 
                 const formattedDate = formatFullDate(useDate);
 
-                // Math Layout
+                // Math Layout (Simplified now that the map is gone)
                 const margin = canvas.width * 0.03; 
                 const cardWidth = canvas.width - (margin * 2);
                 const padding = canvas.width * 0.02;
@@ -491,7 +483,6 @@
                 const textBlockHeight = titleSize + (dataSize * 3) + (lineGap * 3);
                 const cardHeight = textBlockHeight + (padding * 2);
                 const startY = canvas.height - cardHeight - margin;
-                const mapSize = textBlockHeight;
 
                 // Glassmorphism Base
                 ctx.save();
@@ -509,28 +500,17 @@
                 drawRoundedRect(ctx, margin, startY, cardWidth, cardHeight, radius);
                 ctx.stroke();
 
+                // Draw Gold Accent Line
                 let textStartX = margin + padding;
-                if (satelliteImg) {
-                    ctx.save();
-                    drawRoundedRect(ctx, textStartX, startY + padding, mapSize, mapSize, radius);
-                    ctx.clip();
-                    ctx.drawImage(satelliteImg, textStartX, startY + padding, mapSize, mapSize);
-                    ctx.restore();
-                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-                    drawRoundedRect(ctx, textStartX, startY + padding, mapSize, mapSize, radius);
-                    ctx.stroke();
-                    textStartX += mapSize + (padding * 1.5); 
-                } else {
-                    ctx.fillStyle = '#D4AF37'; 
-                    ctx.fillRect(textStartX, startY + padding, canvas.width * 0.004, mapSize);
-                    textStartX += (canvas.width * 0.015);
-                }
+                ctx.fillStyle = '#D4AF37'; 
+                ctx.fillRect(textStartX, startY + padding, canvas.width * 0.006, textBlockHeight);
+                textStartX += (canvas.width * 0.02); // Add gap between line and text
 
                 // --- TEXT FITTING AND DRAWING ---
                 let currentY = startY + padding;
                 ctx.textBaseline = 'top'; ctx.textAlign = 'left'; 
                 
-                // Calculate exactly how much width we have left for text
+                // Calculate available text width for auto-scaling
                 const availableTextWidth = (margin + cardWidth) - textStartX - padding;
 
                 // 1. Fit & Draw Title
@@ -557,7 +537,7 @@
                 ctx.fillStyle = '#FFFFFF';
                 ctx.fillText(formattedDate, textStartX, currentY);
 
-                // MAXIMUM QUALITY (1.0) EXPORT FIX 
+                // MAXIMUM QUALITY EXPORT (1.0 = 100% resolution preservation)
                 item.finalDataURL = canvas.toDataURL('image/jpeg', 1.0);
 
                 const imgElem = document.createElement('img');
@@ -565,33 +545,55 @@
                 imgElem.className = 'preview-card';
                 grid.appendChild(imgElem);
             }
+            
+            updateExportButton();
         }
 
-        async function exportBatchAsZip() {
+        // --- SMART EXPORT LOGIC ---
+        function exportBatch() {
             if (batchData.length === 0) return alert("Please upload images first.");
             
             const btn = document.getElementById('exportBtn');
             const btnText = document.getElementById('exportBtnText');
             btn.disabled = true;
-            btnText.innerText = "ZIPPING HIGH-RES FILES...";
 
-            const zip = new JSZip();
-            const folder = zip.folder("MobillioLuxe_Max_Quality");
-
-            batchData.forEach((item, index) => {
-                const base64Data = item.finalDataURL.split(',')[1];
-                folder.file(`Geotag_${index + 1}_${item.originalName}`, base64Data, {base64: true});
-            });
-
-            zip.generateAsync({type:"blob"}).then(function(content) {
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(content);
-                link.download = `MobillioLuxe_MaxRes_Batch_${Date.now()}.zip`;
-                link.click();
+            if (batchData.length < 5) {
+                // Direct Download for 1-4 files
+                btnText.innerText = "DOWNLOADING...";
+                batchData.forEach((item, index) => {
+                    // Stagger downloads by 500ms to prevent browser blocking multiple popups
+                    setTimeout(() => {
+                        const link = document.createElement('a');
+                        link.href = item.finalDataURL;
+                        let safeName = item.originalName.replace(/\.[^/.]+$/, ""); // remove original extension
+                        link.download = `MobillioLuxe_${safeName}_Geotagged.jpg`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    }, index * 500); 
+                });
                 
-                btnText.innerText = "Export 100% Quality ZIP";
-                btn.disabled = false;
-            });
+                setTimeout(() => { updateExportButton(); }, batchData.length * 500 + 500);
+
+            } else {
+                // ZIP Download for 5+ files
+                btnText.innerText = "ZIPPING HIGH-RES FILES...";
+                const zip = new JSZip();
+                const folder = zip.folder("MobillioLuxe_Max_Quality");
+
+                batchData.forEach((item, index) => {
+                    const base64Data = item.finalDataURL.split(',')[1];
+                    folder.file(`Geotag_${index + 1}_${item.originalName}`, base64Data, {base64: true});
+                });
+
+                zip.generateAsync({type:"blob"}).then(function(content) {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(content);
+                    link.download = `MobillioLuxe_MaxRes_Batch_${Date.now()}.zip`;
+                    link.click();
+                    updateExportButton();
+                });
+            }
         }
     </script>
 </body>
