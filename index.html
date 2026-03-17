@@ -3,138 +3,318 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Site Photo Geotagger</title>
+    <title>Enterprise Site Geotagger</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
         #preview-canvas {
             max-width: 100%;
             height: auto;
-            border: 1px solid #e5e7eb;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
         }
+        
+        /* Smooth Drag & Drop Zone */
+        .drop-zone {
+            transition: all 0.2s ease;
+        }
+        .drop-zone.dragover {
+            background-color: #eff6ff;
+            border-color: #3b82f6;
+            transform: scale(1.02);
+        }
+
+        /* Modal Styles */
+        #mapModal { display: none; opacity: 0; transition: opacity 0.3s ease; }
+        #mapModal.active { display: flex; opacity: 1; }
+        #googleMap { height: 400px; width: 100%; border-radius: 0.5rem; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen text-gray-800 font-sans">
+<body class="bg-slate-50 min-h-screen text-slate-800 relative pb-12">
 
-    <div class="max-w-7xl mx-auto px-4 py-8">
-        <header class="mb-8 border-b border-gray-300 pb-4">
-            <h1 class="text-3xl font-bold text-slate-800">Pro Site Photo Geotagger</h1>
-            <p class="text-gray-600">High-fidelity progress reporting tool.</p>
+    <div class="max-w-7xl mx-auto px-4 py-8 relative z-0">
+        <header class="mb-10 text-center md:text-left">
+            <h1 class="text-4xl font-bold text-slate-900 tracking-tight">Enterprise Geotagger</h1>
+            <p class="text-slate-500 mt-2">Automated EXIF extraction & intelligent geocoding for progress reporting.</p>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 lg:col-span-1 space-y-5">
+            <div class="lg:col-span-5 space-y-6">
                 
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">1. Upload Site Photo</label>
-                    <input type="file" id="imageInput" accept="image/*" class="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition">
-                </div>
-
-                <hr class="border-gray-200">
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Project / Site Title</label>
-                    <input type="text" id="locTitle" placeholder="e.g., Olenguruone Main Block" class="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" oninput="updateCanvas()">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Specific Location / Task</label>
-                    <input type="text" id="locAddress" placeholder="e.g., Ground Floor Slab Pouring" class="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" oninput="updateCanvas()">
-                </div>
-
-                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                    <div class="flex justify-between items-center mb-2">
-                        <label class="block text-sm font-semibold text-slate-800">GPS Coordinates</label>
-                        <button onclick="getLocation()" class="bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs font-bold py-1 px-3 rounded-full transition">
-                            📍 Auto-Detect
-                        </button>
+                <div id="dropZone" class="drop-zone border-2 border-dashed border-slate-300 rounded-xl p-8 text-center bg-white cursor-pointer shadow-sm hover:shadow-md">
+                    <input type="file" id="imageInput" accept="image/*" class="hidden">
+                    <div class="mx-auto h-12 w-12 text-blue-500 mb-3">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                     </div>
-                    <div class="flex gap-3">
-                        <div class="w-1/2">
-                            <label class="block text-[11px] text-gray-500 uppercase tracking-wide">Latitude</label>
-                            <input type="text" id="lat" placeholder="-0.573492" class="w-full border border-gray-300 rounded p-2 text-sm" oninput="updateCanvas()">
+                    <p class="text-sm font-semibold text-slate-700">Click to upload or drag and drop</p>
+                    <p class="text-xs text-slate-500 mt-1">High-res site photos (Originals preferred for EXIF)</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-5 relative">
+                    <div id="loadingOverlay" class="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 hidden flex-col items-center justify-center rounded-xl">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        <p class="text-sm font-semibold text-slate-700 mt-2">Contacting Google Maps...</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Project Name</label>
+                        <input type="text" id="locTitle" placeholder="e.g., Mobillio HQ Site" class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" oninput="updateCanvas()">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-end mb-1">
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Detected Address</label>
+                            <span class="text-[10px] text-blue-600 font-semibold bg-blue-50 px-2 py-0.5 rounded">Auto-fills via API</span>
                         </div>
-                        <div class="w-1/2">
-                            <label class="block text-[11px] text-gray-500 uppercase tracking-wide">Longitude</label>
-                            <input type="text" id="lng" placeholder="35.614589" class="w-full border border-gray-300 rounded p-2 text-sm" oninput="updateCanvas()">
+                        <input type="text" id="locAddress" placeholder="Will be fetched automatically..." class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" oninput="updateCanvas()">
+                    </div>
+
+                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                        <div class="flex justify-between items-center mb-3">
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Coordinates</label>
+                            <div class="flex gap-2">
+                                <button onclick="getLocation()" class="bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold py-1.5 px-3 rounded-md transition shadow-sm flex items-center gap-1">
+                                    <span>📍</span> Device GPS
+                                </button>
+                                <button onclick="openMap()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-1.5 px-3 rounded-md transition shadow-sm flex items-center gap-1">
+                                    <span>🗺️</span> Open Map
+                                </button>
+                            </div>
                         </div>
+                        <div class="flex gap-3">
+                            <input type="text" id="lat" placeholder="Latitude" class="w-1/2 border border-slate-300 rounded-lg p-2 text-sm text-slate-600 bg-white" readonly>
+                            <input type="text" id="lng" placeholder="Longitude" class="w-1/2 border border-slate-300 rounded-lg p-2 text-sm text-slate-600 bg-white" readonly>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Date & Time</label>
+                        <input type="datetime-local" id="dateTimeInput" class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" oninput="updateCanvas()">
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Timestamp</label>
-                    <input type="text" id="dateTime" placeholder="Auto-fills on upload..." class="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" oninput="updateCanvas()">
-                </div>
-
-                <button onclick="downloadImage()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 px-4 rounded-md transition duration-200 shadow-md">
-                    ⬇ Download Stamped Photo
+                <button onclick="downloadImage()" class="w-full bg-slate-900 hover:bg-black text-white font-bold py-4 px-4 rounded-xl transition duration-200 shadow-lg flex justify-center items-center gap-2 text-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Export Stamped Photo
                 </button>
             </div>
 
-            <div class="lg:col-span-2 bg-gray-200/50 rounded-xl flex items-center justify-center p-4 border-2 border-dashed border-gray-300 min-h-[500px]">
+            <div class="lg:col-span-7 bg-slate-200/50 rounded-2xl flex items-center justify-center p-6 border-2 border-dashed border-slate-300 min-h-[600px]">
                 <canvas id="preview-canvas" class="hidden"></canvas>
                 <div id="placeholder-text" class="text-center">
-                    <svg class="mx-auto h-12 w-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                    <p class="text-gray-500 font-medium">Upload a site photo to preview the layout</p>
+                    <div class="bg-white p-4 rounded-full inline-block shadow-sm mb-4">
+                        <svg class="h-8 w-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-slate-700">No Image Selected</h3>
+                    <p class="text-slate-500 mt-1">Upload an image to preview the premium stamp</p>
                 </div>
             </div>
 
         </div>
     </div>
 
+    <div id="mapModal" class="fixed inset-0 bg-slate-900/60 z-50 items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden transform transition-all">
+            <div class="p-5 border-b flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-slate-800 text-lg">Pinpoint Location</h3>
+                <button onclick="closeMap()" class="text-slate-400 hover:text-slate-700 font-bold text-2xl leading-none">&times;</button>
+            </div>
+            <div id="googleMap"></div>
+            <div class="p-5 bg-slate-50 flex justify-end gap-3 border-t">
+                <button onclick="closeMap()" class="text-slate-600 font-semibold py-2 px-4 hover:bg-slate-200 rounded-lg transition">Cancel</button>
+                <button onclick="confirmMapLocation()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition shadow-md">Confirm Pin</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // --- GLOBAL VARIABLES ---
         const imageInput = document.getElementById('imageInput');
+        const dropZone = document.getElementById('dropZone');
         const canvas = document.getElementById('preview-canvas');
         const ctx = canvas.getContext('2d');
-        const placeholderText = document.getElementById('placeholder-text');
+        const dateTimeInput = document.getElementById('dateTimeInput');
         
         let uploadedImage = null;
+        let map, marker, geocoder;
+        let tempLatLng = null; // Holds map selection before confirm
 
-        imageInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
+        // --- INITIALIZATION ---
+        function setDefaultTime() {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            dateTimeInput.value = now.toISOString().slice(0, 16);
+        }
+        setDefaultTime();
 
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                uploadedImage = new Image();
-                uploadedImage.onload = function() {
-                    canvas.classList.remove('hidden');
-                    placeholderText.classList.add('hidden');
-                    
-                    if(!document.getElementById('dateTime').value) {
-                        const now = new Date();
-                        // Formatting to look like: "Tuesday, 17/03/2026 13:57 PM"
-                        const options = { weekday: 'short', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' };
-                        document.getElementById('dateTime').value = now.toLocaleDateString('en-GB', options) + ' EAT';
-                    }
-                    updateCanvas();
+        // Initialize Google Maps Data
+        function initMap() {
+            geocoder = new google.maps.Geocoder();
+            const defaultLoc = { lat: -1.2921, lng: 36.8219 }; // Nairobi/Kenya default
+            map = new google.maps.Map(document.getElementById("googleMap"), {
+                zoom: 8,
+                center: defaultLoc,
+                mapTypeId: 'hybrid' // Satellite with labels looks very pro
+            });
+
+            marker = new google.maps.Marker({
+                position: defaultLoc,
+                map: map,
+                draggable: true,
+                animation: google.maps.Animation.DROP,
+            });
+
+            // Update temp coordinates when map is clicked or marker is dragged
+            map.addListener("click", (e) => marker.setPosition(e.latLng));
+            marker.addListener("position_changed", () => {
+                tempLatLng = { lat: marker.getPosition().lat(), lng: marker.getPosition().lng() };
+            });
+        }
+
+        // --- GOOGLE MAPS GEOCODING (REVERSE) ---
+        function fetchAddressFromCoords(lat, lng) {
+            if(!geocoder) return;
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+            document.getElementById('loadingOverlay').classList.add('flex');
+            
+            const latlng = { lat: parseFloat(lat), lng: parseFloat(lng) };
+            
+            geocoder.geocode({ location: latlng }, (results, status) => {
+                document.getElementById('loadingOverlay').classList.add('hidden');
+                document.getElementById('loadingOverlay').classList.remove('flex');
+                
+                if (status === "OK" && results[0]) {
+                    // Get a clean, formatted address without getting too long
+                    document.getElementById('locAddress').value = results[0].formatted_address;
+                } else {
+                    document.getElementById('locAddress').value = "Address not found for these coordinates";
                 }
-                uploadedImage.src = event.target.result;
-            }
-            reader.readAsDataURL(file);
+                updateCanvas();
+            });
+        }
+
+        // --- FILE HANDLING (DRAG & DROP + INPUT) ---
+        dropZone.addEventListener('click', () => imageInput.click());
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if(e.dataTransfer.files.length) processFile(e.dataTransfer.files[0]);
+        });
+        imageInput.addEventListener('change', (e) => {
+            if(e.target.files.length) processFile(e.target.files[0]);
         });
 
-        // HTML5 Geolocation API
+        function convertDMSToDD(degrees, minutes, seconds, direction) {
+            let dd = degrees + (minutes / 60) + (seconds / 3600);
+            if (direction === "S" || direction === "W") dd = dd * -1;
+            return dd;
+        }
+
+        function processFile(file) {
+            EXIF.getData(file, function() {
+                // Extract Data
+                const latDMS = EXIF.getTag(this, "GPSLatitude");
+                const latRef = EXIF.getTag(this, "GPSLatitudeRef");
+                const lngDMS = EXIF.getTag(this, "GPSLongitude");
+                const lngRef = EXIF.getTag(this, "GPSLongitudeRef");
+                const dateTimeOriginal = EXIF.getTag(this, "DateTimeOriginal");
+
+                let foundCoords = false;
+                if (latDMS && lngDMS) {
+                    const lat = convertDMSToDD(latDMS[0], latDMS[1], latDMS[2], latRef).toFixed(6);
+                    const lng = convertDMSToDD(lngDMS[0], lngDMS[1], lngDMS[2], lngRef).toFixed(6);
+                    document.getElementById('lat').value = lat;
+                    document.getElementById('lng').value = lng;
+                    foundCoords = true;
+                    fetchAddressFromCoords(lat, lng); // Trigger API call!
+                }
+
+                if (dateTimeOriginal) {
+                    const parts = dateTimeOriginal.split(' ');
+                    const dateParts = parts[0].replace(/:/g, '-');
+                    const timeParts = parts[1].slice(0, 5); 
+                    dateTimeInput.value = `${dateParts}T${timeParts}`;
+                }
+
+                // Draw Image
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    uploadedImage = new Image();
+                    uploadedImage.onload = function() {
+                        canvas.classList.remove('hidden');
+                        document.getElementById('placeholder-text').classList.add('hidden');
+                        if(!foundCoords) updateCanvas(); // Update instantly if no geocode delay
+                    }
+                    uploadedImage.src = event.target.result;
+                }
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // --- LOCATION CONTROLS ---
         function getLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     function(position) {
-                        document.getElementById('lat').value = position.coords.latitude.toFixed(6);
-                        document.getElementById('lng').value = position.coords.longitude.toFixed(6);
-                        updateCanvas();
+                        const lat = position.coords.latitude.toFixed(6);
+                        const lng = position.coords.longitude.toFixed(6);
+                        document.getElementById('lat').value = lat;
+                        document.getElementById('lng').value = lng;
+                        fetchAddressFromCoords(lat, lng);
                     },
-                    function(error) {
-                        alert("Unable to retrieve location. Please ensure location services are enabled on your device/browser.");
-                    },
-                    { enableHighAccuracy: true } // Requests GPS hardware if available
+                    function(error) { alert("Enable location permissions in your browser."); },
+                    { enableHighAccuracy: true }
                 );
-            } else {
-                alert("Geolocation is not supported by this browser.");
             }
         }
 
+        function openMap() {
+            document.getElementById('mapModal').classList.add('active');
+            // If we already have coordinates, center the map there
+            const currLat = document.getElementById('lat').value;
+            const currLng = document.getElementById('lng').value;
+            if(currLat && currLng) {
+                const pos = { lat: parseFloat(currLat), lng: parseFloat(currLng) };
+                map.setCenter(pos);
+                marker.setPosition(pos);
+                tempLatLng = pos;
+            }
+        }
+
+        function closeMap() { document.getElementById('mapModal').classList.remove('active'); }
+
+        function confirmMapLocation() {
+            if(tempLatLng) {
+                document.getElementById('lat').value = tempLatLng.lat.toFixed(6);
+                document.getElementById('lng').value = tempLatLng.lng.toFixed(6);
+                fetchAddressFromCoords(tempLatLng.lat, tempLatLng.lng);
+            }
+            closeMap();
+        }
+
+        // Helper to draw rounded rectangles on canvas
+        function drawRoundedRect(ctx, x, y, width, height, radius) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        // --- PREMIUM CANVAS RENDERING ---
         function updateCanvas() {
             if (!uploadedImage) return;
 
@@ -142,81 +322,120 @@
             canvas.height = uploadedImage.height;
             ctx.drawImage(uploadedImage, 0, 0);
 
-            // Get Inputs
-            const title = document.getElementById('locTitle').value || "Project Title";
-            const address = document.getElementById('locAddress').value || "Location Details";
-            const lat = document.getElementById('lat').value || "0.000000";
-            const lng = document.getElementById('lng').value || "0.000000";
-            const date = document.getElementById('dateTime').value || "Timestamp";
-
-            // Elegant Proportions
-            const cardMargin = canvas.width * 0.03;
-            const cardPadding = canvas.width * 0.02;
-            const cardWidth = canvas.width - (cardMargin * 2);
+            // Data Prep
+            const title = document.getElementById('locTitle').value || "UNNAMED PROJECT";
+            const address = document.getElementById('locAddress').value || "Location details pending...";
+            const lat = document.getElementById('lat').value || "---";
+            const lng = document.getElementById('lng').value || "---";
             
-            // Calculate Font Sizes dynamically based on image width
-            const titleSize = Math.floor(canvas.width * 0.025);
-            const subSize = Math.floor(canvas.width * 0.018);
-            const lineSpacing = subSize * 1.5;
+            const dateObj = new Date(dateTimeInput.value);
+            const dateStr = dateObj.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: '2-digit' }).toUpperCase();
+            const timeStr = dateObj.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
-            // Calculate Card Height
-            const cardHeight = (cardPadding * 2) + titleSize + (lineSpacing * 2) + (canvas.width * 0.01);
-            const startY = canvas.height - cardHeight - cardMargin;
+            // Layout Math (Dynamic based on image size)
+            const margin = canvas.width * 0.04;
+            const cardWidth = canvas.width - (margin * 2);
+            const paddingX = canvas.width * 0.03;
+            const paddingY = canvas.width * 0.025;
+            
+            const titleSize = Math.floor(canvas.width * 0.022);
+            const labelSize = Math.floor(canvas.width * 0.012);
+            const dataSize = Math.floor(canvas.width * 0.016);
+            
+            const cardHeight = (paddingY * 2) + titleSize + (canvas.width * 0.02) + labelSize + (canvas.width * 0.005) + dataSize;
+            const startY = canvas.height - cardHeight - margin;
 
-            // 1. Draw Sleek Rounded Card Background
-            ctx.fillStyle = 'rgba(15, 23, 42, 0.75)'; // Dark Slate with transparency
-            // Using standard fillRect to ensure compatibility, but styled elegantly
-            ctx.fillRect(cardMargin, startY, cardWidth, cardHeight);
+            // 1. Draw Premium Frosted/Dark Card
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.85)'; // Slate 900 with 85% opacity
+            drawRoundedRect(ctx, margin, startY, cardWidth, cardHeight, canvas.width * 0.015);
 
-            // 2. Draw "Construction Yellow" Accent Line
-            const accentWidth = canvas.width * 0.008;
-            ctx.fillStyle = '#EAB308'; // Tailwind Yellow-500
-            ctx.fillRect(cardMargin, startY, accentWidth, cardHeight);
+            // 2. Draw Left Accent Line (Mobillio Blue)
+            ctx.fillStyle = '#3B82F6'; // Blue 500
+            ctx.beginPath();
+            ctx.moveTo(margin, startY + (canvas.width * 0.015)); // Match border radius
+            ctx.lineTo(margin + (canvas.width * 0.008), startY + (canvas.width * 0.015));
+            ctx.lineTo(margin + (canvas.width * 0.008), startY + cardHeight - (canvas.width * 0.015));
+            ctx.lineTo(margin, startY + cardHeight - (canvas.width * 0.015));
+            ctx.fill();
 
-            // 3. Setup Text Drawing
+            // Setup Text
+            const leftColX = margin + paddingX + (canvas.width * 0.008);
+            const rightColX = margin + cardWidth - paddingX;
+            let currentY = startY + paddingY;
+
+            // --- TOP ROW ---
+            // Title (Left)
             ctx.textBaseline = 'top';
-            let currentTextY = startY + cardPadding;
-            const textStartX = cardMargin + accentWidth + cardPadding;
-
-            // 4. Draw Title
+            ctx.textAlign = 'left';
             ctx.fillStyle = '#FFFFFF';
-            ctx.font = `bold ${titleSize}px "Segoe UI", Roboto, Helvetica, Arial, sans-serif`;
-            ctx.fillText(title, textStartX, currentTextY);
-            
-            // Move down
-            currentTextY += titleSize + (canvas.width * 0.01);
+            ctx.font = `800 ${titleSize}px 'Inter', sans-serif`;
+            ctx.fillText(title.toUpperCase(), leftColX, currentY);
 
-            // 5. Draw Address / Details
-            ctx.font = `normal ${subSize}px "Segoe UI", Roboto, Helvetica, Arial, sans-serif`;
-            ctx.fillStyle = '#E2E8F0'; // Slate-200 (Slightly off-white for hierarchy)
-            ctx.fillText(address, textStartX, currentTextY);
-
-            currentTextY += lineSpacing;
-
-            // 6. Draw GPS & Timestamp (Side by Side if possible, or stacked)
-            ctx.font = `normal ${subSize}px "Segoe UI", Roboto, Helvetica, Arial, sans-serif`;
-            ctx.fillStyle = '#94A3B8'; // Slate-400 (Muted for secondary info)
-            const metaText = `📍 GPS: ${lat}, ${lng}   |   🕒 ${date}`;
-            ctx.fillText(metaText, textStartX, currentTextY);
-            
-            // 7. Add Watermark Logo (Bottom Right of the card)
+            // Verified Badge (Right)
             ctx.textAlign = 'right';
-            ctx.font = `bold ${subSize * 0.9}px "Segoe UI", Roboto, Helvetica, Arial, sans-serif`;
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-            ctx.fillText("Verified Tracker", cardMargin + cardWidth - cardPadding, startY + cardPadding);
-            ctx.textAlign = 'left'; // reset
+            ctx.fillStyle = '#3B82F6';
+            ctx.font = `800 ${labelSize * 1.2}px 'Inter', sans-serif`;
+            ctx.fillText("✓ VERIFIED REPORT", rightColX, currentY + (titleSize - (labelSize * 1.2)));
+
+            // Divider Line
+            currentY += titleSize + (canvas.width * 0.015);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+            ctx.lineWidth = canvas.width * 0.002;
+            ctx.beginPath();
+            ctx.moveTo(leftColX, currentY);
+            ctx.lineTo(rightColX, currentY);
+            ctx.stroke();
+
+            currentY += (canvas.width * 0.015);
+
+            // --- BOTTOM ROW (Grid Layout) ---
+            ctx.textAlign = 'left';
+            
+            // Block 1: Address
+            ctx.fillStyle = '#94A3B8'; // Slate 400 (Label)
+            ctx.font = `600 ${labelSize}px 'Inter', sans-serif`;
+            ctx.fillText("LOCATION", leftColX, currentY);
+            
+            ctx.fillStyle = '#F8FAFC'; // Slate 50 (Data)
+            ctx.font = `500 ${dataSize}px 'Inter', sans-serif`;
+            ctx.fillText(address, leftColX, currentY + labelSize + (canvas.width * 0.005));
+
+            // Block 2: Coordinates (Centeredish)
+            const middleColX = margin + (cardWidth * 0.55);
+            ctx.fillStyle = '#94A3B8';
+            ctx.font = `600 ${labelSize}px 'Inter', sans-serif`;
+            ctx.fillText("COORDINATES", middleColX, currentY);
+
+            ctx.fillStyle = '#F8FAFC';
+            ctx.font = `500 ${dataSize}px 'Inter', sans-serif`;
+            ctx.fillText(`${lat}, ${lng}`, middleColX, currentY + labelSize + (canvas.width * 0.005));
+
+            // Block 3: DateTime (Right Aligned)
+            ctx.textAlign = 'right';
+            ctx.fillStyle = '#94A3B8';
+            ctx.font = `600 ${labelSize}px 'Inter', sans-serif`;
+            ctx.fillText("TIMESTAMP", rightColX, currentY);
+
+            ctx.fillStyle = '#F8FAFC';
+            ctx.font = `500 ${dataSize}px 'Inter', sans-serif`;
+            ctx.fillText(`${dateStr} • ${timeStr}`, rightColX, currentY + labelSize + (canvas.width * 0.005));
+            
+            // Reset align
+            ctx.textAlign = 'left';
         }
 
         function downloadImage() {
             if (!uploadedImage) return alert("Please upload an image first.");
             const dataURL = canvas.toDataURL('image/jpeg', 0.95);
             const link = document.createElement('a');
-            link.download = `Site_Photo_${Date.now()}.jpg`;
+            link.download = `${document.getElementById('locTitle').value.replace(/\s+/g, '_')}_${Date.now()}.jpg`;
             link.href = dataURL;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
         }
     </script>
+    
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAn231BuusN6opfyIw0AO37UdhkmfgwhU0&callback=initMap" async defer></script>
 </body>
 </html>
