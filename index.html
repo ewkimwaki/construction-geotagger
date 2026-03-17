@@ -3,23 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mobillio Luxe | Site Geotagger</title>
+    <title>Mobillio Luxe | Bulk Site Geotagger</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; }
         
-        #preview-canvas {
-            max-width: 100%;
-            height: auto;
-            border-radius: 0.5rem;
-            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15);
-        }
-        
+        .preview-card { border-radius: 0.5rem; box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1); width: 100%; height: auto; }
         .drop-zone { transition: all 0.3s ease; }
         .drop-zone.dragover { background-color: #f1f5f9; border-color: #D4AF37; }
-        
         .modal { display: none; opacity: 0; transition: opacity 0.3s ease; }
         .modal.active { display: flex; opacity: 1; }
         #googleMap { height: 400px; width: 100%; border-radius: 0.5rem; }
@@ -28,113 +22,119 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         
-        /* Styling for Google Places Autocomplete Dropdown to match our theme */
         .pac-container { font-family: 'Montserrat', sans-serif; border-radius: 0.5rem; border: 1px solid #e2e8f0; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
         .pac-item { padding: 10px; font-size: 14px; cursor: pointer; }
         .pac-item:hover { background-color: #f8fafc; }
     </style>
 </head>
-<body class="text-slate-800 relative pb-12">
+<body class="text-slate-800 relative pb-12 h-screen flex flex-col overflow-hidden">
 
-    <div class="bg-slate-900 text-white p-4 flex justify-between items-center shadow-md">
+    <div class="bg-slate-900 text-white p-4 flex justify-between items-center shadow-md shrink-0 z-20">
         <div class="flex items-center gap-3">
             <div class="w-2 h-6 bg-[#D4AF37]"></div>
-            <div class="font-semibold tracking-[0.2em] text-sm text-slate-100">MOBILLIO LUXE</div>
+            <div class="font-semibold tracking-[0.2em] text-sm text-slate-100">MOBILLIO LUXE <span class="text-slate-500 font-light text-xs ml-2">BULK EDITION</span></div>
         </div>
         <button onclick="openSettings()" class="text-xs tracking-wider uppercase text-slate-300 hover:text-white transition flex items-center gap-2">
             ⚙️ API Settings
         </button>
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 py-10 relative z-0">
+    <div class="flex-1 flex flex-col lg:flex-row overflow-hidden" id="mainAppContent" style="display: none;">
         
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10" id="mainAppContent" style="display: none;">
-            
-            <div class="lg:col-span-5 space-y-6">
+        <div class="w-full lg:w-[450px] xl:w-[500px] bg-white shadow-xl z-10 overflow-y-auto flex flex-col shrink-0 border-r border-slate-200">
+            <div class="p-6 space-y-6">
                 
-                <div class="mb-4">
-                    <h1 class="text-3xl font-light text-slate-900 tracking-tight mb-1">Bespoke Geotagger</h1>
-                    <p class="text-slate-500 text-sm">Upload architectural photos to generate high-fidelity stamps with satellite maps.</p>
+                <div>
+                    <h1 class="text-2xl font-light text-slate-900 tracking-tight mb-1">Bulk Geotagger</h1>
+                    <p class="text-slate-500 text-xs leading-relaxed">Global settings apply to images missing EXIF data. Images with native GPS will use their own precise coordinates.</p>
                 </div>
 
-                <div id="dropZone" class="drop-zone border border-slate-300 rounded-none p-8 text-center bg-white cursor-pointer shadow-sm hover:shadow-md">
-                    <input type="file" id="imageInput" accept="image/*" class="hidden">
-                    <div class="mx-auto h-10 w-10 text-slate-300 mb-4">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"></path></svg>
+                <div id="dropZone" class="drop-zone border-2 border-dashed border-slate-300 rounded-lg p-6 text-center bg-slate-50 cursor-pointer hover:border-[#D4AF37] transition">
+                    <input type="file" id="imageInput" accept="image/*" multiple class="hidden">
+                    <div class="mx-auto h-8 w-8 text-[#D4AF37] mb-3">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"></path></svg>
                     </div>
-                    <p class="text-sm font-medium text-slate-700 tracking-wide">CLICK OR DRAG PHOTO HERE</p>
+                    <p class="text-xs font-bold text-slate-700 tracking-widest uppercase">Select Multiple Photos</p>
+                    <p class="text-[10px] text-slate-400 mt-1">Or drag and drop a folder</p>
                 </div>
 
-                <div class="bg-white p-6 shadow-sm border border-slate-200 space-y-6 relative">
+                <div class="space-y-5 relative">
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="h-[1px] bg-slate-200 flex-1"></div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Global Location Settings</span>
+                        <div class="h-[1px] bg-slate-200 flex-1"></div>
+                    </div>
+
                     <div id="loadingOverlay" class="absolute inset-0 bg-white/90 backdrop-blur-sm z-10 hidden flex-col items-center justify-center">
-                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#D4AF37]"></div>
-                        <p class="text-xs tracking-widest text-slate-500 mt-4 uppercase">Processing Details...</p>
+                        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-[#D4AF37]"></div>
+                        <p class="text-[10px] tracking-widest text-slate-500 mt-3 uppercase">Locating...</p>
                     </div>
 
-                    <div class="bg-slate-50 p-4 border border-slate-200">
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-2">Smart Location Search</label>
+                    <div>
                         <div class="flex gap-2">
-                            <input type="text" id="smartSearch" placeholder="Type a place to search..." class="w-full border border-slate-300 p-3 text-sm focus:ring-1 focus:ring-[#D4AF37] outline-none transition bg-white">
-                            <button onclick="executeSmartSearch()" class="bg-slate-900 hover:bg-slate-800 text-white px-5 text-sm font-medium transition flex items-center justify-center" title="Click to process pasted Google Maps Links">FIND</button>
+                            <input type="text" id="smartSearch" placeholder="Search place or paste Maps link..." class="w-full border border-slate-300 p-2.5 text-xs focus:ring-1 focus:ring-[#D4AF37] outline-none transition bg-white rounded-sm">
+                            <button onclick="executeSmartSearch()" class="bg-slate-900 hover:bg-slate-800 text-white px-4 text-xs font-medium transition rounded-sm">FIND</button>
                         </div>
-                        <p class="text-[10px] text-slate-400 mt-2">Start typing for suggestions, or paste a Maps URL and click FIND.</p>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div class="col-span-2">
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-1">Project / Area Name</label>
-                            <input type="text" id="locTitle" placeholder="e.g., Olenguruone, Nakuru County" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent" oninput="updateCanvas()">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Project Name</label>
+                            <input type="text" id="locTitle" placeholder="e.g., Mobillio HQ" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent" oninput="renderBatch()">
                         </div>
                         <div class="col-span-2">
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-1">Detailed Address / Plus Code</label>
-                            <input type="text" id="locAddress" placeholder="Auto-fills from search..." class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent" oninput="updateCanvas()">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Detected Address</label>
+                            <input type="text" id="locAddress" placeholder="Auto-fills from search..." class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent" oninput="renderBatch()">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-1">Latitude</label>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Fallback Lat</label>
                             <input type="text" id="lat" class="w-full border-b border-slate-300 p-2 text-sm text-slate-500 bg-transparent outline-none" readonly>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-1">Longitude</label>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Fallback Long</label>
                             <input type="text" id="lng" class="w-full border-b border-slate-300 p-2 text-sm text-slate-500 bg-transparent outline-none" readonly>
                         </div>
                         <div class="col-span-2 flex gap-2 mt-1">
-                            <button onclick="getLocation()" class="flex-1 border border-slate-300 hover:bg-slate-50 text-slate-600 text-[11px] uppercase tracking-wider py-2 transition">📍 Device GPS</button>
-                            <button onclick="openMap()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] uppercase tracking-wider py-2 transition">🗺️ Pick on Map</button>
+                            <button onclick="getLocation()" class="flex-1 border border-slate-300 hover:bg-slate-50 text-slate-600 text-[10px] font-bold uppercase tracking-widest py-2 transition rounded-sm">📍 My GPS</button>
+                            <button onclick="openMap()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 text-[10px] font-bold uppercase tracking-widest py-2 transition rounded-sm">🗺️ Pick Map</button>
                         </div>
                         <div class="col-span-2 mt-2">
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-1">Date & Time</label>
-                            <input type="datetime-local" id="dateTimeInput" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent" oninput="updateCanvas()">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Fallback Timestamp</label>
+                            <input type="datetime-local" id="dateTimeInput" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent" oninput="renderBatch()">
                         </div>
                     </div>
                 </div>
 
-                <button onclick="downloadImage()" class="w-full bg-[#D4AF37] hover:bg-[#c4a030] text-white font-medium tracking-[0.1em] py-4 rounded-sm transition shadow-lg text-sm uppercase">
-                    Export Geotagged Photo
+                <button id="exportBtn" onclick="exportBatchAsZip()" class="w-full bg-[#D4AF37] hover:bg-[#c4a030] text-white font-medium tracking-widest py-4 rounded-sm transition shadow-md text-xs uppercase flex justify-center items-center gap-2 opacity-50 cursor-not-allowed" disabled>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    <span id="exportBtnText">Export Batch as ZIP</span>
                 </button>
             </div>
-
-            <div class="lg:col-span-7 bg-slate-200/40 flex items-center justify-center p-8 border border-slate-200 min-h-[600px] relative">
-                <canvas id="preview-canvas" class="hidden"></canvas>
-                <div id="placeholder-text" class="text-center">
-                    <h3 class="text-xl font-light text-slate-400 tracking-widest uppercase">Awaiting Image</h3>
-                </div>
-            </div>
         </div>
-        
-        <div id="setupState" class="text-center py-20">
-            <div class="max-w-md mx-auto bg-white p-10 shadow-sm border border-slate-200">
-                <h2 class="text-xl font-light text-slate-800 mb-2 tracking-widest uppercase">API Authentication</h2>
-                <p class="text-slate-500 text-sm mb-8 leading-relaxed">Securely enter your Google Maps API key locally to unlock Autocomplete and Satellite Maps.</p>
-                <button onclick="openSettings()" class="w-full bg-slate-900 hover:bg-black text-white text-sm tracking-[0.1em] uppercase py-3 transition">Configure</button>
+
+        <div class="flex-1 bg-slate-200/50 p-6 overflow-y-auto">
+            <div id="placeholder-text" class="h-full flex flex-col items-center justify-center text-slate-400">
+                <svg class="w-16 h-16 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"></path></svg>
+                <h3 class="text-lg font-light tracking-widest uppercase">Grid Preview</h3>
+                <p class="text-xs mt-2">Upload multiple images to see them processed here.</p>
             </div>
+            
+            <div id="previewGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-max hidden">
+                </div>
+        </div>
+    </div>
+    
+    <div id="setupState" class="absolute inset-0 bg-slate-50 z-50 flex items-center justify-center">
+        <div class="max-w-md mx-auto bg-white p-10 shadow-lg border border-slate-200 text-center rounded-lg">
+            <h2 class="text-xl font-light text-slate-800 mb-2 tracking-widest uppercase">API Authentication</h2>
+            <p class="text-slate-500 text-sm mb-8 leading-relaxed">Securely enter your Google Maps API key locally to unlock Bulk Processing and Maps.</p>
+            <button onclick="openSettings()" class="w-full bg-slate-900 hover:bg-black text-white text-sm tracking-[0.1em] uppercase py-3 transition rounded-sm">Configure</button>
         </div>
     </div>
 
     <div id="settingsModal" class="modal fixed inset-0 bg-slate-900/80 z-[60] items-center justify-center p-4 backdrop-blur-md">
-        <div class="bg-white shadow-2xl w-full max-w-md overflow-hidden">
-            <div class="p-6 border-b">
-                <h3 class="font-light tracking-widest text-slate-800 uppercase text-sm">System Configuration</h3>
-            </div>
+        <div class="bg-white shadow-2xl w-full max-w-md overflow-hidden rounded-lg">
+            <div class="p-6 border-b"><h3 class="font-light tracking-widest text-slate-800 uppercase text-sm">System Configuration</h3></div>
             <div class="p-8">
                 <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-2">Google Maps API Key</label>
                 <input type="password" id="apiKeyInput" placeholder="AIzaSy..." class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition">
@@ -147,7 +147,7 @@
     </div>
 
     <div id="mapModal" class="modal fixed inset-0 bg-slate-900/80 z-50 items-center justify-center p-4 backdrop-blur-md">
-        <div class="bg-white shadow-2xl w-full max-w-4xl overflow-hidden">
+        <div class="bg-white shadow-2xl w-full max-w-4xl overflow-hidden rounded-lg">
             <div class="p-5 border-b flex justify-between items-center">
                 <h3 class="font-light tracking-widest text-slate-800 uppercase text-sm">Location Pinpoint</h3>
                 <button onclick="closeMap()" class="text-slate-400 hover:text-slate-900 text-2xl leading-none">×</button>
@@ -161,6 +161,10 @@
     </div>
 
     <script>
+        // --- STATE MANAGEMENT FOR BULK BATCH ---
+        let batchData = []; // Array to hold { file, originalImg, exifData, finalDataURL }
+        let staticMapCache = {}; // Cache to avoid duplicate API calls for same coordinates
+
         // --- API & INITIALIZATION LOGIC ---
         let geocoder, map, marker, autocomplete;
         let tempLatLng = null;
@@ -169,10 +173,10 @@
             const savedKey = localStorage.getItem('gmaps_api_key');
             if (savedKey) {
                 document.getElementById('setupState').style.display = 'none';
-                document.getElementById('mainAppContent').style.display = 'grid';
+                document.getElementById('mainAppContent').style.display = 'flex';
                 loadGoogleMapsScript(savedKey);
             } else {
-                document.getElementById('setupState').style.display = 'block';
+                document.getElementById('setupState').style.display = 'flex';
                 document.getElementById('mainAppContent').style.display = 'none';
             }
         }
@@ -188,7 +192,6 @@
             if (!document.getElementById('gmaps-script')) {
                 const script = document.createElement('script');
                 script.id = 'gmaps-script';
-                // Added &libraries=places to enable Autocomplete suggestions
                 script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initMap`;
                 script.async = true; script.defer = true;
                 document.head.appendChild(script);
@@ -199,7 +202,6 @@
             geocoder = new google.maps.Geocoder();
             const defaultLoc = { lat: -1.2921, lng: 36.8219 };
             
-            // Initialize the modal Map
             map = new google.maps.Map(document.getElementById("googleMap"), {
                 zoom: 12, center: defaultLoc, mapTypeId: 'hybrid', disableDefaultUI: true, zoomControl: true
             });
@@ -207,24 +209,22 @@
             map.addListener("click", (e) => marker.setPosition(e.latLng));
             marker.addListener("position_changed", () => { tempLatLng = { lat: marker.getPosition().lat(), lng: marker.getPosition().lng() }; });
 
-            // Initialize Google Places Autocomplete on the Smart Search input
             const searchInput = document.getElementById('smartSearch');
             autocomplete = new google.maps.places.Autocomplete(searchInput);
             autocomplete.addListener('place_changed', () => {
                 const place = autocomplete.getPlace();
-                if (!place.geometry || !place.geometry.location) return; // User hit enter without selecting
+                if (!place.geometry || !place.geometry.location) return; 
                 
                 const loc = place.geometry.location;
                 document.getElementById('lat').value = loc.lat().toFixed(6);
                 document.getElementById('lng').value = loc.lng().toFixed(6);
                 document.getElementById('locAddress').value = place.formatted_address;
                 
-                // Extract City/Locality for the title
                 let projName = place.address_components?.find(c => c.types.includes('locality'))?.long_name || place.name || "";
                 if(projName) document.getElementById('locTitle').value = `${projName}`;
                 
                 if(map) { map.setCenter(loc); marker.setPosition(loc); }
-                updateCanvas();
+                renderBatch(); // Re-render the entire batch with new global fallback
             });
         }
 
@@ -234,6 +234,8 @@
         function formatFullDate(dateStr) {
             if(!dateStr) return "Invalid Date";
             const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return "Invalid Date";
+            
             const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
             const dayName = days[d.getDay()];
             const dd = String(d.getDate()).padStart(2, '0');
@@ -254,7 +256,6 @@
             return `${dayName}, ${dd}/${mm}/${yyyy} ${strTime} GMT ${offsetSign}${offsetHours}:${offsetMins}`;
         }
 
-        // Handles manually clicking FIND (mostly for pasted URLs)
         function executeSmartSearch() {
             if(!geocoder) return alert("Google Maps API loading...");
             const query = document.getElementById('smartSearch').value.trim();
@@ -267,17 +268,14 @@
             const match = query.match(coordRegex);
 
             if (match) {
-                // Success: Extracted coordinates from a long map URL
                 const lat = parseFloat(match[1]).toFixed(6); const lng = parseFloat(match[2]).toFixed(6);
                 document.getElementById('lat').value = lat; document.getElementById('lng').value = lng;
                 fetchAddressFromCoords(lat, lng);
             } else if (query.startsWith('http://') || query.startsWith('https://')) {
-                // Warning for short URLs
                 document.getElementById('loadingOverlay').classList.add('hidden');
                 document.getElementById('loadingOverlay').classList.remove('flex');
                 alert("It looks like you pasted a shortened link.\n\nPlease OPEN the link in your browser first to let the map load, then copy the FULL, long URL from the address bar (containing an '@' symbol) and paste it here.");
             } else {
-                // Fallback: If they typed text and hit FIND without clicking a dropdown suggestion
                 geocoder.geocode({ address: query }, (results, status) => {
                     if (status === "OK" && results[0]) {
                         const loc = results[0].geometry.location;
@@ -288,25 +286,21 @@
                         if(projName) document.getElementById('locTitle').value = `${projName}`;
                         
                         if(map) { map.setCenter(loc); marker.setPosition(loc); }
-                        updateCanvas();
-                    } else { alert("Could not find location. Try selecting a suggestion from the dropdown."); }
+                        renderBatch();
+                    } else { alert("Could not find location."); }
                     document.getElementById('loadingOverlay').classList.add('hidden');
                     document.getElementById('loadingOverlay').classList.remove('flex');
                 });
             }
         }
 
-        // --- CORE APP LOGIC ---
+        // --- BULK FILE HANDLING ---
         const imageInput = document.getElementById('imageInput');
         const dropZone = document.getElementById('dropZone');
-        const canvas = document.getElementById('preview-canvas');
-        const ctx = canvas.getContext('2d');
-        const dateTimeInput = document.getElementById('dateTimeInput');
-        let uploadedImage = null;
 
         function setDefaultTime() {
             const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-            dateTimeInput.value = now.toISOString().slice(0, 16);
+            document.getElementById('dateTimeInput').value = now.toISOString().slice(0, 16);
         }
         setDefaultTime();
 
@@ -321,7 +315,7 @@
                 if (status === "OK" && results[0]) {
                     document.getElementById('locAddress').value = results[0].formatted_address;
                 }
-                updateCanvas();
+                renderBatch(); // Update the whole batch
             });
         }
 
@@ -330,9 +324,11 @@
         dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
         dropZone.addEventListener('drop', (e) => {
             e.preventDefault(); dropZone.classList.remove('dragover');
-            if(e.dataTransfer.files.length) processFile(e.dataTransfer.files[0]);
+            if(e.dataTransfer.files.length) processMultipleFiles(e.dataTransfer.files);
         });
-        imageInput.addEventListener('change', (e) => { if(e.target.files.length) processFile(e.target.files[0]); });
+        imageInput.addEventListener('change', (e) => { 
+            if(e.target.files.length) processMultipleFiles(e.target.files); 
+        });
 
         function convertDMSToDD(degrees, minutes, seconds, direction) {
             let dd = degrees + (minutes / 60) + (seconds / 3600);
@@ -340,38 +336,57 @@
             return dd;
         }
 
-        function processFile(file) {
-            EXIF.getData(file, function() {
-                const latDMS = EXIF.getTag(this, "GPSLatitude"); const latRef = EXIF.getTag(this, "GPSLatitudeRef");
-                const lngDMS = EXIF.getTag(this, "GPSLongitude"); const lngRef = EXIF.getTag(this, "GPSLongitudeRef");
-                const dateTimeOriginal = EXIF.getTag(this, "DateTimeOriginal");
+        // Read all dropped files into the queue
+        function processMultipleFiles(files) {
+            document.getElementById('placeholder-text').classList.add('hidden');
+            document.getElementById('previewGrid').classList.remove('hidden');
+            
+            // Enable export button
+            const btn = document.getElementById('exportBtn');
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            
+            // Convert FileList to Array and process
+            Array.from(files).forEach((file, index) => {
+                // Read EXIF Data for EACH file
+                EXIF.getData(file, function() {
+                    let fileExif = { lat: null, lng: null, date: null };
+                    
+                    const latDMS = EXIF.getTag(this, "GPSLatitude"); const latRef = EXIF.getTag(this, "GPSLatitudeRef");
+                    const lngDMS = EXIF.getTag(this, "GPSLongitude"); const lngRef = EXIF.getTag(this, "GPSLongitudeRef");
+                    const dateTimeOriginal = EXIF.getTag(this, "DateTimeOriginal");
 
-                let foundCoords = false;
-                if (latDMS && lngDMS) {
-                    const lat = convertDMSToDD(latDMS[0], latDMS[1], latDMS[2], latRef).toFixed(6);
-                    const lng = convertDMSToDD(lngDMS[0], lngDMS[1], lngDMS[2], lngRef).toFixed(6);
-                    document.getElementById('lat').value = lat; document.getElementById('lng').value = lng;
-                    foundCoords = true; fetchAddressFromCoords(lat, lng);
-                }
-
-                if (dateTimeOriginal) {
-                    const parts = dateTimeOriginal.split(' ');
-                    const dateParts = parts[0].replace(/:/g, '-');
-                    const timeParts = parts[1].slice(0, 5); 
-                    dateTimeInput.value = `${dateParts}T${timeParts}`;
-                }
-
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    uploadedImage = new Image();
-                    uploadedImage.onload = function() {
-                        canvas.classList.remove('hidden');
-                        document.getElementById('placeholder-text').classList.add('hidden');
-                        if(!foundCoords) updateCanvas();
+                    if (latDMS && lngDMS) {
+                        fileExif.lat = convertDMSToDD(latDMS[0], latDMS[1], latDMS[2], latRef).toFixed(6);
+                        fileExif.lng = convertDMSToDD(lngDMS[0], lngDMS[1], lngDMS[2], lngRef).toFixed(6);
                     }
-                    uploadedImage.src = event.target.result;
-                }
-                reader.readAsDataURL(file);
+                    if (dateTimeOriginal) {
+                        const parts = dateTimeOriginal.split(' ');
+                        const dateParts = parts[0].replace(/:/g, '-');
+                        const timeParts = parts[1].slice(0, 5); 
+                        fileExif.date = `${dateParts}T${timeParts}`;
+                    }
+
+                    // Load Image object
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const img = new Image();
+                        img.onload = function() {
+                            // Add to our global batch array
+                            batchData.push({
+                                id: Date.now() + index, // unique ID
+                                originalName: file.name,
+                                originalImg: img,
+                                exif: fileExif,
+                                finalDataURL: null // Will be generated by renderBatch
+                            });
+                            // Trigger re-render of the grid
+                            renderBatch();
+                        }
+                        img.src = event.target.result;
+                    }
+                    reader.readAsDataURL(file);
+                });
             });
         }
 
@@ -406,7 +421,27 @@
             closeMap();
         }
 
-        // --- PERFECT SQUARE MAP & GLASSMORPHISM RENDERING ---
+        // --- BATCH RENDERING ENGINE ---
+        
+        // Cache helper for Static Maps
+        function getStaticMap(lat, lng, apiKey) {
+            return new Promise((resolve) => {
+                if(!lat || !lng || lat==="N/A" || !apiKey) return resolve(null);
+                
+                const cacheKey = `${lat}_${lng}`;
+                if(staticMapCache[cacheKey]) return resolve(staticMapCache[cacheKey]);
+
+                const mapImg = new Image();
+                mapImg.crossOrigin = "Anonymous"; 
+                mapImg.onload = function() { 
+                    staticMapCache[cacheKey] = mapImg; // Save to cache
+                    resolve(mapImg); 
+                };
+                mapImg.onerror = function() { resolve(null); }; 
+                mapImg.src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=16&size=400x400&maptype=satellite&markers=color:red%7C${lat},${lng}&key=${apiKey}`;
+            });
+        }
+
         function drawRoundedRect(ctx, x, y, width, height, radius) {
             ctx.beginPath(); ctx.moveTo(x + radius, y); ctx.lineTo(x + width - radius, y);
             ctx.quadraticCurveTo(x + width, y, x + width, y + radius); ctx.lineTo(x + width, y + height - radius);
@@ -415,126 +450,151 @@
             ctx.quadraticCurveTo(x, y, x + radius, y); ctx.closePath();
         }
 
-        function updateCanvas() {
-            if (!uploadedImage) return;
-            const lat = document.getElementById('lat').value;
-            const lng = document.getElementById('lng').value;
+        // Loops through all uploaded images and draws them
+        async function renderBatch() {
+            const grid = document.getElementById('previewGrid');
+            grid.innerHTML = ''; // Clear grid
+
             const apiKey = localStorage.getItem('gmaps_api_key');
+            
+            // Global Fallbacks
+            const gTitle = document.getElementById('locTitle').value || "LOCATION REPORT";
+            const gAddress = document.getElementById('locAddress').value || "Address Unavailable";
+            const gLat = document.getElementById('lat').value;
+            const gLng = document.getElementById('lng').value;
+            const gDate = document.getElementById('dateTimeInput').value;
 
-            if (lat && lng && lat !== "N/A" && apiKey) {
-                const mapImg = new Image();
-                mapImg.crossOrigin = "Anonymous"; // Allows canvas to draw the static map
-                const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=16&size=400x400&maptype=satellite&markers=color:red%7C${lat},${lng}&key=${apiKey}`;
+            for (let i = 0; i < batchData.length; i++) {
+                const item = batchData[i];
                 
-                mapImg.onload = function() { drawFinalCanvas(mapImg); };
-                mapImg.onerror = function() { drawFinalCanvas(null); }; 
-                mapImg.src = mapUrl;
-            } else {
-                drawFinalCanvas(null);
-            }
-        }
+                // 1. Determine Data (EXIF vs Global Fallback)
+                const useLat = item.exif.lat || gLat || "N/A";
+                const useLng = item.exif.lng || gLng || "N/A";
+                const useDate = item.exif.date || gDate;
+                
+                // Note: If an image has its own EXIF GPS, we realistically need a Reverse Geocode for its specific address. 
+                // To prevent hitting the Google API limit 50 times in 1 second, we will use the Global Address as the fallback for all,
+                // but display the precise EXIF coordinates on the image itself.
+                
+                // 2. Fetch/Retrieve cached Map
+                const satelliteImg = await getStaticMap(useLat, useLng, apiKey);
 
-        function drawFinalCanvas(satelliteImg) {
-            canvas.width = uploadedImage.width; canvas.height = uploadedImage.height;
-            ctx.drawImage(uploadedImage, 0, 0);
+                // 3. Create off-screen canvas to draw
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = item.originalImg.width; 
+                canvas.height = item.originalImg.height;
+                
+                // Draw Base Image
+                ctx.drawImage(item.originalImg, 0, 0);
 
-            const title = document.getElementById('locTitle').value || "LOCATION REPORT";
-            const address = document.getElementById('locAddress').value || "Pending Address";
-            const lat = document.getElementById('lat').value || "N/A";
-            const lng = document.getElementById('lng').value || "N/A";
-            const formattedDate = formatFullDate(dateTimeInput.value);
+                const formattedDate = formatFullDate(useDate);
 
-            // Precision Layout Math
-            const margin = canvas.width * 0.03; 
-            const cardWidth = canvas.width - (margin * 2);
-            const padding = canvas.width * 0.02;
-            const radius = canvas.width * 0.01; 
-            
-            // Text sizing proportional to image
-            const titleSize = Math.floor(canvas.width * 0.030); 
-            const dataSize = Math.floor(canvas.width * 0.018);   
-            const lineGap = canvas.width * 0.01;
+                // Math Layout
+                const margin = canvas.width * 0.03; 
+                const cardWidth = canvas.width - (margin * 2);
+                const padding = canvas.width * 0.02;
+                const radius = canvas.width * 0.01; 
+                const titleSize = Math.floor(canvas.width * 0.030); 
+                const dataSize = Math.floor(canvas.width * 0.018);   
+                const lineGap = canvas.width * 0.01;
+                const textBlockHeight = titleSize + (dataSize * 3) + (lineGap * 3);
+                const cardHeight = textBlockHeight + (padding * 2);
+                const startY = canvas.height - cardHeight - margin;
+                const mapSize = textBlockHeight;
 
-            // Calculate the exact height of the text block (4 lines of text)
-            const textBlockHeight = titleSize + (dataSize * 3) + (lineGap * 3);
-            
-            // Card height is text block + top/bottom padding
-            const cardHeight = textBlockHeight + (padding * 2);
-            const startY = canvas.height - cardHeight - margin;
-            
-            // Map Size is strictly forced to match the textBlockHeight = PERFECT SQUARE
-            const mapSize = textBlockHeight;
-
-            // 1. Draw Glassmorphism Base
-            ctx.save();
-            drawRoundedRect(ctx, margin, startY, cardWidth, cardHeight, radius);
-            ctx.clip();
-            ctx.filter = 'blur(20px) brightness(60%)'; 
-            ctx.drawImage(uploadedImage, 0, 0, canvas.width, canvas.height);
-            ctx.filter = 'none';
-            ctx.fillStyle = 'rgba(15, 23, 42, 0.65)'; 
-            ctx.fillRect(margin, startY, cardWidth, cardHeight);
-            ctx.restore(); 
-
-            // White border around entire card
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-            ctx.lineWidth = Math.max(1, canvas.width * 0.002);
-            drawRoundedRect(ctx, margin, startY, cardWidth, cardHeight, radius);
-            ctx.stroke();
-
-            // 2. Draw Perfect Square Map Thumbnail
-            let textStartX = margin + padding;
-            if (satelliteImg) {
+                // Glassmorphism
                 ctx.save();
-                drawRoundedRect(ctx, textStartX, startY + padding, mapSize, mapSize, radius);
+                drawRoundedRect(ctx, margin, startY, cardWidth, cardHeight, radius);
                 ctx.clip();
-                ctx.drawImage(satelliteImg, textStartX, startY + padding, mapSize, mapSize);
-                ctx.restore();
-                
-                // Map border
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-                drawRoundedRect(ctx, textStartX, startY + padding, mapSize, mapSize, radius);
+                ctx.filter = 'blur(20px) brightness(60%)'; 
+                ctx.drawImage(item.originalImg, 0, 0, canvas.width, canvas.height);
+                ctx.filter = 'none';
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.65)'; 
+                ctx.fillRect(margin, startY, cardWidth, cardHeight);
+                ctx.restore(); 
+
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+                ctx.lineWidth = Math.max(1, canvas.width * 0.002);
+                drawRoundedRect(ctx, margin, startY, cardWidth, cardHeight, radius);
                 ctx.stroke();
 
-                textStartX += mapSize + (padding * 1.5); // Push text to the right of the map
-            } else {
-                ctx.fillStyle = '#D4AF37'; 
-                ctx.fillRect(textStartX, startY + padding, canvas.width * 0.004, mapSize);
-                textStartX += (canvas.width * 0.015);
+                let textStartX = margin + padding;
+                if (satelliteImg) {
+                    ctx.save();
+                    drawRoundedRect(ctx, textStartX, startY + padding, mapSize, mapSize, radius);
+                    ctx.clip();
+                    ctx.drawImage(satelliteImg, textStartX, startY + padding, mapSize, mapSize);
+                    ctx.restore();
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                    drawRoundedRect(ctx, textStartX, startY + padding, mapSize, mapSize, radius);
+                    ctx.stroke();
+                    textStartX += mapSize + (padding * 1.5); 
+                } else {
+                    ctx.fillStyle = '#D4AF37'; 
+                    ctx.fillRect(textStartX, startY + padding, canvas.width * 0.004, mapSize);
+                    textStartX += (canvas.width * 0.015);
+                }
+
+                let currentY = startY + padding;
+                ctx.textBaseline = 'top'; ctx.textAlign = 'left'; 
+                
+                ctx.fillStyle = '#FFFFFF'; 
+                ctx.font = `600 ${titleSize}px 'Montserrat', sans-serif`;
+                ctx.fillText(gTitle, textStartX, currentY);
+
+                currentY += titleSize + lineGap;
+                ctx.font = `400 ${dataSize}px 'Montserrat', sans-serif`; 
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillText(gAddress, textStartX, currentY);
+
+                currentY += dataSize + lineGap;
+                ctx.fillStyle = '#cbd5e1'; 
+                ctx.fillText(`Lat ${useLat}° Long ${useLng}°`, textStartX, currentY);
+
+                currentY += dataSize + lineGap;
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillText(formattedDate, textStartX, currentY);
+
+                // Save Final Data URL to batch array
+                item.finalDataURL = canvas.toDataURL('image/jpeg', 0.90);
+
+                // Append visual preview to grid using an <img> tag for performance
+                const imgElem = document.createElement('img');
+                imgElem.src = item.finalDataURL;
+                imgElem.className = 'preview-card';
+                grid.appendChild(imgElem);
             }
-
-            // 3. Draw Text Block (Aligned precisely with map height)
-            let currentY = startY + padding;
-
-            ctx.textBaseline = 'top'; ctx.textAlign = 'left'; 
-            
-            // Line 1: Title
-            ctx.fillStyle = '#FFFFFF'; 
-            ctx.font = `600 ${titleSize}px 'Montserrat', sans-serif`;
-            ctx.fillText(title, textStartX, currentY);
-
-            // Line 2: Address
-            currentY += titleSize + lineGap;
-            ctx.font = `400 ${dataSize}px 'Montserrat', sans-serif`; 
-            ctx.fillStyle = '#f8fafc';
-            ctx.fillText(address, textStartX, currentY);
-
-            // Line 3: Coordinates
-            currentY += dataSize + lineGap;
-            ctx.fillStyle = '#cbd5e1'; 
-            ctx.fillText(`Lat ${lat}° Long ${lng}°`, textStartX, currentY);
-
-            // Line 4: Timestamp
-            currentY += dataSize + lineGap;
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillText(formattedDate, textStartX, currentY);
         }
 
-        function downloadImage() {
-            if (!uploadedImage) return alert("Please upload an image first.");
-            const dataURL = canvas.toDataURL('image/jpeg', 0.95); const link = document.createElement('a');
-            link.download = `MobillioLuxe_Geotag_${Date.now()}.jpg`; link.href = dataURL;
-            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        // --- BULK EXPORT VIA JSZIP ---
+        async function exportBatchAsZip() {
+            if (batchData.length === 0) return alert("Please upload images first.");
+            
+            const btn = document.getElementById('exportBtn');
+            const btnText = document.getElementById('exportBtnText');
+            btn.disabled = true;
+            btnText.innerText = "ZIPPING FILES...";
+
+            const zip = new JSZip();
+            const folder = zip.folder("MobillioLuxe_Batch_Geotags");
+
+            batchData.forEach((item, index) => {
+                // Remove the 'data:image/jpeg;base64,' part
+                const base64Data = item.finalDataURL.split(',')[1];
+                // Name file elegantly
+                folder.file(`Geotag_${index + 1}_${item.originalName}`, base64Data, {base64: true});
+            });
+
+            zip.generateAsync({type:"blob"}).then(function(content) {
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = `MobillioLuxe_Geotags_${Date.now()}.zip`;
+                link.click();
+                
+                btnText.innerText = "Export Batch as ZIP";
+                btn.disabled = false;
+            });
         }
     </script>
 </body>
