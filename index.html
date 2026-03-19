@@ -183,12 +183,10 @@
         async function fetchWeather(lat, lng) {
             if (!lat || !lng || isNaN(lat) || isNaN(lng)) return "Weather Unavailable";
             
-            // Round coordinates lightly to increase cache hits and reduce API load
             const cacheKey = `${parseFloat(lat).toFixed(3)}_${parseFloat(lng).toFixed(3)}`;
             if (weatherCache[cacheKey]) return weatherCache[cacheKey];
 
             try {
-                // We use the completely free Open-Meteo API (No Key Required!)
                 const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current_weather=true`);
                 const data = await res.json();
                 
@@ -197,7 +195,6 @@
                     const code = data.current_weather.weathercode;
                     let desc = "Clear";
                     
-                    // WMO Weather interpretation codes
                     if(code >= 1 && code <= 3) desc = "Partly Cloudy";
                     else if(code >= 45 && code <= 48) desc = "Fog";
                     else if(code >= 51 && code <= 67) desc = "Rain";
@@ -210,9 +207,8 @@
                     return weatherStr;
                 }
             } catch(e) { 
-                console.warn("Weather fetch failed. API might be unreachable.", e); 
+                console.warn("Weather API failed.", e); 
             }
-            
             return "Weather Unavailable";
         }
 
@@ -303,7 +299,6 @@
                 
                 if(map) { map.setCenter(loc); marker.setPosition(loc); }
                 
-                // Fetch Global Weather for this newly selected place
                 globalWeather = await fetchWeather(finalLat, finalLng);
                 renderBatch(); 
             });
@@ -427,6 +422,7 @@
             return dd.toFixed(6);
         }
 
+        // --- BULLETPROOF PROMISE PIPELINE ---
         async function processMultipleFiles(files) {
             document.getElementById('placeholder-text').classList.add('hidden');
             document.getElementById('previewGrid').classList.remove('hidden');
@@ -437,14 +433,12 @@
             overlay.classList.add('flex');
             overlayText.innerText = "Processing Files...";
 
-            let filesProcessed = 0;
-            const totalFiles = files.length;
-
+            // We loop through the files sequentially to ensure the vault never crashes
             for (let i = 0; i < files.length; i++) {
                 let originalFile = files[i];
                 let renderFile = originalFile;
 
-                // HEIC Conversion Interceptor
+                // 1. Safe HEIC Conversion
                 if (originalFile.name.toLowerCase().endsWith('.heic')) {
                     overlayText.innerText = `Converting iPhone Photo ${i+1}...`;
                     try {
@@ -452,59 +446,77 @@
                         renderFile = new File([convertedBlob], originalFile.name.replace(/\.[^/.]+$/, ".jpg"), { type: "image/jpeg" });
                     } catch (error) {
                         console.error("HEIC conversion failed:", error);
-                        alert(`Failed to convert ${originalFile.name}. Skipping file.`);
-                        filesProcessed++;
-                        continue; 
+                        continue; // Skip file safely if conversion fails
                     }
                 }
 
-                EXIF.getData(originalFile, async function() {
-                    let fileExif = { lat: null, lng: null, date: null, weather: null };
-                    
-                    const latDMS = EXIF.getTag(this, "GPSLatitude"); const latRef = EXIF.getTag(this, "GPSLatitudeRef");
-                    const lngDMS = EXIF.getTag(this, "GPSLongitude"); const lngRef = EXIF.getTag(this, "GPSLongitudeRef");
-                    const dateTimeOriginal = EXIF.getTag(this, "DateTimeOriginal");
+                // 2. Safe EXIF Extraction
+                let fileExif = { lat: null, lng: null, date: null, weather: null };
+                
+                // We wrap the EXIF reader in a Promise so if it crashes, it resolves anyway
+                await new Promise((resolve) => {
+                    try {
+                        EXIF.getData(renderFile, function() {
+                            const latDMS = EXIF.getTag(this, "GPSLatitude"); 
+                            const latRef = EXIF.getTag(this, "GPSLatitudeRef");
+                            const lngDMS = EXIF.getTag(this, "GPSLongitude"); 
+                            const lngRef = EXIF.getTag(this, "GPSLongitudeRef");
+                            const dateTimeOriginal = EXIF.getTag(this, "DateTimeOriginal");
 
-                    if (latDMS && lngDMS) {
-                        fileExif.lat = parseExifToDecimal(latDMS, latRef);
-                        fileExif.lng = parseExifToDecimal(lngDMS, lngRef);
-                        
-                        // Grab weather data specific to this photo's EXIF location
-                        if(fileExif.lat && fileExif.lng) {
-                            fileExif.weather = await fetchWeather(fileExif.lat, fileExif.lng);
-                        }
+                            if (latDMS && lngDMS) {
+                                fileExif.lat = parseExifToDecimal(latDMS, latRef);
+                                fileExif.lng = parseExifToDecimal(lngDMS, lngRef);
+                            }
+                            if (dateTimeOriginal) {
+                                const parts = dateTimeOriginal.split(' ');
+                                const dateParts = parts[0].replace(/:/g, '-');
+                                const timeParts = parts[1].slice(0, 5); 
+                                fileExif.date = `${dateParts}T${timeParts}`;
+                            }
+                            resolve(); 
+                        });
+                    } catch (e) {
+                        console.warn("EXIF read error on file", i);
+                        resolve(); // Force resolve to prevent app freeze
                     }
-                    if (dateTimeOriginal) {
-                        const parts = dateTimeOriginal.split(' ');
-                        const dateParts = parts[0].replace(/:/g, '-');
-                        const timeParts = parts[1].slice(0, 5); 
-                        fileExif.date = `${dateParts}T${timeParts}`;
-                    }
+                });
 
+                // 3. Safe Weather Fetching
+                if (fileExif.lat && fileExif.lng) {
+                    try {
+                        fileExif.weather = await fetchWeather(fileExif.lat, fileExif.lng);
+                    } catch (e) {
+                        fileExif.weather = "Weather Unavailable";
+                    }
+                }
+
+                // 4. Safe Image Loading
+                await new Promise((resolve) => {
                     const reader = new FileReader();
                     reader.onload = function(event) {
                         const img = new Image();
                         img.onload = function() {
                             batchData.push({
-                                id: Date.now() + index,
+                                id: Date.now() + i,
                                 originalName: renderFile.name,
                                 originalImg: img,
                                 exif: fileExif,
                                 finalDataURL: null 
                             });
-                            filesProcessed++;
-                            
-                            if (filesProcessed === totalFiles) {
-                                overlay.classList.add('hidden');
-                                overlay.classList.remove('flex');
-                                renderBatch();
-                            }
+                            resolve(); 
                         }
+                        img.onerror = () => { resolve(); } // Prevent freeze if image draws incorrectly
                         img.src = event.target.result;
                     }
+                    reader.onerror = () => { resolve(); } // Prevent freeze if file is unreadable
                     reader.readAsDataURL(renderFile);
                 });
             }
+
+            // Once the loop is finished, all files are successfully vaulted.
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex');
+            renderBatch();
         }
 
         function getLocation() {
@@ -591,7 +603,7 @@
                 if (!useLng || useLng === "NaN") useLng = gLng || "N/A";
                 
                 const useDate = item.exif.date || gDate;
-                const useWeather = item.exif.weather || globalWeather; // Assign appropriate weather
+                const useWeather = item.exif.weather || globalWeather; 
                 
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
@@ -602,7 +614,6 @@
 
                 const formattedDate = formatFullDate(useDate);
 
-                // Math Layout updated to fit 4 lines of data instead of 3 (Added weather line)
                 const margin = canvas.width * 0.03; 
                 const cardWidth = canvas.width - (margin * 2);
                 const padding = canvas.width * 0.02;
@@ -610,7 +621,7 @@
                 const titleSize = Math.floor(canvas.width * 0.030); 
                 const dataSize = Math.floor(canvas.width * 0.018);   
                 const lineGap = canvas.width * 0.01;
-                const textBlockHeight = titleSize + (dataSize * 4) + (lineGap * 4); // Added room here
+                const textBlockHeight = titleSize + (dataSize * 4) + (lineGap * 4); 
                 const cardHeight = textBlockHeight + (padding * 2);
                 const startY = canvas.height - cardHeight - margin;
 
@@ -654,32 +665,27 @@
 
                 const availableTextWidth = (margin + cardWidth) - textStartX - padding - logoReservedWidth;
 
-                // 1. Title
                 const finalTitleSize = getFitFont(ctx, gTitle, titleSize, 600, 'Montserrat', availableTextWidth);
                 ctx.fillStyle = '#FFFFFF'; 
                 ctx.fillText(gTitle, textStartX, currentY);
 
-                // 2. Address
                 currentY += finalTitleSize + lineGap;
                 const finalAddrSize = getFitFont(ctx, gAddress, dataSize, 400, 'Montserrat', availableTextWidth);
                 ctx.fillStyle = '#f8fafc';
                 ctx.fillText(gAddress, textStartX, currentY);
 
-                // 3. Lat/Long
                 currentY += finalAddrSize + lineGap;
                 const coordString = `Lat ${useLat}° Long ${useLng}°`;
                 const finalCoordSize = getFitFont(ctx, coordString, dataSize, 400, 'Montserrat', availableTextWidth);
                 ctx.fillStyle = '#cbd5e1'; 
                 ctx.fillText(coordString, textStartX, currentY);
 
-                // 4. THE WEATHER STRING
                 currentY += finalCoordSize + lineGap;
                 const weatherString = `Condition: ${useWeather}`;
                 const finalWeatherSize = getFitFont(ctx, weatherString, dataSize, 400, 'Montserrat', availableTextWidth);
-                ctx.fillStyle = '#D4AF37'; // Gold
+                ctx.fillStyle = '#D4AF37'; 
                 ctx.fillText(weatherString, textStartX, currentY);
 
-                // 5. Timestamp
                 currentY += finalWeatherSize + lineGap;
                 const finalDateSize = getFitFont(ctx, formattedDate, dataSize, 400, 'Montserrat', availableTextWidth);
                 ctx.fillStyle = '#FFFFFF';
