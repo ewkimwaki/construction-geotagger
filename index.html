@@ -16,6 +16,16 @@
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Montserrat', sans-serif; }
         
+        /* Removes browser spin buttons from number inputs for a cleaner UI */
+        input[type="number"]::-webkit-inner-spin-button, 
+        input[type="number"]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type="number"] { 
+            -moz-appearance: textfield; 
+        }
+        
         .preview-card { border-radius: 0.5rem; box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1); width: 100%; height: auto; }
         .drop-zone { transition: all 0.3s ease; }
         .drop-zone.dragover { background-color: #f1f5f9; border-color: #D4AF37; }
@@ -465,10 +475,12 @@
                     tasksHtml += `
                     <div class="flex items-center gap-2 mt-2 ml-4 border-l-2 border-blue-200 pl-3">
                         <input type="text" value="${task.name}" oninput="progressBlocks[${bIndex}].tasks[${tIndex}].name = this.value" placeholder="Task Name (e.g. Roof Casting)" class="flex-1 border border-slate-300 p-1.5 text-xs outline-none focus:border-blue-400 rounded-sm bg-white">
-                        <div class="relative w-28">
-                            <input type="number" value="${task.progress}" oninput="progressBlocks[${bIndex}].tasks[${tIndex}].progress = this.value" placeholder="0" class="w-full border border-slate-300 p-1.5 pr-6 text-xs outline-none focus:border-blue-400 rounded-sm bg-white text-center">
-                            <span class="absolute right-2 top-1.5 text-xs text-slate-400 font-bold">%</span>
+                        
+                        <div class="relative w-32">
+                            <input type="number" value="${task.progress}" oninput="progressBlocks[${bIndex}].tasks[${tIndex}].progress = this.value" placeholder="0" class="w-full border border-slate-300 p-1.5 pl-3 pr-8 text-xs outline-none focus:border-blue-400 rounded-sm bg-white text-left">
+                            <span class="absolute right-3 top-1.5 text-xs text-slate-400 font-bold">%</span>
                         </div>
+                        
                         <input type="text" value="${task.status}" oninput="progressBlocks[${bIndex}].tasks[${tIndex}].status = this.value" placeholder="Status Remarks" class="w-32 border border-slate-300 p-1.5 text-xs outline-none focus:border-blue-400 rounded-sm bg-white">
                         <button type="button" onclick="removeProgressTask(${bIndex}, ${tIndex})" class="text-slate-400 hover:text-red-500 transition text-xs font-bold">✕</button>
                     </div>`;
