@@ -473,22 +473,24 @@ function renderProgressBlocks() {
                 let tasksHtml = '';
                 block.tasks.forEach((task, tIndex) => {
                     tasksHtml += `
-                    <div class="flex items-center gap-2 mt-2 ml-4 border-l-2 border-blue-200 pl-3">
-                        <input type="text" value="${task.name}" oninput="progressBlocks[${bIndex}].tasks[${tIndex}].name = this.value" placeholder="Task Name (e.g. Roof Casting)" class="flex-1 border border-slate-300 p-1.5 text-xs outline-none focus:border-blue-400 rounded-sm bg-white">
+                    <div class="flex flex-wrap sm:flex-nowrap items-center gap-1.5 mt-2 ml-2 sm:ml-4 border-l-2 border-blue-200 pl-2 sm:pl-3">
                         
-                        <div class="flex items-center border border-slate-300 rounded-sm bg-white focus-within:border-blue-400 transition w-24 overflow-hidden shrink-0">
+                        <input type="text" value="${task.name}" oninput="progressBlocks[${bIndex}].tasks[${tIndex}].name = this.value" placeholder="Task Name (e.g. Roof Casting)" class="flex-[2] min-w-[100px] border border-slate-300 p-1.5 text-xs outline-none focus:border-blue-400 rounded-sm bg-white">
+                        
+                        <div class="flex items-center border border-slate-300 rounded-sm bg-white focus-within:border-blue-400 transition w-20 shrink-0 overflow-hidden">
                             <input type="number" value="${task.progress}" oninput="progressBlocks[${bIndex}].tasks[${tIndex}].progress = this.value" placeholder="0" class="w-full p-1.5 text-xs outline-none bg-transparent text-center m-0" style="-moz-appearance: textfield;">
-                            <span class="text-xs text-slate-400 font-bold bg-slate-50 h-full px-2 py-1.5 border-l border-slate-200">%</span>
+                            <span class="text-[10px] text-slate-400 font-bold bg-slate-50 h-full px-1.5 py-1.5 border-l border-slate-200">%</span>
                         </div>
                         
-                        <input type="text" value="${task.status}" oninput="progressBlocks[${bIndex}].tasks[${tIndex}].status = this.value" placeholder="Status Remarks" class="w-32 border border-slate-300 p-1.5 text-xs outline-none focus:border-blue-400 rounded-sm bg-white">
-                        <button type="button" onclick="removeProgressTask(${bIndex}, ${tIndex})" class="text-slate-400 hover:text-red-500 transition text-xs font-bold">✕</button>
+                        <input type="text" value="${task.status}" oninput="progressBlocks[${bIndex}].tasks[${tIndex}].status = this.value" placeholder="Status Remarks" class="flex-[1.5] min-w-[80px] border border-slate-300 p-1.5 text-xs outline-none focus:border-blue-400 rounded-sm bg-white">
+                        
+                        <button type="button" onclick="removeProgressTask(${bIndex}, ${tIndex})" class="text-slate-400 hover:text-red-500 transition text-xs font-bold px-1 shrink-0">✕</button>
                     </div>`;
                 });
 
                 const blockHtml = `
                 <div class="bg-slate-50 border border-blue-200 rounded p-3 relative">
-                    <button type="button" onclick="removeProgressCategory(${bIndex})" class="absolute top-2 right-2 text-red-400 hover:text-red-600 text-xs font-bold bg-white px-2 py-1 rounded border border-red-100 shadow-sm">Delete Block</button>
+                    <button type="button" onclick="removeProgressCategory(${bIndex})" class="absolute top-2 right-2 text-red-400 hover:text-red-600 text-[10px] font-bold bg-white px-2 py-1 rounded border border-red-100 shadow-sm">Delete Block</button>
                     <input type="text" value="${block.category}" oninput="progressBlocks[${bIndex}].category = this.value" placeholder="MASTER CATEGORY (e.g. ABLUTION BLOCK)" class="w-2/3 border-b-2 border-blue-400 p-1.5 text-sm font-bold text-blue-900 bg-transparent outline-none uppercase mb-2">
                     ${tasksHtml}
                     <button type="button" onclick="addProgressTask(${bIndex})" class="ml-4 mt-3 text-[10px] font-bold text-slate-500 hover:text-blue-600 uppercase tracking-widest flex items-center gap-1">+ Add Task</button>
