@@ -34,7 +34,7 @@
     <div class="bg-slate-900 text-white p-4 flex justify-between items-center shadow-md sticky top-0 z-40 shrink-0">
         <div class="flex items-center gap-3">
             <div class="w-2 h-6 bg-[#D4AF37]"></div>
-            <div class="font-semibold tracking-[0.2em] text-xs sm:text-sm text-slate-100">MOBILLIO LUXE <span class="text-[#D4AF37] font-bold text-[10px] sm:text-xs ml-1 sm:ml-2">ENTERPRISE</span></div>
+            <div class="font-semibold tracking-[0.2em] text-xs sm:text-sm text-slate-100">MOBILLIO LUXE <span class="text-[#D4AF37] font-bold text-[10px] sm:text-xs ml-1 sm:ml-2">ENTERPRISE AUDIT</span></div>
         </div>
         <button onclick="openSettings()" class="text-xs tracking-wider uppercase text-slate-300 hover:text-white transition flex items-center gap-2">
             ⚙️ API Settings
@@ -116,7 +116,7 @@
 
                 <button id="exportBtn" onclick="exportBatch()" class="w-full bg-[#D4AF37] hover:bg-[#c4a030] text-white font-medium tracking-widest py-4 rounded-sm transition shadow-md text-xs uppercase flex justify-center items-center gap-2 opacity-50 cursor-not-allowed" disabled>
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                    <span id="exportBtnText">EXPORT PHOTOS</span>
+                    <span id="exportBtnText">EXPORT PHOTOS & MAP DATA</span>
                 </button>
             </div>
         </div>
@@ -174,9 +174,10 @@
         let geocoder, map, marker, autocomplete;
         let tempLatLng = null;
         let debounceTimer; 
-        
-        // --- LOGO WATERMARK STATE ---
         let customLogoImg = null;
+        
+        // --- WEATHER API CACHE ---
+        const weatherCache = {};
 
         function handleLogoUpload(event) {
             const file = event.target.files[0];
@@ -376,7 +377,64 @@
             return dd.toFixed(6);
         }
 
-        // --- HEIC & EXIF PROCESSING ENGINE ---
+        // --- WEATHER INTERPRETATION ENGINE ---
+        function getWeatherCodeString(code) {
+            if (code === 0) return "☀️ Clear";
+            if (code >= 1 && code <= 3) return "⛅ Partly Cloudy";
+            if (code >= 45 && code <= 48) return "🌫️ Foggy";
+            if (code >= 51 && code <= 55) return "🌧️ Drizzle";
+            if (code >= 61 && code <= 65) return "🌧️ Rain";
+            if (code >= 71 && code <= 75) return "❄️ Snow";
+            if (code >= 80 && code <= 82) return "🌧️ Showers";
+            if (code >= 95) return "⛈️ Thunderstorm";
+            return "☁️ Cloudy";
+        }
+
+        // --- LIVE API FETCH ---
+        async function fetchWeatherData(lat, lng, dateString) {
+            if (!lat || !lng || lat === "N/A" || !dateString) return "Condition: Weather Unavailable";
+            
+            try {
+                // Parse date for the API (Needs YYYY-MM-DD format)
+                const d = new Date(dateString);
+                if (isNaN(d.getTime())) return "Condition: Date Error";
+                
+                const dateOnly = d.toISOString().split('T')[0];
+                const hourIndex = d.getHours(); // 0 to 23
+
+                // Cache Check (Saves API calls if multiple photos are from the exact same site/day)
+                const cacheKey = `${lat}_${lng}_${dateOnly}`;
+                let data = weatherCache[cacheKey];
+
+                if (!data) {
+                    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&start_date=${dateOnly}&end_date=${dateOnly}&hourly=temperature_2m,weathercode,windspeed_10m`;
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error("API Limit");
+                    data = await response.json();
+                    weatherCache[cacheKey] = data; // Save to Cache
+                }
+
+                if (data && data.hourly) {
+                    const temp = data.hourly.temperature_2m[hourIndex];
+                    const code = data.hourly.weathercode[hourIndex];
+                    const wind = data.hourly.windspeed_10m[hourIndex];
+                    
+                    if(temp !== null) {
+                        return `Condition: ${getWeatherCodeString(code)}, ${Math.round(temp)}°C, Wind: ${Math.round(wind)}km/h`;
+                    }
+                }
+                return "Condition: Archival Data Unavailable";
+            } catch (err) {
+                console.warn("Weather API Error:", err);
+                return "Condition: Weather Service Offline";
+            }
+        }
+
+        // EXIF wrapper to allow async/await usage
+        const getExifData = (file) => new Promise(resolve => {
+            EXIF.getData(file, function() { resolve(this); });
+        });
+
         async function processMultipleFiles(files) {
             document.getElementById('placeholder-text').classList.add('hidden');
             document.getElementById('previewGrid').classList.remove('hidden');
@@ -385,73 +443,74 @@
             const overlayText = document.getElementById('loadingText');
             overlay.classList.remove('hidden');
             overlay.classList.add('flex');
-            overlayText.innerText = "Processing Files...";
-
-            let filesProcessed = 0;
-            const totalFiles = files.length;
 
             for (let i = 0; i < files.length; i++) {
+                overlayText.innerText = `Analyzing Photo ${i+1} of ${files.length}...`;
                 let originalFile = files[i];
                 let renderFile = originalFile;
 
-                // HEIC Conversion Interceptor
                 if (originalFile.name.toLowerCase().endsWith('.heic')) {
-                    overlayText.innerText = `Converting iPhone Photo ${i+1}...`;
+                    overlayText.innerText = `Converting Apple HEIC ${i+1}...`;
                     try {
                         const convertedBlob = await heic2any({ blob: originalFile, toType: "image/jpeg" });
-                        // We create a new valid JPEG file for the canvas to read
                         renderFile = new File([convertedBlob], originalFile.name.replace(/\.[^/.]+$/, ".jpg"), { type: "image/jpeg" });
                     } catch (error) {
                         console.error("HEIC conversion failed:", error);
-                        alert(`Failed to convert ${originalFile.name}. Skipping file.`);
-                        filesProcessed++;
                         continue; 
                     }
                 }
 
-                // Now read the EXIF (attempting on original first)
-                EXIF.getData(originalFile, function() {
-                    let fileExif = { lat: null, lng: null, date: null };
-                    
-                    const latDMS = EXIF.getTag(this, "GPSLatitude"); const latRef = EXIF.getTag(this, "GPSLatitudeRef");
-                    const lngDMS = EXIF.getTag(this, "GPSLongitude"); const lngRef = EXIF.getTag(this, "GPSLongitudeRef");
-                    const dateTimeOriginal = EXIF.getTag(this, "DateTimeOriginal");
+                // Await EXIF extraction
+                const exifContext = await getExifData(originalFile);
+                let fileExif = { lat: null, lng: null, date: null, weather: null };
+                
+                const latDMS = EXIF.getTag(exifContext, "GPSLatitude"); const latRef = EXIF.getTag(exifContext, "GPSLatitudeRef");
+                const lngDMS = EXIF.getTag(exifContext, "GPSLongitude"); const lngRef = EXIF.getTag(exifContext, "GPSLongitudeRef");
+                const dateTimeOriginal = EXIF.getTag(exifContext, "DateTimeOriginal");
 
-                    if (latDMS && lngDMS) {
-                        fileExif.lat = parseExifToDecimal(latDMS, latRef);
-                        fileExif.lng = parseExifToDecimal(lngDMS, lngRef);
-                    }
-                    if (dateTimeOriginal) {
-                        const parts = dateTimeOriginal.split(' ');
-                        const dateParts = parts[0].replace(/:/g, '-');
-                        const timeParts = parts[1].slice(0, 5); 
-                        fileExif.date = `${dateParts}T${timeParts}`;
-                    }
+                if (latDMS && lngDMS) {
+                    fileExif.lat = parseExifToDecimal(latDMS, latRef);
+                    fileExif.lng = parseExifToDecimal(lngDMS, lngRef);
+                }
+                if (dateTimeOriginal) {
+                    const parts = dateTimeOriginal.split(' ');
+                    const dateParts = parts[0].replace(/:/g, '-');
+                    const timeParts = parts[1].slice(0, 5); 
+                    fileExif.date = `${dateParts}T${timeParts}`;
+                }
 
+                // If photo has coordinates, fetch exact weather! If not, fallback to global settings
+                overlayText.innerText = `Fetching Weather Data ${i+1}...`;
+                const useLat = fileExif.lat || document.getElementById('lat').value;
+                const useLng = fileExif.lng || document.getElementById('lng').value;
+                const useDate = fileExif.date || document.getElementById('dateTimeInput').value;
+                
+                fileExif.weather = await fetchWeatherData(useLat, useLng, useDate);
+
+                // Convert to Image for Canvas
+                await new Promise((resolve) => {
                     const reader = new FileReader();
                     reader.onload = function(event) {
                         const img = new Image();
                         img.onload = function() {
                             batchData.push({
-                                id: Date.now() + index,
+                                id: Date.now() + i,
                                 originalName: renderFile.name,
                                 originalImg: img,
                                 exif: fileExif,
                                 finalDataURL: null 
                             });
-                            filesProcessed++;
-                            
-                            if (filesProcessed === totalFiles) {
-                                overlay.classList.add('hidden');
-                                overlay.classList.remove('flex');
-                                renderBatch();
-                            }
+                            resolve();
                         }
                         img.src = event.target.result;
                     }
                     reader.readAsDataURL(renderFile);
                 });
             }
+
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex');
+            renderBatch();
         }
 
         function getLocation() {
@@ -494,9 +553,9 @@
             btn.classList.remove('opacity-50', 'cursor-not-allowed');
             
             if (batchData.length < 5) {
-                btnText.innerText = `DOWNLOAD ${batchData.length} PHOTO${batchData.length > 1 ? 'S' : ''}`;
+                btnText.innerText = `DOWNLOAD ${batchData.length} PHOTO${batchData.length > 1 ? 'S' : ''} + MAP DATA`;
             } else {
-                btnText.innerText = `ZIP & EXPORT ${batchData.length} PHOTOS`;
+                btnText.innerText = `ZIP & EXPORT ${batchData.length} PHOTOS + MAP DATA`;
             }
         }
 
@@ -516,6 +575,37 @@
             ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height); ctx.lineTo(x + radius, y + height);
             ctx.quadraticCurveTo(x, y + height, x, y + height - radius); ctx.lineTo(x, y + radius);
             ctx.quadraticCurveTo(x, y, x + radius, y); ctx.closePath();
+        }
+
+        // --- KML GENERATOR (Google Earth 3D Maps) ---
+        function generateKML() {
+            let kmlString = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Mobillio Luxe Field Audit</name>
+    <description>Automated Site Export</description>\n`;
+
+            const gLat = document.getElementById('lat').value;
+            const gLng = document.getElementById('lng').value;
+
+            batchData.forEach((item, index) => {
+                let lat = item.exif.lat; if (!lat || lat === "NaN") lat = gLat;
+                let lng = item.exif.lng; if (!lng || lng === "NaN") lng = gLng;
+                
+                if (lat && lng && lat !== "N/A") {
+                    let safeName = item.originalName.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    kmlString += `    <Placemark>
+      <name>Photo ${index + 1}: ${safeName}</name>
+      <description>${item.exif.weather || "Weather Data Unavailable"}</description>
+      <Point>
+        <coordinates>${lng},${lat},0</coordinates>
+      </Point>
+    </Placemark>\n`;
+                }
+            });
+
+            kmlString += `  </Document>\n</kml>`;
+            return kmlString;
         }
 
         function renderBatch() {
@@ -539,6 +629,9 @@
                 
                 const useDate = item.exif.date || gDate;
                 
+                // If it failed to fetch weather earlier, it will show this default
+                const weatherString = item.exif.weather || "Condition: Weather Unavailable";
+                
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 canvas.width = item.originalImg.width; 
@@ -548,7 +641,7 @@
 
                 const formattedDate = formatFullDate(useDate);
 
-                // Math Layout 
+                // Math Layout (UPDATED for 4 Lines of Text to include Weather)
                 const margin = canvas.width * 0.03; 
                 const cardWidth = canvas.width - (margin * 2);
                 const padding = canvas.width * 0.02;
@@ -556,7 +649,7 @@
                 const titleSize = Math.floor(canvas.width * 0.030); 
                 const dataSize = Math.floor(canvas.width * 0.018);   
                 const lineGap = canvas.width * 0.01;
-                const textBlockHeight = titleSize + (dataSize * 3) + (lineGap * 3);
+                const textBlockHeight = titleSize + (dataSize * 4) + (lineGap * 4); // Added 1 line
                 const cardHeight = textBlockHeight + (padding * 2);
                 const startY = canvas.height - cardHeight - margin;
 
@@ -583,16 +676,14 @@
                 let currentY = startY + padding;
                 ctx.textBaseline = 'top'; ctx.textAlign = 'left'; 
                 
-                // --- CUSTOM LOGO WATERMARK RENDER ---
-                // If a logo is uploaded, reserve space on the right side of the card
                 let logoReservedWidth = 0;
                 if (customLogoImg) {
-                    const maxLogoHeight = textBlockHeight; // Constrain logo height to the text block
+                    const maxLogoHeight = textBlockHeight; 
                     const logoRatio = customLogoImg.width / customLogoImg.height;
                     const finalLogoWidth = maxLogoHeight * logoRatio;
                     const finalLogoHeight = maxLogoHeight;
                     
-                    logoReservedWidth = finalLogoWidth + padding; // Give it some breathing room
+                    logoReservedWidth = finalLogoWidth + padding; 
                     
                     const logoX = margin + cardWidth - padding - finalLogoWidth;
                     const logoY = startY + padding;
@@ -600,25 +691,34 @@
                     ctx.drawImage(customLogoImg, logoX, logoY, finalLogoWidth, finalLogoHeight);
                 }
 
-                // Calculate available text width (subtracting logo width if it exists)
                 const availableTextWidth = (margin + cardWidth) - textStartX - padding - logoReservedWidth;
 
+                // Title
                 const finalTitleSize = getFitFont(ctx, gTitle, titleSize, 600, 'Montserrat', availableTextWidth);
                 ctx.fillStyle = '#FFFFFF'; 
                 ctx.fillText(gTitle, textStartX, currentY);
 
+                // Address
                 currentY += finalTitleSize + lineGap;
                 const finalAddrSize = getFitFont(ctx, gAddress, dataSize, 400, 'Montserrat', availableTextWidth);
                 ctx.fillStyle = '#f8fafc';
                 ctx.fillText(gAddress, textStartX, currentY);
 
+                // Coordinates
                 currentY += finalAddrSize + lineGap;
                 const coordString = `Lat ${useLat}° Long ${useLng}°`;
                 const finalCoordSize = getFitFont(ctx, coordString, dataSize, 400, 'Montserrat', availableTextWidth);
                 ctx.fillStyle = '#cbd5e1'; 
                 ctx.fillText(coordString, textStartX, currentY);
 
+                // Weather (NEW)
                 currentY += finalCoordSize + lineGap;
+                const finalWeatherSize = getFitFont(ctx, weatherString, dataSize, 400, 'Montserrat', availableTextWidth);
+                ctx.fillStyle = '#D4AF37'; // Make weather stand out slightly
+                ctx.fillText(weatherString, textStartX, currentY);
+
+                // Date/Time
+                currentY += finalWeatherSize + lineGap;
                 const finalDateSize = getFitFont(ctx, formattedDate, dataSize, 400, 'Montserrat', availableTextWidth);
                 ctx.fillStyle = '#FFFFFF';
                 ctx.fillText(formattedDate, textStartX, currentY);
@@ -641,8 +741,23 @@
             const btnText = document.getElementById('exportBtnText');
             btn.disabled = true;
 
+            const kmlData = generateKML();
+            const kmlBlob = new Blob([kmlData], {type: 'application/vnd.google-earth.kml+xml'});
+
             if (batchData.length < 5) {
                 btnText.innerText = "DOWNLOADING...";
+                
+                // 1. Download KML Map File
+                setTimeout(() => {
+                    const kmlLink = document.createElement('a');
+                    kmlLink.href = URL.createObjectURL(kmlBlob);
+                    kmlLink.download = `MobillioLuxe_GoogleEarth_Map_${Date.now()}.kml`;
+                    document.body.appendChild(kmlLink);
+                    kmlLink.click();
+                    document.body.removeChild(kmlLink);
+                }, 100);
+
+                // 2. Download Images
                 batchData.forEach((item, index) => {
                     setTimeout(() => {
                         const link = document.createElement('a');
@@ -652,15 +767,18 @@
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
-                    }, index * 500); 
+                    }, (index + 1) * 600); 
                 });
                 
-                setTimeout(() => { updateExportButton(); }, batchData.length * 500 + 500);
+                setTimeout(() => { updateExportButton(); }, batchData.length * 600 + 1000);
 
             } else {
                 btnText.innerText = "ZIPPING HIGH-RES FILES...";
                 const zip = new JSZip();
                 const folder = zip.folder("MobillioLuxe_Max_Quality");
+
+                // Add Google Earth File to the ZIP
+                folder.file(`Google_Earth_Audit_Map.kml`, kmlData);
 
                 batchData.forEach((item, index) => {
                     const base64Data = item.finalDataURL.split(',')[1];
@@ -670,7 +788,7 @@
                 zip.generateAsync({type:"blob"}).then(function(content) {
                     const link = document.createElement('a');
                     link.href = URL.createObjectURL(content);
-                    link.download = `MobillioLuxe_MaxRes_Batch_${Date.now()}.zip`;
+                    link.download = `MobillioLuxe_Site_Audit_${Date.now()}.zip`;
                     link.click();
                     updateExportButton();
                 });
