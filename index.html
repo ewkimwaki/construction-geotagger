@@ -34,7 +34,7 @@
     <div class="bg-slate-900 text-white p-4 flex justify-between items-center shadow-md sticky top-0 z-40 shrink-0">
         <div class="flex items-center gap-3">
             <div class="w-2 h-6 bg-[#D4AF37]"></div>
-            <div class="font-semibold tracking-[0.2em] text-xs sm:text-sm text-slate-100">MOBILLIO LUXE <span class="text-[#D4AF37] font-bold text-[10px] sm:text-xs ml-1 sm:ml-2">ENTERPRISE AUDIT</span></div>
+            <div class="font-semibold tracking-[0.2em] text-xs sm:text-sm text-slate-100">MOBILLIO LUXE <span class="text-[#D4AF37] font-bold text-[10px] sm:text-xs ml-1 sm:ml-2">ENTERPRISE</span></div>
         </div>
         <button onclick="openSettings()" class="text-xs tracking-wider uppercase text-slate-300 hover:text-white transition flex items-center gap-2">
             ⚙️ API Settings
@@ -48,7 +48,7 @@
                 
                 <div>
                     <h1 class="text-xl sm:text-2xl font-light text-slate-900 tracking-tight mb-1">Field Site Geotagger</h1>
-                    <p class="text-slate-500 text-[11px] sm:text-xs leading-relaxed">Global settings apply to images missing EXIF data. Apple HEIC files are automatically supported.</p>
+                    <p class="text-slate-500 text-[11px] sm:text-xs leading-relaxed">Global settings apply to images missing EXIF data. Weather and HEIC automatically supported.</p>
                 </div>
 
                 <div id="dropZone" class="drop-zone border-2 border-dashed border-slate-300 rounded-lg p-6 text-center bg-slate-50 cursor-pointer hover:border-[#D4AF37] transition">
@@ -116,7 +116,7 @@
 
                 <button id="exportBtn" onclick="exportBatch()" class="w-full bg-[#D4AF37] hover:bg-[#c4a030] text-white font-medium tracking-widest py-4 rounded-sm transition shadow-md text-xs uppercase flex justify-center items-center gap-2 opacity-50 cursor-not-allowed" disabled>
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                    <span id="exportBtnText">EXPORT PHOTOS & MAP DATA</span>
+                    <span id="exportBtnText">EXPORT PHOTOS</span>
                 </button>
             </div>
         </div>
@@ -176,7 +176,45 @@
         let debounceTimer; 
         let customLogoImg = null;
         
+        // --- WEATHER ENGINE ---
         const weatherCache = {};
+        let globalWeather = "Weather Unavailable";
+
+        async function fetchWeather(lat, lng) {
+            if (!lat || !lng || isNaN(lat) || isNaN(lng)) return "Weather Unavailable";
+            
+            // Round coordinates lightly to increase cache hits and reduce API load
+            const cacheKey = `${parseFloat(lat).toFixed(3)}_${parseFloat(lng).toFixed(3)}`;
+            if (weatherCache[cacheKey]) return weatherCache[cacheKey];
+
+            try {
+                // We use the completely free Open-Meteo API (No Key Required!)
+                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current_weather=true`);
+                const data = await res.json();
+                
+                if (data && data.current_weather) {
+                    const temp = data.current_weather.temperature;
+                    const code = data.current_weather.weathercode;
+                    let desc = "Clear";
+                    
+                    // WMO Weather interpretation codes
+                    if(code >= 1 && code <= 3) desc = "Partly Cloudy";
+                    else if(code >= 45 && code <= 48) desc = "Fog";
+                    else if(code >= 51 && code <= 67) desc = "Rain";
+                    else if(code >= 71 && code <= 77) desc = "Snow";
+                    else if(code >= 80 && code <= 82) desc = "Showers";
+                    else if(code >= 95) desc = "Thunderstorm";
+                    
+                    const weatherStr = `${desc}, ${temp}°C`;
+                    weatherCache[cacheKey] = weatherStr;
+                    return weatherStr;
+                }
+            } catch(e) { 
+                console.warn("Weather fetch failed. API might be unreachable.", e); 
+            }
+            
+            return "Weather Unavailable";
+        }
 
         function handleLogoUpload(event) {
             const file = event.target.files[0];
@@ -248,19 +286,25 @@
 
             const searchInput = document.getElementById('smartSearch');
             autocomplete = new google.maps.places.Autocomplete(searchInput);
-            autocomplete.addListener('place_changed', () => {
+            autocomplete.addListener('place_changed', async () => {
                 const place = autocomplete.getPlace();
                 if (!place.geometry || !place.geometry.location) return; 
                 
                 const loc = place.geometry.location;
-                document.getElementById('lat').value = loc.lat().toFixed(6);
-                document.getElementById('lng').value = loc.lng().toFixed(6);
+                const finalLat = loc.lat().toFixed(6);
+                const finalLng = loc.lng().toFixed(6);
+                
+                document.getElementById('lat').value = finalLat;
+                document.getElementById('lng').value = finalLng;
                 document.getElementById('locAddress').value = place.formatted_address;
                 
                 let projName = place.address_components?.find(c => c.types.includes('locality'))?.long_name || place.name || "";
                 if(projName) document.getElementById('locTitle').value = `${projName}`;
                 
                 if(map) { map.setCenter(loc); marker.setPosition(loc); }
+                
+                // Fetch Global Weather for this newly selected place
+                globalWeather = await fetchWeather(finalLat, finalLng);
                 renderBatch(); 
             });
         }
@@ -292,7 +336,7 @@
             return `${dayName}, ${dd}/${mm}/${yyyy} ${strTime} GMT ${offsetSign}${offsetHours}:${offsetMins}`;
         }
 
-        function executeSmartSearch() {
+        async function executeSmartSearch() {
             if(!geocoder) return alert("Google Maps API loading...");
             const query = document.getElementById('smartSearch').value.trim();
             if(!query) return;
@@ -312,16 +356,21 @@
                 document.getElementById('loadingOverlay').classList.remove('flex');
                 alert("It looks like you pasted a shortened link.\n\nPlease OPEN the link in your browser first to let the map load, then copy the FULL, long URL from the address bar (containing an '@' symbol) and paste it here.");
             } else {
-                geocoder.geocode({ address: query }, (results, status) => {
+                geocoder.geocode({ address: query }, async (results, status) => {
                     if (status === "OK" && results[0]) {
                         const loc = results[0].geometry.location;
-                        document.getElementById('lat').value = loc.lat().toFixed(6);
-                        document.getElementById('lng').value = loc.lng().toFixed(6);
+                        const finalLat = loc.lat().toFixed(6);
+                        const finalLng = loc.lng().toFixed(6);
+                        
+                        document.getElementById('lat').value = finalLat;
+                        document.getElementById('lng').value = finalLng;
                         document.getElementById('locAddress').value = results[0].formatted_address;
                         let projName = results[0].address_components.find(c => c.types.includes('locality'))?.long_name || "";
                         if(projName) document.getElementById('locTitle').value = `${projName}`;
                         
                         if(map) { map.setCenter(loc); marker.setPosition(loc); }
+                        
+                        globalWeather = await fetchWeather(finalLat, finalLng);
                         renderBatch();
                     } else { alert("Could not find location."); }
                     document.getElementById('loadingOverlay').classList.add('hidden');
@@ -339,11 +388,13 @@
         }
         setDefaultTime();
 
-        function fetchAddressFromCoords(lat, lng) {
+        async function fetchAddressFromCoords(lat, lng) {
             if(!geocoder) return;
             document.getElementById('loadingOverlay').classList.remove('hidden');
             document.getElementById('loadingOverlay').classList.add('flex');
             
+            globalWeather = await fetchWeather(lat, lng);
+
             geocoder.geocode({ location: { lat: parseFloat(lat), lng: parseFloat(lng) } }, (results, status) => {
                 document.getElementById('loadingOverlay').classList.add('hidden');
                 document.getElementById('loadingOverlay').classList.remove('flex');
@@ -376,59 +427,6 @@
             return dd.toFixed(6);
         }
 
-        function getWeatherCodeString(code) {
-            if (code === 0) return "☀️ Clear";
-            if (code >= 1 && code <= 3) return "⛅ Partly Cloudy";
-            if (code >= 45 && code <= 48) return "🌫️ Foggy";
-            if (code >= 51 && code <= 55) return "🌧️ Drizzle";
-            if (code >= 61 && code <= 65) return "🌧️ Rain";
-            if (code >= 71 && code <= 75) return "❄️ Snow";
-            if (code >= 80 && code <= 82) return "🌧️ Showers";
-            if (code >= 95) return "⛈️ Thunderstorm";
-            return "☁️ Cloudy";
-        }
-
-        async function fetchWeatherData(lat, lng, dateString) {
-            if (!lat || !lng || lat === "N/A" || !dateString) return "Condition: Weather Unavailable";
-            
-            try {
-                const d = new Date(dateString);
-                if (isNaN(d.getTime())) return "Condition: Date Error";
-                
-                const dateOnly = d.toISOString().split('T')[0];
-                const hourIndex = d.getHours(); 
-
-                const cacheKey = `${lat}_${lng}_${dateOnly}`;
-                let data = weatherCache[cacheKey];
-
-                if (!data) {
-                    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&start_date=${dateOnly}&end_date=${dateOnly}&hourly=temperature_2m,weathercode,windspeed_10m`;
-                    const response = await fetch(url);
-                    if (!response.ok) throw new Error("API Limit");
-                    data = await response.json();
-                    weatherCache[cacheKey] = data; 
-                }
-
-                if (data && data.hourly) {
-                    const temp = data.hourly.temperature_2m[hourIndex];
-                    const code = data.hourly.weathercode[hourIndex];
-                    const wind = data.hourly.windspeed_10m[hourIndex];
-                    
-                    if(temp !== null) {
-                        return `Condition: ${getWeatherCodeString(code)}, ${Math.round(temp)}°C, Wind: ${Math.round(wind)}km/h`;
-                    }
-                }
-                return "Condition: Archival Data Unavailable";
-            } catch (err) {
-                console.warn("Weather API Error:", err);
-                return "Condition: Weather Service Offline";
-            }
-        }
-
-        const getExifData = (file) => new Promise(resolve => {
-            EXIF.getData(file, function() { resolve(this); });
-        });
-
         async function processMultipleFiles(files) {
             document.getElementById('placeholder-text').classList.add('hidden');
             document.getElementById('previewGrid').classList.remove('hidden');
@@ -437,78 +435,76 @@
             const overlayText = document.getElementById('loadingText');
             overlay.classList.remove('hidden');
             overlay.classList.add('flex');
+            overlayText.innerText = "Processing Files...";
+
+            let filesProcessed = 0;
+            const totalFiles = files.length;
 
             for (let i = 0; i < files.length; i++) {
-                overlayText.innerText = `Analyzing Photo ${i+1} of ${files.length}...`;
                 let originalFile = files[i];
                 let renderFile = originalFile;
 
+                // HEIC Conversion Interceptor
                 if (originalFile.name.toLowerCase().endsWith('.heic')) {
-                    overlayText.innerText = `Converting Apple HEIC ${i+1}...`;
+                    overlayText.innerText = `Converting iPhone Photo ${i+1}...`;
                     try {
                         const convertedBlob = await heic2any({ blob: originalFile, toType: "image/jpeg" });
                         renderFile = new File([convertedBlob], originalFile.name.replace(/\.[^/.]+$/, ".jpg"), { type: "image/jpeg" });
                     } catch (error) {
                         console.error("HEIC conversion failed:", error);
+                        alert(`Failed to convert ${originalFile.name}. Skipping file.`);
+                        filesProcessed++;
                         continue; 
                     }
                 }
 
-                const exifContext = await getExifData(originalFile);
-                let fileExif = { lat: null, lng: null, date: null, weather: null };
-                
-                const latDMS = EXIF.getTag(exifContext, "GPSLatitude"); const latRef = EXIF.getTag(exifContext, "GPSLatitudeRef");
-                const lngDMS = EXIF.getTag(exifContext, "GPSLongitude"); const lngRef = EXIF.getTag(exifContext, "GPSLongitudeRef");
-                const dateTimeOriginal = EXIF.getTag(exifContext, "DateTimeOriginal");
-
-                if (latDMS && lngDMS) {
-                    fileExif.lat = parseExifToDecimal(latDMS, latRef);
-                    fileExif.lng = parseExifToDecimal(lngDMS, lngRef);
+                EXIF.getData(originalFile, async function() {
+                    let fileExif = { lat: null, lng: null, date: null, weather: null };
                     
-                    // --- NEW: THE NULL ISLAND BUG FIX ---
-                    // If WhatsApp strips data but leaves zeros, reject them so Fallback GPS kicks in.
-                    if (fileExif.lat === "0.000000" && fileExif.lng === "0.000000") {
-                        fileExif.lat = null;
-                        fileExif.lng = null;
+                    const latDMS = EXIF.getTag(this, "GPSLatitude"); const latRef = EXIF.getTag(this, "GPSLatitudeRef");
+                    const lngDMS = EXIF.getTag(this, "GPSLongitude"); const lngRef = EXIF.getTag(this, "GPSLongitudeRef");
+                    const dateTimeOriginal = EXIF.getTag(this, "DateTimeOriginal");
+
+                    if (latDMS && lngDMS) {
+                        fileExif.lat = parseExifToDecimal(latDMS, latRef);
+                        fileExif.lng = parseExifToDecimal(lngDMS, lngRef);
+                        
+                        // Grab weather data specific to this photo's EXIF location
+                        if(fileExif.lat && fileExif.lng) {
+                            fileExif.weather = await fetchWeather(fileExif.lat, fileExif.lng);
+                        }
                     }
-                }
-                if (dateTimeOriginal) {
-                    const parts = dateTimeOriginal.split(' ');
-                    const dateParts = parts[0].replace(/:/g, '-');
-                    const timeParts = parts[1].slice(0, 5); 
-                    fileExif.date = `${dateParts}T${timeParts}`;
-                }
+                    if (dateTimeOriginal) {
+                        const parts = dateTimeOriginal.split(' ');
+                        const dateParts = parts[0].replace(/:/g, '-');
+                        const timeParts = parts[1].slice(0, 5); 
+                        fileExif.date = `${dateParts}T${timeParts}`;
+                    }
 
-                overlayText.innerText = `Fetching Weather Data ${i+1}...`;
-                const useLat = fileExif.lat || document.getElementById('lat').value;
-                const useLng = fileExif.lng || document.getElementById('lng').value;
-                const useDate = fileExif.date || document.getElementById('dateTimeInput').value;
-                
-                fileExif.weather = await fetchWeatherData(useLat, useLng, useDate);
-
-                await new Promise((resolve) => {
                     const reader = new FileReader();
                     reader.onload = function(event) {
                         const img = new Image();
                         img.onload = function() {
                             batchData.push({
-                                id: Date.now() + i,
+                                id: Date.now() + index,
                                 originalName: renderFile.name,
                                 originalImg: img,
                                 exif: fileExif,
                                 finalDataURL: null 
                             });
-                            resolve();
+                            filesProcessed++;
+                            
+                            if (filesProcessed === totalFiles) {
+                                overlay.classList.add('hidden');
+                                overlay.classList.remove('flex');
+                                renderBatch();
+                            }
                         }
                         img.src = event.target.result;
                     }
                     reader.readAsDataURL(renderFile);
                 });
             }
-
-            overlay.classList.add('hidden');
-            overlay.classList.remove('flex');
-            renderBatch();
         }
 
         function getLocation() {
@@ -551,9 +547,9 @@
             btn.classList.remove('opacity-50', 'cursor-not-allowed');
             
             if (batchData.length < 5) {
-                btnText.innerText = `DOWNLOAD ${batchData.length} PHOTO${batchData.length > 1 ? 'S' : ''} + MAP DATA`;
+                btnText.innerText = `DOWNLOAD ${batchData.length} PHOTO${batchData.length > 1 ? 'S' : ''}`;
             } else {
-                btnText.innerText = `ZIP & EXPORT ${batchData.length} PHOTOS + MAP DATA`;
+                btnText.innerText = `ZIP & EXPORT ${batchData.length} PHOTOS`;
             }
         }
 
@@ -575,36 +571,6 @@
             ctx.quadraticCurveTo(x, y, x + radius, y); ctx.closePath();
         }
 
-        function generateKML() {
-            let kmlString = `<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2">
-  <Document>
-    <name>Mobillio Luxe Field Audit</name>
-    <description>Automated Site Export</description>\n`;
-
-            const gLat = document.getElementById('lat').value;
-            const gLng = document.getElementById('lng').value;
-
-            batchData.forEach((item, index) => {
-                let lat = item.exif.lat; if (!lat || lat === "NaN" || lat === "0.000000") lat = gLat;
-                let lng = item.exif.lng; if (!lng || lng === "NaN" || lng === "0.000000") lng = gLng;
-                
-                if (lat && lng && lat !== "N/A") {
-                    let safeName = item.originalName.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                    kmlString += `    <Placemark>
-      <name>Photo ${index + 1}: ${safeName}</name>
-      <description>${item.exif.weather || "Weather Data Unavailable"}</description>
-      <Point>
-        <coordinates>${lng},${lat},0</coordinates>
-      </Point>
-    </Placemark>\n`;
-                }
-            });
-
-            kmlString += `  </Document>\n</kml>`;
-            return kmlString;
-        }
-
         function renderBatch() {
             const grid = document.getElementById('previewGrid');
             grid.innerHTML = ''; 
@@ -619,14 +585,13 @@
                 const item = batchData[i];
                 
                 let useLat = item.exif.lat;
-                if (!useLat || useLat === "NaN" || useLat === "0.000000") useLat = gLat || "N/A";
+                if (!useLat || useLat === "NaN") useLat = gLat || "N/A";
                 
                 let useLng = item.exif.lng;
-                if (!useLng || useLng === "NaN" || useLng === "0.000000") useLng = gLng || "N/A";
+                if (!useLng || useLng === "NaN") useLng = gLng || "N/A";
                 
                 const useDate = item.exif.date || gDate;
-                
-                const weatherString = item.exif.weather || "Condition: Weather Unavailable";
+                const useWeather = item.exif.weather || globalWeather; // Assign appropriate weather
                 
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
@@ -637,6 +602,7 @@
 
                 const formattedDate = formatFullDate(useDate);
 
+                // Math Layout updated to fit 4 lines of data instead of 3 (Added weather line)
                 const margin = canvas.width * 0.03; 
                 const cardWidth = canvas.width - (margin * 2);
                 const padding = canvas.width * 0.02;
@@ -644,7 +610,7 @@
                 const titleSize = Math.floor(canvas.width * 0.030); 
                 const dataSize = Math.floor(canvas.width * 0.018);   
                 const lineGap = canvas.width * 0.01;
-                const textBlockHeight = titleSize + (dataSize * 4) + (lineGap * 4); 
+                const textBlockHeight = titleSize + (dataSize * 4) + (lineGap * 4); // Added room here
                 const cardHeight = textBlockHeight + (padding * 2);
                 const startY = canvas.height - cardHeight - margin;
 
@@ -688,26 +654,32 @@
 
                 const availableTextWidth = (margin + cardWidth) - textStartX - padding - logoReservedWidth;
 
+                // 1. Title
                 const finalTitleSize = getFitFont(ctx, gTitle, titleSize, 600, 'Montserrat', availableTextWidth);
                 ctx.fillStyle = '#FFFFFF'; 
                 ctx.fillText(gTitle, textStartX, currentY);
 
+                // 2. Address
                 currentY += finalTitleSize + lineGap;
                 const finalAddrSize = getFitFont(ctx, gAddress, dataSize, 400, 'Montserrat', availableTextWidth);
                 ctx.fillStyle = '#f8fafc';
                 ctx.fillText(gAddress, textStartX, currentY);
 
+                // 3. Lat/Long
                 currentY += finalAddrSize + lineGap;
                 const coordString = `Lat ${useLat}° Long ${useLng}°`;
                 const finalCoordSize = getFitFont(ctx, coordString, dataSize, 400, 'Montserrat', availableTextWidth);
                 ctx.fillStyle = '#cbd5e1'; 
                 ctx.fillText(coordString, textStartX, currentY);
 
+                // 4. THE WEATHER STRING
                 currentY += finalCoordSize + lineGap;
+                const weatherString = `Condition: ${useWeather}`;
                 const finalWeatherSize = getFitFont(ctx, weatherString, dataSize, 400, 'Montserrat', availableTextWidth);
-                ctx.fillStyle = '#D4AF37'; 
+                ctx.fillStyle = '#D4AF37'; // Gold
                 ctx.fillText(weatherString, textStartX, currentY);
 
+                // 5. Timestamp
                 currentY += finalWeatherSize + lineGap;
                 const finalDateSize = getFitFont(ctx, formattedDate, dataSize, 400, 'Montserrat', availableTextWidth);
                 ctx.fillStyle = '#FFFFFF';
@@ -731,21 +703,8 @@
             const btnText = document.getElementById('exportBtnText');
             btn.disabled = true;
 
-            const kmlData = generateKML();
-            const kmlBlob = new Blob([kmlData], {type: 'application/vnd.google-earth.kml+xml'});
-
             if (batchData.length < 5) {
                 btnText.innerText = "DOWNLOADING...";
-                
-                setTimeout(() => {
-                    const kmlLink = document.createElement('a');
-                    kmlLink.href = URL.createObjectURL(kmlBlob);
-                    kmlLink.download = `MobillioLuxe_GoogleEarth_Map_${Date.now()}.kml`;
-                    document.body.appendChild(kmlLink);
-                    kmlLink.click();
-                    document.body.removeChild(kmlLink);
-                }, 100);
-
                 batchData.forEach((item, index) => {
                     setTimeout(() => {
                         const link = document.createElement('a');
@@ -755,17 +714,15 @@
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
-                    }, (index + 1) * 600); 
+                    }, index * 500); 
                 });
                 
-                setTimeout(() => { updateExportButton(); }, batchData.length * 600 + 1000);
+                setTimeout(() => { updateExportButton(); }, batchData.length * 500 + 500);
 
             } else {
                 btnText.innerText = "ZIPPING HIGH-RES FILES...";
                 const zip = new JSZip();
                 const folder = zip.folder("MobillioLuxe_Max_Quality");
-
-                folder.file(`Google_Earth_Audit_Map.kml`, kmlData);
 
                 batchData.forEach((item, index) => {
                     const base64Data = item.finalDataURL.split(',')[1];
@@ -775,7 +732,7 @@
                 zip.generateAsync({type:"blob"}).then(function(content) {
                     const link = document.createElement('a');
                     link.href = URL.createObjectURL(content);
-                    link.download = `MobillioLuxe_Site_Audit_${Date.now()}.zip`;
+                    link.download = `MobillioLuxe_MaxRes_Batch_${Date.now()}.zip`;
                     link.click();
                     updateExportButton();
                 });
