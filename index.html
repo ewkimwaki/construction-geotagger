@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mobillio Luxe | Bulk Site Geotagger</title>
+    <title>Mobillio Luxe | Field Reporting & Geotagger</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Montserrat', sans-serif; }
@@ -33,7 +34,7 @@
     <div class="bg-slate-900 text-white p-4 flex justify-between items-center shadow-md sticky top-0 z-40 shrink-0">
         <div class="flex items-center gap-3">
             <div class="w-2 h-6 bg-[#D4AF37]"></div>
-            <div class="font-semibold tracking-[0.2em] text-xs sm:text-sm text-slate-100">MOBILLIO LUXE <span class="text-[#D4AF37] font-bold text-[10px] sm:text-xs ml-1 sm:ml-2">MAX QUALITY</span></div>
+            <div class="font-semibold tracking-[0.2em] text-xs sm:text-sm text-slate-100">MOBILLIO LUXE <span class="text-[#D4AF37] font-bold text-[10px] sm:text-xs ml-1 sm:ml-2">ENTERPRISE</span></div>
         </div>
         <button onclick="openSettings()" class="text-xs tracking-wider uppercase text-slate-300 hover:text-white transition flex items-center gap-2">
             ⚙️ API Settings
@@ -46,29 +47,36 @@
             <div class="p-5 lg:p-6 space-y-6">
                 
                 <div>
-                    <h1 class="text-xl sm:text-2xl font-light text-slate-900 tracking-tight mb-1">Bulk Geotagger</h1>
-                    <p class="text-slate-500 text-[11px] sm:text-xs leading-relaxed">Global settings apply to images missing EXIF data. Export runs at 100% maximum quality.</p>
+                    <h1 class="text-xl sm:text-2xl font-light text-slate-900 tracking-tight mb-1">Field Site Geotagger</h1>
+                    <p class="text-slate-500 text-[11px] sm:text-xs leading-relaxed">Global settings apply to images missing EXIF data. Apple HEIC files are automatically supported.</p>
                 </div>
 
                 <div id="dropZone" class="drop-zone border-2 border-dashed border-slate-300 rounded-lg p-6 text-center bg-slate-50 cursor-pointer hover:border-[#D4AF37] transition">
-                    <input type="file" id="imageInput" accept="image/*" multiple class="hidden">
+                    <input type="file" id="imageInput" accept="image/jpeg, image/png, image/heic" multiple class="hidden">
                     <div class="mx-auto h-8 w-8 text-[#D4AF37] mb-3">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"></path></svg>
                     </div>
-                    <p class="text-xs font-bold text-slate-700 tracking-widest uppercase">Select Photos</p>
+                    <p class="text-xs font-bold text-slate-700 tracking-widest uppercase">Select Photos (JPEG/HEIC)</p>
                     <p class="text-[10px] text-slate-400 mt-1">Tap to select from gallery</p>
                 </div>
 
                 <div class="space-y-5 relative">
                     <div class="flex items-center gap-2 mb-2">
                         <div class="h-[1px] bg-slate-200 flex-1"></div>
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Global Location Settings</span>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Report Settings</span>
                         <div class="h-[1px] bg-slate-200 flex-1"></div>
                     </div>
 
                     <div id="loadingOverlay" class="absolute inset-0 bg-white/90 backdrop-blur-sm z-10 hidden flex-col items-center justify-center">
                         <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-[#D4AF37]"></div>
-                        <p class="text-[10px] tracking-widest text-slate-500 mt-3 uppercase">Locating...</p>
+                        <p class="text-[10px] tracking-widest text-slate-500 mt-3 uppercase" id="loadingText">Locating...</p>
+                    </div>
+
+                    <div>
+                        <input type="file" id="logoInput" accept="image/png, image/jpeg" class="hidden" onchange="handleLogoUpload(event)">
+                        <button onclick="document.getElementById('logoInput').click()" class="w-full border border-slate-300 hover:bg-slate-50 text-slate-600 text-[10px] font-bold uppercase tracking-widest py-3 transition rounded-sm flex justify-center items-center gap-2">
+                            <span id="logoStatusText">📷 Add Custom Logo Watermark</span>
+                        </button>
                     </div>
 
                     <div>
@@ -162,11 +170,29 @@
     </div>
 
     <script>
-        // --- STATE MANAGEMENT ---
         let batchData = []; 
         let geocoder, map, marker, autocomplete;
         let tempLatLng = null;
         let debounceTimer; 
+        
+        // --- LOGO WATERMARK STATE ---
+        let customLogoImg = null;
+
+        function handleLogoUpload(event) {
+            const file = event.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                customLogoImg = new Image();
+                customLogoImg.onload = () => {
+                    document.getElementById('logoStatusText').innerText = "✅ Logo Loaded (Click to Change)";
+                    document.getElementById('logoStatusText').classList.add('text-[#D4AF37]');
+                    if(batchData.length > 0) renderBatch();
+                };
+                customLogoImg.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
 
         function debouncedRenderBatch() {
             clearTimeout(debounceTimer);
@@ -339,33 +365,52 @@
             if(e.target.files.length) processMultipleFiles(e.target.files); 
         });
 
-        // --- BULLETPROOF EXIF FIX ---
-        // Safely checks if corrupted empty arrays exist (like 0/0) and forces 'null' to allow Global Fallbacks
         function parseExifToDecimal(tag, ref) {
             if (!tag || !tag.length) return null;
-            
             let d = tag[0].numerator !== undefined ? tag[0].numerator / (tag[0].denominator || 1) : Number(tag[0]);
             let m = tag[1] && tag[1].numerator !== undefined ? tag[1].numerator / (tag[1].denominator || 1) : Number(tag[1] || 0);
             let s = tag[2] && tag[2].numerator !== undefined ? tag[2].numerator / (tag[2].denominator || 1) : Number(tag[2] || 0);
-            
             let dd = d + (m / 60) + (s / 3600);
-            
-            // If the math results in 'Not a Number', destroy it so the Global Fallback can take over
             if (isNaN(dd)) return null; 
-            
             if (ref === "S" || ref === "W") dd = dd * -1;
             return dd.toFixed(6);
         }
 
-        function processMultipleFiles(files) {
+        // --- HEIC & EXIF PROCESSING ENGINE ---
+        async function processMultipleFiles(files) {
             document.getElementById('placeholder-text').classList.add('hidden');
             document.getElementById('previewGrid').classList.remove('hidden');
             
+            const overlay = document.getElementById('loadingOverlay');
+            const overlayText = document.getElementById('loadingText');
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+            overlayText.innerText = "Processing Files...";
+
             let filesProcessed = 0;
             const totalFiles = files.length;
 
-            Array.from(files).forEach((file, index) => {
-                EXIF.getData(file, function() {
+            for (let i = 0; i < files.length; i++) {
+                let originalFile = files[i];
+                let renderFile = originalFile;
+
+                // HEIC Conversion Interceptor
+                if (originalFile.name.toLowerCase().endsWith('.heic')) {
+                    overlayText.innerText = `Converting iPhone Photo ${i+1}...`;
+                    try {
+                        const convertedBlob = await heic2any({ blob: originalFile, toType: "image/jpeg" });
+                        // We create a new valid JPEG file for the canvas to read
+                        renderFile = new File([convertedBlob], originalFile.name.replace(/\.[^/.]+$/, ".jpg"), { type: "image/jpeg" });
+                    } catch (error) {
+                        console.error("HEIC conversion failed:", error);
+                        alert(`Failed to convert ${originalFile.name}. Skipping file.`);
+                        filesProcessed++;
+                        continue; 
+                    }
+                }
+
+                // Now read the EXIF (attempting on original first)
+                EXIF.getData(originalFile, function() {
                     let fileExif = { lat: null, lng: null, date: null };
                     
                     const latDMS = EXIF.getTag(this, "GPSLatitude"); const latRef = EXIF.getTag(this, "GPSLatitudeRef");
@@ -389,19 +434,24 @@
                         img.onload = function() {
                             batchData.push({
                                 id: Date.now() + index,
-                                originalName: file.name,
+                                originalName: renderFile.name,
                                 originalImg: img,
                                 exif: fileExif,
                                 finalDataURL: null 
                             });
                             filesProcessed++;
-                            if (filesProcessed === totalFiles) renderBatch();
+                            
+                            if (filesProcessed === totalFiles) {
+                                overlay.classList.add('hidden');
+                                overlay.classList.remove('flex');
+                                renderBatch();
+                            }
                         }
                         img.src = event.target.result;
                     }
-                    reader.readAsDataURL(file);
+                    reader.readAsDataURL(renderFile);
                 });
-            });
+            }
         }
 
         function getLocation() {
@@ -481,8 +531,6 @@
             for (let i = 0; i < batchData.length; i++) {
                 const item = batchData[i];
                 
-                // --- FALLBACK OVERRIDE ---
-                // Double-checks that a "NaN" string didn't somehow slip through
                 let useLat = item.exif.lat;
                 if (!useLat || useLat === "NaN") useLat = gLat || "N/A";
                 
@@ -500,6 +548,7 @@
 
                 const formattedDate = formatFullDate(useDate);
 
+                // Math Layout 
                 const margin = canvas.width * 0.03; 
                 const cardWidth = canvas.width - (margin * 2);
                 const padding = canvas.width * 0.02;
@@ -534,7 +583,25 @@
                 let currentY = startY + padding;
                 ctx.textBaseline = 'top'; ctx.textAlign = 'left'; 
                 
-                const availableTextWidth = (margin + cardWidth) - textStartX - padding;
+                // --- CUSTOM LOGO WATERMARK RENDER ---
+                // If a logo is uploaded, reserve space on the right side of the card
+                let logoReservedWidth = 0;
+                if (customLogoImg) {
+                    const maxLogoHeight = textBlockHeight; // Constrain logo height to the text block
+                    const logoRatio = customLogoImg.width / customLogoImg.height;
+                    const finalLogoWidth = maxLogoHeight * logoRatio;
+                    const finalLogoHeight = maxLogoHeight;
+                    
+                    logoReservedWidth = finalLogoWidth + padding; // Give it some breathing room
+                    
+                    const logoX = margin + cardWidth - padding - finalLogoWidth;
+                    const logoY = startY + padding;
+                    
+                    ctx.drawImage(customLogoImg, logoX, logoY, finalLogoWidth, finalLogoHeight);
+                }
+
+                // Calculate available text width (subtracting logo width if it exists)
+                const availableTextWidth = (margin + cardWidth) - textStartX - padding - logoReservedWidth;
 
                 const finalTitleSize = getFitFont(ctx, gTitle, titleSize, 600, 'Montserrat', availableTextWidth);
                 ctx.fillStyle = '#FFFFFF'; 
