@@ -176,7 +176,6 @@
         let debounceTimer; 
         let customLogoImg = null;
         
-        // --- WEATHER API CACHE ---
         const weatherCache = {};
 
         function handleLogoUpload(event) {
@@ -377,7 +376,6 @@
             return dd.toFixed(6);
         }
 
-        // --- WEATHER INTERPRETATION ENGINE ---
         function getWeatherCodeString(code) {
             if (code === 0) return "☀️ Clear";
             if (code >= 1 && code <= 3) return "⛅ Partly Cloudy";
@@ -390,19 +388,16 @@
             return "☁️ Cloudy";
         }
 
-        // --- LIVE API FETCH ---
         async function fetchWeatherData(lat, lng, dateString) {
             if (!lat || !lng || lat === "N/A" || !dateString) return "Condition: Weather Unavailable";
             
             try {
-                // Parse date for the API (Needs YYYY-MM-DD format)
                 const d = new Date(dateString);
                 if (isNaN(d.getTime())) return "Condition: Date Error";
                 
                 const dateOnly = d.toISOString().split('T')[0];
-                const hourIndex = d.getHours(); // 0 to 23
+                const hourIndex = d.getHours(); 
 
-                // Cache Check (Saves API calls if multiple photos are from the exact same site/day)
                 const cacheKey = `${lat}_${lng}_${dateOnly}`;
                 let data = weatherCache[cacheKey];
 
@@ -411,7 +406,7 @@
                     const response = await fetch(url);
                     if (!response.ok) throw new Error("API Limit");
                     data = await response.json();
-                    weatherCache[cacheKey] = data; // Save to Cache
+                    weatherCache[cacheKey] = data; 
                 }
 
                 if (data && data.hourly) {
@@ -430,7 +425,6 @@
             }
         }
 
-        // EXIF wrapper to allow async/await usage
         const getExifData = (file) => new Promise(resolve => {
             EXIF.getData(file, function() { resolve(this); });
         });
@@ -460,7 +454,6 @@
                     }
                 }
 
-                // Await EXIF extraction
                 const exifContext = await getExifData(originalFile);
                 let fileExif = { lat: null, lng: null, date: null, weather: null };
                 
@@ -471,6 +464,13 @@
                 if (latDMS && lngDMS) {
                     fileExif.lat = parseExifToDecimal(latDMS, latRef);
                     fileExif.lng = parseExifToDecimal(lngDMS, lngRef);
+                    
+                    // --- NEW: THE NULL ISLAND BUG FIX ---
+                    // If WhatsApp strips data but leaves zeros, reject them so Fallback GPS kicks in.
+                    if (fileExif.lat === "0.000000" && fileExif.lng === "0.000000") {
+                        fileExif.lat = null;
+                        fileExif.lng = null;
+                    }
                 }
                 if (dateTimeOriginal) {
                     const parts = dateTimeOriginal.split(' ');
@@ -479,7 +479,6 @@
                     fileExif.date = `${dateParts}T${timeParts}`;
                 }
 
-                // If photo has coordinates, fetch exact weather! If not, fallback to global settings
                 overlayText.innerText = `Fetching Weather Data ${i+1}...`;
                 const useLat = fileExif.lat || document.getElementById('lat').value;
                 const useLng = fileExif.lng || document.getElementById('lng').value;
@@ -487,7 +486,6 @@
                 
                 fileExif.weather = await fetchWeatherData(useLat, useLng, useDate);
 
-                // Convert to Image for Canvas
                 await new Promise((resolve) => {
                     const reader = new FileReader();
                     reader.onload = function(event) {
@@ -577,7 +575,6 @@
             ctx.quadraticCurveTo(x, y, x + radius, y); ctx.closePath();
         }
 
-        // --- KML GENERATOR (Google Earth 3D Maps) ---
         function generateKML() {
             let kmlString = `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
@@ -589,8 +586,8 @@
             const gLng = document.getElementById('lng').value;
 
             batchData.forEach((item, index) => {
-                let lat = item.exif.lat; if (!lat || lat === "NaN") lat = gLat;
-                let lng = item.exif.lng; if (!lng || lng === "NaN") lng = gLng;
+                let lat = item.exif.lat; if (!lat || lat === "NaN" || lat === "0.000000") lat = gLat;
+                let lng = item.exif.lng; if (!lng || lng === "NaN" || lng === "0.000000") lng = gLng;
                 
                 if (lat && lng && lat !== "N/A") {
                     let safeName = item.originalName.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -622,14 +619,13 @@
                 const item = batchData[i];
                 
                 let useLat = item.exif.lat;
-                if (!useLat || useLat === "NaN") useLat = gLat || "N/A";
+                if (!useLat || useLat === "NaN" || useLat === "0.000000") useLat = gLat || "N/A";
                 
                 let useLng = item.exif.lng;
-                if (!useLng || useLng === "NaN") useLng = gLng || "N/A";
+                if (!useLng || useLng === "NaN" || useLng === "0.000000") useLng = gLng || "N/A";
                 
                 const useDate = item.exif.date || gDate;
                 
-                // If it failed to fetch weather earlier, it will show this default
                 const weatherString = item.exif.weather || "Condition: Weather Unavailable";
                 
                 const canvas = document.createElement('canvas');
@@ -641,7 +637,6 @@
 
                 const formattedDate = formatFullDate(useDate);
 
-                // Math Layout (UPDATED for 4 Lines of Text to include Weather)
                 const margin = canvas.width * 0.03; 
                 const cardWidth = canvas.width - (margin * 2);
                 const padding = canvas.width * 0.02;
@@ -649,7 +644,7 @@
                 const titleSize = Math.floor(canvas.width * 0.030); 
                 const dataSize = Math.floor(canvas.width * 0.018);   
                 const lineGap = canvas.width * 0.01;
-                const textBlockHeight = titleSize + (dataSize * 4) + (lineGap * 4); // Added 1 line
+                const textBlockHeight = titleSize + (dataSize * 4) + (lineGap * 4); 
                 const cardHeight = textBlockHeight + (padding * 2);
                 const startY = canvas.height - cardHeight - margin;
 
@@ -693,31 +688,26 @@
 
                 const availableTextWidth = (margin + cardWidth) - textStartX - padding - logoReservedWidth;
 
-                // Title
                 const finalTitleSize = getFitFont(ctx, gTitle, titleSize, 600, 'Montserrat', availableTextWidth);
                 ctx.fillStyle = '#FFFFFF'; 
                 ctx.fillText(gTitle, textStartX, currentY);
 
-                // Address
                 currentY += finalTitleSize + lineGap;
                 const finalAddrSize = getFitFont(ctx, gAddress, dataSize, 400, 'Montserrat', availableTextWidth);
                 ctx.fillStyle = '#f8fafc';
                 ctx.fillText(gAddress, textStartX, currentY);
 
-                // Coordinates
                 currentY += finalAddrSize + lineGap;
                 const coordString = `Lat ${useLat}° Long ${useLng}°`;
                 const finalCoordSize = getFitFont(ctx, coordString, dataSize, 400, 'Montserrat', availableTextWidth);
                 ctx.fillStyle = '#cbd5e1'; 
                 ctx.fillText(coordString, textStartX, currentY);
 
-                // Weather (NEW)
                 currentY += finalCoordSize + lineGap;
                 const finalWeatherSize = getFitFont(ctx, weatherString, dataSize, 400, 'Montserrat', availableTextWidth);
-                ctx.fillStyle = '#D4AF37'; // Make weather stand out slightly
+                ctx.fillStyle = '#D4AF37'; 
                 ctx.fillText(weatherString, textStartX, currentY);
 
-                // Date/Time
                 currentY += finalWeatherSize + lineGap;
                 const finalDateSize = getFitFont(ctx, formattedDate, dataSize, 400, 'Montserrat', availableTextWidth);
                 ctx.fillStyle = '#FFFFFF';
@@ -747,7 +737,6 @@
             if (batchData.length < 5) {
                 btnText.innerText = "DOWNLOADING...";
                 
-                // 1. Download KML Map File
                 setTimeout(() => {
                     const kmlLink = document.createElement('a');
                     kmlLink.href = URL.createObjectURL(kmlBlob);
@@ -757,7 +746,6 @@
                     document.body.removeChild(kmlLink);
                 }, 100);
 
-                // 2. Download Images
                 batchData.forEach((item, index) => {
                     setTimeout(() => {
                         const link = document.createElement('a');
@@ -777,7 +765,6 @@
                 const zip = new JSZip();
                 const folder = zip.folder("MobillioLuxe_Max_Quality");
 
-                // Add Google Earth File to the ZIP
                 folder.file(`Google_Earth_Audit_Map.kml`, kmlData);
 
                 batchData.forEach((item, index) => {
