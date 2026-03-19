@@ -433,12 +433,10 @@
             overlay.classList.add('flex');
             overlayText.innerText = "Processing Files...";
 
-            // We loop through the files sequentially to ensure the vault never crashes
             for (let i = 0; i < files.length; i++) {
                 let originalFile = files[i];
                 let renderFile = originalFile;
 
-                // 1. Safe HEIC Conversion
                 if (originalFile.name.toLowerCase().endsWith('.heic')) {
                     overlayText.innerText = `Converting iPhone Photo ${i+1}...`;
                     try {
@@ -446,14 +444,12 @@
                         renderFile = new File([convertedBlob], originalFile.name.replace(/\.[^/.]+$/, ".jpg"), { type: "image/jpeg" });
                     } catch (error) {
                         console.error("HEIC conversion failed:", error);
-                        continue; // Skip file safely if conversion fails
+                        continue; 
                     }
                 }
 
-                // 2. Safe EXIF Extraction
                 let fileExif = { lat: null, lng: null, date: null, weather: null };
                 
-                // We wrap the EXIF reader in a Promise so if it crashes, it resolves anyway
                 await new Promise((resolve) => {
                     try {
                         EXIF.getData(renderFile, function() {
@@ -476,13 +472,11 @@
                             resolve(); 
                         });
                     } catch (e) {
-                        console.warn("EXIF read error on file", i);
-                        resolve(); // Force resolve to prevent app freeze
+                        resolve(); 
                     }
                 });
 
-                // 3. Safe Weather Fetching
-                if (fileExif.lat && fileExif.lng) {
+                if (fileExif.lat && fileExif.lng && parseFloat(fileExif.lat) !== 0 && parseFloat(fileExif.lng) !== 0) {
                     try {
                         fileExif.weather = await fetchWeather(fileExif.lat, fileExif.lng);
                     } catch (e) {
@@ -490,7 +484,6 @@
                     }
                 }
 
-                // 4. Safe Image Loading
                 await new Promise((resolve) => {
                     const reader = new FileReader();
                     reader.onload = function(event) {
@@ -505,15 +498,14 @@
                             });
                             resolve(); 
                         }
-                        img.onerror = () => { resolve(); } // Prevent freeze if image draws incorrectly
+                        img.onerror = () => { resolve(); } 
                         img.src = event.target.result;
                     }
-                    reader.onerror = () => { resolve(); } // Prevent freeze if file is unreadable
+                    reader.onerror = () => { resolve(); } 
                     reader.readAsDataURL(renderFile);
                 });
             }
 
-            // Once the loop is finished, all files are successfully vaulted.
             overlay.classList.add('hidden');
             overlay.classList.remove('flex');
             renderBatch();
@@ -596,11 +588,13 @@
             for (let i = 0; i < batchData.length; i++) {
                 const item = batchData[i];
                 
+                // --- THE ZERO OVERRIDE FIX ---
+                // If the coordinate is literally '0.000000', treat it as broken GPS and use the fallback
                 let useLat = item.exif.lat;
-                if (!useLat || useLat === "NaN") useLat = gLat || "N/A";
+                if (!useLat || useLat === "NaN" || parseFloat(useLat) === 0) useLat = gLat || "N/A";
                 
                 let useLng = item.exif.lng;
-                if (!useLng || useLng === "NaN") useLng = gLng || "N/A";
+                if (!useLng || useLng === "NaN" || parseFloat(useLng) === 0) useLng = gLng || "N/A";
                 
                 const useDate = item.exif.date || gDate;
                 const useWeather = item.exif.weather || globalWeather; 
