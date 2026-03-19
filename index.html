@@ -310,6 +310,7 @@
         let tempLatLng = null;
         let debounceTimer; 
         let customLogoImg = null;
+        let rawLogoBase64 = null;
         const weatherCache = {};
         let globalWeather = "Weather Unavailable";
 
@@ -369,15 +370,12 @@
 
         function addEquipmentRow() { eqList.push({name: "", qty: 1, cond: "Good"}); renderEquipmentGrid(); }
         function removeEquipmentRow(index) { eqList.splice(index, 1); renderEquipmentGrid(); }
-        
         function addMaterialRow() { matList.push({desc: "", qty: ""}); renderMaterialsGrid(); }
         function removeMaterialRow(index) { matList.splice(index, 1); renderMaterialsGrid(); }
 
-        // Initialize Dynamic Grids
         renderEquipmentGrid();
         renderMaterialsGrid();
 
-        // --- MINI EDITOR TOOL ---
         function insertFormat(elementId, textToInsert) {
             const el = document.getElementById(elementId);
             if (!el) return;
@@ -387,26 +385,21 @@
             el.focus(); el.selectionStart = el.selectionEnd = start + textToInsert.length + 1;
         }
 
-        // --- UNIFIED UI TOGGLE ---
         function toggleReportFields() {
             const mode = document.getElementById('exportMode').value;
             const shared = document.getElementById('sharedReportFields');
             const weekly = document.getElementById('weeklySpecificFields');
-            const btnText = document.getElementById('exportBtnText');
             
             shared.classList.remove('active');
             weekly.classList.remove('active');
             
             if(mode === 'daily') {
                 shared.classList.add('active');
-                if(batchData.length > 0) btnText.innerText = `GENERATE DAILY PDF`;
             } else if (mode === 'weekly') {
                 shared.classList.add('active');
                 weekly.classList.add('active');
-                if(batchData.length > 0) btnText.innerText = `GENERATE WEEKLY PDF`;
-            } else {
-                if(batchData.length > 0) updateExportButton(); 
             }
+            updateExportButton(); 
         }
 
         async function fetchWeather(lat, lng) {
@@ -648,13 +641,27 @@
             closeMap();
         }
 
+        // --- ENFORCING STRICT VALIDATION ---
         function updateExportButton() {
-            const mode = document.getElementById('exportMode').value; const btn = document.getElementById('exportBtn'); const btnText = document.getElementById('exportBtnText');
-            if (batchData.length === 0) return;
-            btn.disabled = false; btn.classList.remove('opacity-50', 'cursor-not-allowed');
-            if (mode === 'daily') { btnText.innerText = `GENERATE DAILY PDF`; } 
-            else if (mode === 'weekly') { btnText.innerText = `GENERATE WEEKLY PDF`; } 
-            else {
+            const mode = document.getElementById('exportMode').value; 
+            const btn = document.getElementById('exportBtn'); 
+            const btnText = document.getElementById('exportBtnText');
+            
+            if (batchData.length === 0) {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                btnText.innerText = "EXPORT PHOTOS";
+                return;
+            }
+
+            btn.disabled = false; 
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            
+            if (mode === 'daily') { 
+                btnText.innerText = `GENERATE DAILY PDF`; 
+            } else if (mode === 'weekly') { 
+                btnText.innerText = `GENERATE WEEKLY PDF`; 
+            } else {
                 if (batchData.length < 5) btnText.innerText = `DOWNLOAD ${batchData.length} PHOTO${batchData.length > 1 ? 'S' : ''}`;
                 else btnText.innerText = `ZIP & EXPORT ${batchData.length} PHOTOS`;
             }
@@ -754,7 +761,6 @@
         function fetchSharedFormData() {
             const formatInputDate = (dateStr) => { if(!dateStr) return "N/A"; const d = new Date(dateStr); return isNaN(d) ? dateStr : d.toLocaleDateString('en-GB'); };
             
-            // Generate formatted Materials string for Daily Report
             let compiledMaterialsText = matList.map(m => `• ${m.desc} : ${m.qty}`).join('\n');
             if (compiledMaterialsText.trim() === '•  :') compiledMaterialsText = "None recorded";
 
@@ -790,220 +796,244 @@
             };
         }
 
-        // --- DAILY PDF ENGINE ---
+        // --- BULLETPROOF DAILY PDF ENGINE ---
         function exportDailyPDF() {
             if (batchData.length === 0) return alert("Please upload images first.");
             document.getElementById('exportBtn').disabled = true; document.getElementById('exportBtnText').innerText = "GENERATING PDF...";
 
             setTimeout(() => {
-                const { jsPDF } = window.jspdf; const doc = new jsPDF(); const d = fetchSharedFormData();
-                const rDateObj = new Date(document.getElementById('dateTimeInput').value);
-                const rDate = isNaN(rDateObj) ? new Date().toLocaleDateString('en-GB') : rDateObj.toLocaleDateString('en-GB');
-                const totalSkilled = d.vFix + d.vMas + d.vCar + d.vSaf + d.vOpe + d.vPlu + d.vEle + d.vAgt; const totalLabor = totalSkilled + d.vCas;
+                try {
+                    const { jsPDF } = window.jspdf; const doc = new jsPDF(); const d = fetchSharedFormData();
+                    const rDateObj = new Date(document.getElementById('dateTimeInput').value);
+                    const rDate = isNaN(rDateObj) ? new Date().toLocaleDateString('en-GB') : rDateObj.toLocaleDateString('en-GB');
+                    const totalSkilled = d.vFix + d.vMas + d.vCar + d.vSaf + d.vOpe + d.vPlu + d.vEle + d.vAgt; const totalLabor = totalSkilled + d.vCas;
 
-                let currentY = 15;
-                if (rawLogoBase64 && customLogoImg) {
-                    const ratio = customLogoImg.width / customLogoImg.height; const h = 22; const w = h * ratio; const x = (210 - w) / 2; 
-                    doc.addImage(rawLogoBase64, 'PNG', x, currentY, w, h); currentY += h + 6;
-                } else { currentY += 10; }
+                    let currentY = 15;
+                    // Format Safety Check for Logo
+                    if (rawLogoBase64 && customLogoImg) {
+                        const ratio = customLogoImg.width / (customLogoImg.height || 1); const h = 22; const w = h * ratio; const x = (210 - w) / 2; 
+                        const format = rawLogoBase64.includes('image/jpeg') ? 'JPEG' : 'PNG';
+                        doc.addImage(rawLogoBase64, format, x, currentY, w, h); currentY += h + 6;
+                    } else { currentY += 10; }
 
-                doc.setFont("helvetica", "bold"); doc.setFontSize(13); doc.text(d.orgName.toUpperCase(), 105, currentY, null, null, "center"); currentY += 6;
-                if (d.orgDept.trim() !== "") { doc.setFont("helvetica", "normal"); doc.setFontSize(11); doc.text(d.orgDept, 105, currentY, null, null, "center"); currentY += 6; }
-                if (d.orgSubDept.trim() !== "") { doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.text(d.orgSubDept, 105, currentY, null, null, "center"); currentY += 6; } else { currentY += 2; }
-                doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.5); doc.line(14, currentY, 196, currentY); currentY += 8;
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(13); doc.text(String(d.orgName).toUpperCase(), 105, currentY, null, null, "center"); currentY += 6;
+                    if (d.orgDept.trim() !== "") { doc.setFont("helvetica", "normal"); doc.setFontSize(11); doc.text(String(d.orgDept), 105, currentY, null, null, "center"); currentY += 6; }
+                    if (d.orgSubDept.trim() !== "") { doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.text(String(d.orgSubDept), 105, currentY, null, null, "center"); currentY += 6; } else { currentY += 2; }
+                    doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.5); doc.line(14, currentY, 196, currentY); currentY += 8;
 
-                doc.setFont("helvetica", "bold"); doc.setFontSize(14); doc.text("DAILY SITE REPORT", 105, currentY, null, null, "center"); currentY += 8;
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(14); doc.text("DAILY SITE REPORT", 105, currentY, null, null, "center"); currentY += 8;
 
-                doc.autoTable({
-                    startY: currentY, theme: 'grid', styles: { fontSize: 9, cellPadding: 3, lineColor: [200, 200, 200], lineWidth: 0.1, textColor: [40, 40, 40] },
-                    columnStyles: { 0: { fontStyle: 'bold', fillColor: [245, 245, 245], cellWidth: 40 }, 1: { cellWidth: 50 }, 2: { fontStyle: 'bold', fillColor: [245, 245, 245], cellWidth: 40 }, 3: { cellWidth: 50 } },
-                    body: [
-                        ['PROJECT TITLE:', { content: d.title.toUpperCase(), colSpan: 3 }],
-                        ['START DATE:', d.startDate, 'REPORT DATE:', rDate],
-                        ['COMPLETION DATE:', d.compDate, 'WEATHER:', d.wtr],
-                        ['START TIME:', d.sTime, 'CLOSING TIME:', d.cTime],
-                        ['WORK DONE %:', `${d.workDone}%`, 'TIME ELAPSED %:', `${d.timeElapsed}%`]
-                    ]
-                });
-                currentY = doc.lastAutoTable.finalY + 8;
+                    doc.autoTable({
+                        startY: currentY, theme: 'grid', styles: { fontSize: 9, cellPadding: 3, lineColor: [200, 200, 200], lineWidth: 0.1, textColor: [40, 40, 40] },
+                        columnStyles: { 0: { fontStyle: 'bold', fillColor: [245, 245, 245], cellWidth: 40 }, 1: { cellWidth: 50 }, 2: { fontStyle: 'bold', fillColor: [245, 245, 245], cellWidth: 40 }, 3: { cellWidth: 50 } },
+                        body: [
+                            ['PROJECT TITLE:', { content: String(d.title).toUpperCase(), colSpan: 3 }],
+                            ['START DATE:', String(d.startDate), 'REPORT DATE:', String(rDate)],
+                            ['COMPLETION DATE:', String(d.compDate), 'WEATHER:', String(d.wtr)],
+                            ['START TIME:', String(d.sTime), 'CLOSING TIME:', String(d.cTime)],
+                            ['WORK DONE %:', `${d.workDone}%`, 'TIME ELAPSED %:', `${d.timeElapsed}%`]
+                        ]
+                    });
+                    currentY = doc.lastAutoTable.finalY + 8;
 
-                doc.autoTable({
-                    startY: currentY, theme: 'grid', styles: { fontSize: 9, cellPadding: 4, lineColor: [200, 200, 200], lineWidth: 0.1 },
-                    headStyles: { fillColor: [60, 60, 60], textColor: 255, fontStyle: 'bold', halign: 'left' },
-                    head: [['SUMMARY OF WORK DONE']], body: [[d.summary]]
-                });
-                currentY = doc.lastAutoTable.finalY + 8;
+                    doc.autoTable({
+                        startY: currentY, theme: 'grid', styles: { fontSize: 9, cellPadding: 4, lineColor: [200, 200, 200], lineWidth: 0.1 },
+                        headStyles: { fillColor: [60, 60, 60], textColor: 255, fontStyle: 'bold', halign: 'left' },
+                        head: [['SUMMARY OF WORK DONE']], body: [[String(d.summary)]]
+                    });
+                    currentY = doc.lastAutoTable.finalY + 8;
 
-                doc.autoTable({
-                    startY: currentY, theme: 'grid', styles: { fontSize: 9, cellPadding: 3, lineColor: [200, 200, 200], lineWidth: 0.1, valign: 'middle' },
-                    headStyles: { fillColor: [60, 60, 60], textColor: 255, fontStyle: 'bold', halign: 'center' },
-                    columnStyles: { 0: { cellWidth: 35 }, 1: { cellWidth: 25, halign: 'center' }, 2: { cellWidth: 20, halign: 'center' }, 3: { cellWidth: 50 }, 4: { cellWidth: 50 } },
-                    head: [['CATEGORY OF WORK', 'SKILLED WORKERS', 'CASUALS', 'MATERIALS RECEIVED', 'PLANTS AND EQUIPMENT']],
-                    body: [
-                        ['Steel Fixers', d.vFix, '', { content: d.materialsStr, rowSpan: 9 }, { content: 'See Next Section / Attached', rowSpan: 9 }],
-                        ['Masons', d.vMas, '', '', ''], ['Carpenters', d.vCar, '', '', ''],
-                        ['Safety Officer', d.vSaf, '', '', ''], ['Operators', d.vOpe, '', '', ''],
-                        ['Plumbers', d.vPlu, '', '', ''], ['Electrician', d.vEle, '', '', ''], ['Site Agent', d.vAgt, '', '', ''],
-                        [{ content: 'Casuals', fontStyle: 'bold', fillColor: [245, 245, 245] }, '', { content: d.vCas, fontStyle: 'bold', fillColor: [245, 245, 245] }, '', ''],
-                        [{ content: 'TOTAL', fontStyle: 'bold', fillColor: [230, 230, 230] }, { content: totalSkilled, fontStyle: 'bold', fillColor: [230, 230, 230] }, { content: totalLabor, fontStyle: 'bold', fillColor: [230, 230, 230] }, { content: '', fillColor: [230, 230, 230] }, { content: '', fillColor: [230, 230, 230] }]
-                    ]
-                });
-                currentY = doc.lastAutoTable.finalY + 8;
+                    // FIX: Perfectly aligned array lengths to prevent rowSpan collision crashes
+                    doc.autoTable({
+                        startY: currentY, theme: 'grid', styles: { fontSize: 9, cellPadding: 3, lineColor: [200, 200, 200], lineWidth: 0.1, valign: 'middle' },
+                        headStyles: { fillColor: [60, 60, 60], textColor: 255, fontStyle: 'bold', halign: 'center' },
+                        columnStyles: { 0: { cellWidth: 35 }, 1: { cellWidth: 25, halign: 'center' }, 2: { cellWidth: 20, halign: 'center' }, 3: { cellWidth: 50 }, 4: { cellWidth: 50 } },
+                        head: [['CATEGORY OF WORK', 'SKILLED WORKERS', 'CASUALS', 'MATERIALS RECEIVED', 'PLANTS AND EQUIPMENT']],
+                        body: [
+                            // Row 1 spans columns 3 & 4 downwards for 9 rows
+                            ['Steel Fixers', String(d.vFix), '', { content: String(d.materialsStr), rowSpan: 9 }, { content: 'See Next Section / Attached', rowSpan: 9 }],
+                            // Rows 2 through 9 MUST only have 3 elements (because columns 3 & 4 are taken)
+                            ['Masons', String(d.vMas), ''], 
+                            ['Carpenters', String(d.vCar), ''],
+                            ['Safety Officer', String(d.vSaf), ''], 
+                            ['Operators', String(d.vOpe), ''],
+                            ['Plumbers', String(d.vPlu), ''], 
+                            ['Electrician', String(d.vEle), ''], 
+                            ['Site Agent', String(d.vAgt), ''],
+                            [{ content: 'Casuals', fontStyle: 'bold', fillColor: [245, 245, 245] }, '', { content: String(d.vCas), fontStyle: 'bold', fillColor: [245, 245, 245] }],
+                            // Row 10 is OUT of the rowSpan, it needs all 5 elements again
+                            [{ content: 'TOTAL', fontStyle: 'bold', fillColor: [230, 230, 230] }, { content: String(totalSkilled), fontStyle: 'bold', fillColor: [230, 230, 230] }, { content: String(totalLabor), fontStyle: 'bold', fillColor: [230, 230, 230] }, { content: '', fillColor: [230, 230, 230] }, { content: '', fillColor: [230, 230, 230] }]
+                        ]
+                    });
+                    currentY = doc.lastAutoTable.finalY + 8;
 
-                if (currentY > 260) { doc.addPage(); currentY = 20; }
-                doc.autoTable({
-                    startY: currentY, theme: 'grid', styles: { fontSize: 9, cellPadding: 4, lineColor: [200, 200, 200], lineWidth: 0.1 },
-                    columnStyles: { 0: { fontStyle: 'bold', fillColor: [245, 245, 245], cellWidth: 60, valign: 'middle' }, 1: { cellWidth: 120 } },
-                    body: [['VISITORS RECEIVED\n(Name & Title)', d.admVis], ['DRAWINGS / DETAILS\nISSUED', d.admDra], ['SITE INSTRUCTION\nISSUED', d.admIns], ['ANY OTHER REMARKS', d.admRem]]
-                });
-                currentY = doc.lastAutoTable.finalY + 15;
+                    if (currentY > 260) { doc.addPage(); currentY = 20; }
+                    doc.autoTable({
+                        startY: currentY, theme: 'grid', styles: { fontSize: 9, cellPadding: 4, lineColor: [200, 200, 200], lineWidth: 0.1 },
+                        columnStyles: { 0: { fontStyle: 'bold', fillColor: [245, 245, 245], cellWidth: 60, valign: 'middle' }, 1: { cellWidth: 120 } },
+                        body: [['VISITORS RECEIVED\n(Name & Title)', String(d.admVis)], ['DRAWINGS / DETAILS\nISSUED', String(d.admDra)], ['SITE INSTRUCTION\nISSUED', String(d.admIns)], ['ANY OTHER REMARKS', String(d.admRem)]]
+                    });
+                    currentY = doc.lastAutoTable.finalY + 15;
 
-                if (currentY > 260) { doc.addPage(); currentY = 20; }
-                doc.autoTable({
-                    startY: currentY, theme: 'plain', styles: { fontSize: 10, fontStyle: 'bold', cellPadding: 2 },
-                    body: [[`Clerk of Works: ${d.cowName}`, 'Signature: __________________________', `Date: ${rDate}`]]
-                });
+                    if (currentY > 260) { doc.addPage(); currentY = 20; }
+                    doc.autoTable({
+                        startY: currentY, theme: 'plain', styles: { fontSize: 10, fontStyle: 'bold', cellPadding: 2 },
+                        body: [[`Clerk of Works: ${String(d.cowName)}`, 'Signature: __________________________', `Date: ${String(rDate)}`]]
+                    });
 
-                doc.addPage(); doc.setFont("helvetica", "bold"); doc.setFontSize(14); doc.text("PROGRESS PHOTOS", 105, 20, null, null, "center");
-                doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.5); doc.line(14, 25, 196, 25);
+                    if (batchData.length > 0) {
+                        doc.addPage(); doc.setFont("helvetica", "bold"); doc.setFontSize(14); doc.text("PROGRESS PHOTOS", 105, 20, null, null, "center");
+                        doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.5); doc.line(14, 25, 196, 25);
 
-                let imgY = 32;
-                batchData.forEach((item, index) => {
-                    if (index > 0 && index % 2 === 0) { doc.addPage(); imgY = 20; }
-                    const imgData = item.finalDataURL; const renderW = 180; const renderH = renderW * (item.originalImg.height / item.originalImg.width);
-                    doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.2); doc.rect(15, imgY, renderW, renderH); doc.addImage(imgData, 'JPEG', 15, imgY, renderW, renderH); imgY += renderH + 12; 
-                });
+                        let imgY = 32;
+                        batchData.forEach((item, index) => {
+                            if (index > 0 && index % 2 === 0) { doc.addPage(); imgY = 20; }
+                            const imgData = item.finalDataURL; const renderW = 180; const renderH = renderW * (item.originalImg.height / (item.originalImg.width || 1));
+                            doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.2); doc.rect(15, imgY, renderW, renderH); doc.addImage(imgData, 'JPEG', 15, imgY, renderW, renderH); imgY += renderH + 12; 
+                        });
+                    }
 
-                doc.save(`Daily_Site_Report_${rDate.replace(/\//g, '-')}.pdf`); updateExportButton();
+                    doc.save(`Daily_Site_Report_${rDate.replace(/\//g, '-')}.pdf`); 
+                    updateExportButton();
+
+                } catch (error) {
+                    console.error("PDF Generation Error:", error);
+                    alert("A fatal error occurred building the Daily PDF: \n\n" + error.message + "\n\nThe button has been reset.");
+                    updateExportButton();
+                }
             }, 500); 
         }
 
-        // --- WEEKLY MEGA-PDF ENGINE ---
+        // --- BULLETPROOF WEEKLY MEGA-PDF ENGINE ---
         function exportWeeklyPDF() {
             if (batchData.length === 0) return alert("Please upload images first.");
             document.getElementById('exportBtn').disabled = true; document.getElementById('exportBtnText').innerText = "GENERATING MEGA-PDF...";
 
             setTimeout(() => {
-                const { jsPDF } = window.jspdf; const doc = new jsPDF(); const d = fetchSharedFormData();
-                
-                const rDateObj = new Date(document.getElementById('dateTimeInput').value);
-                const options = { day: 'numeric', month: 'long', year: 'numeric' };
-                const asAtDate = isNaN(rDateObj) ? new Date().toLocaleDateString('en-GB', options) : rDateObj.toLocaleDateString('en-GB', options);
-                const shortDate = isNaN(rDateObj) ? new Date().toLocaleDateString('en-GB') : rDateObj.toLocaleDateString('en-GB');
+                try {
+                    const { jsPDF } = window.jspdf; const doc = new jsPDF(); const d = fetchSharedFormData();
+                    
+                    const rDateObj = new Date(document.getElementById('dateTimeInput').value);
+                    const options = { day: 'numeric', month: 'long', year: 'numeric' };
+                    const asAtDate = isNaN(rDateObj) ? new Date().toLocaleDateString('en-GB', options) : rDateObj.toLocaleDateString('en-GB', options);
+                    const shortDate = isNaN(rDateObj) ? new Date().toLocaleDateString('en-GB') : rDateObj.toLocaleDateString('en-GB');
 
-                const formatWeeklyDate = (dateStr) => { if(!dateStr) return "N/A"; const x = new Date(dateStr); return isNaN(x) ? dateStr : x.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }); };
+                    const formatWeeklyDate = (dateStr) => { if(!dateStr) return "N/A"; const x = new Date(dateStr); return isNaN(x) ? dateStr : x.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }); };
 
-                const wEmail = document.getElementById('cowEmail').value || "N/A"; const wPhone = document.getElementById('cowPhone').value || "N/A";
-                const wContractNo = document.getElementById('w_contractNo').value || "N/A"; const wContractSum = document.getElementById('w_contractSum').value || "N/A";
-                const wEmployer = document.getElementById('w_employer').value || "N/A"; const wProcuring = document.getElementById('w_procuring').value || "N/A";
-                const wManager = document.getElementById('w_manager').value || "N/A"; const wContractor = document.getElementById('w_contractor').value || "N/A";
-                const wHandover = formatWeeklyDate(document.getElementById('w_handover').value); const wCommencement = formatWeeklyDate(document.getElementById('w_commencement').value);
+                    const wEmail = document.getElementById('cowEmail').value || "N/A"; const wPhone = document.getElementById('cowPhone').value || "N/A";
+                    const wContractNo = document.getElementById('w_contractNo').value || "N/A"; const wContractSum = document.getElementById('w_contractSum').value || "N/A";
+                    const wEmployer = document.getElementById('w_employer').value || "N/A"; const wProcuring = document.getElementById('w_procuring').value || "N/A";
+                    const wManager = document.getElementById('w_manager').value || "N/A"; const wContractor = document.getElementById('w_contractor').value || "N/A";
+                    const wHandover = formatWeeklyDate(document.getElementById('w_handover').value); const wCommencement = formatWeeklyDate(document.getElementById('w_commencement').value);
 
-                // Harvest Dynamic Arrays
-                let eqDataForPdf = eqList.map((eq, i) => [`${i+1}.`, eq.name, eq.qty, eq.cond]);
-                if (eqDataForPdf.length === 0) eqDataForPdf.push(['-', 'No equipment recorded', '-', '-']);
+                    let eqDataForPdf = eqList.map((eq, i) => [String(i+1) + '.', String(eq.name), String(eq.qty), String(eq.cond)]);
+                    if (eqDataForPdf.length === 0) eqDataForPdf.push(['-', 'No equipment recorded', '-', '-']);
 
-                let matDataForPdf = matList.map((mat, i) => [`${i+1}.`, mat.desc, mat.qty]);
-                if (matDataForPdf.length === 0) matDataForPdf.push(['-', 'No materials recorded', '-']);
+                    let matDataForPdf = matList.map((mat, i) => [String(i+1) + '.', String(mat.desc), String(mat.qty)]);
+                    if (matDataForPdf.length === 0) matDataForPdf.push(['-', 'No materials recorded', '-']);
 
-                const totalSkilled = d.vFix + d.vMas + d.vCar + d.vSaf + d.vOpe + d.vPlu + d.vEle + d.vAgt; const totalLabor = totalSkilled + d.vCas;
+                    const totalSkilled = d.vFix + d.vMas + d.vCar + d.vSaf + d.vOpe + d.vPlu + d.vEle + d.vAgt; const totalLabor = totalSkilled + d.vCas;
 
-                let currentY = 15;
-                if (rawLogoBase64 && customLogoImg) {
-                    const ratio = customLogoImg.width / customLogoImg.height; const h = 22; const w = h * ratio; const x = (210 - w) / 2; 
-                    doc.addImage(rawLogoBase64, 'PNG', x, currentY, w, h); currentY += h + 6;
-                } else { currentY += 10; }
+                    let currentY = 15;
+                    if (rawLogoBase64 && customLogoImg) {
+                        const ratio = customLogoImg.width / (customLogoImg.height || 1); const h = 22; const w = h * ratio; const x = (210 - w) / 2; 
+                        const format = rawLogoBase64.includes('image/jpeg') ? 'JPEG' : 'PNG';
+                        doc.addImage(rawLogoBase64, format, x, currentY, w, h); currentY += h + 6;
+                    } else { currentY += 10; }
 
-                doc.setFont("helvetica", "bold"); doc.setFontSize(14);
-                if (d.orgCountry.trim() !== "") { doc.text(d.orgCountry.toUpperCase(), 105, currentY, null, null, "center"); currentY += 6; }
-                doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.text(d.orgName.toUpperCase(), 105, currentY, null, null, "center"); currentY += 6;
-                
-                if (d.orgDept.trim() !== "") { doc.setFont("helvetica", "normal"); doc.setFontSize(11); doc.text(d.orgDept.toUpperCase(), 105, currentY, null, null, "center"); currentY += 6; }
-                if (d.orgSubDept.trim() !== "") { doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.text(d.orgSubDept, 105, currentY, null, null, "center"); currentY += 8; } else { currentY += 2; }
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(14);
+                    if (d.orgCountry.trim() !== "") { doc.text(String(d.orgCountry).toUpperCase(), 105, currentY, null, null, "center"); currentY += 6; }
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.text(String(d.orgName).toUpperCase(), 105, currentY, null, null, "center"); currentY += 6;
+                    
+                    if (d.orgDept.trim() !== "") { doc.setFont("helvetica", "normal"); doc.setFontSize(11); doc.text(String(d.orgDept).toUpperCase(), 105, currentY, null, null, "center"); currentY += 6; }
+                    if (d.orgSubDept.trim() !== "") { doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.text(String(d.orgSubDept), 105, currentY, null, null, "center"); currentY += 8; } else { currentY += 2; }
 
-                doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.text(`PROGRESS REPORT AS AT ${asAtDate.toUpperCase()}`, 105, currentY, null, null, "center"); currentY += 6;
-                doc.setFontSize(11); doc.text(`CONTRACT NO. ${wContractNo.toUpperCase()}`, 105, currentY, null, null, "center"); currentY += 10;
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.text(`PROGRESS REPORT AS AT ${String(asAtDate).toUpperCase()}`, 105, currentY, null, null, "center"); currentY += 6;
+                    doc.setFontSize(11); doc.text(`CONTRACT NO. ${String(wContractNo).toUpperCase()}`, 105, currentY, null, null, "center"); currentY += 10;
 
-                doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.text(`Clerk of Works: Name: ${d.cowName}   Email: ${wEmail}   Phone Number: ${wPhone}`, 14, currentY); currentY += 8;
-                doc.setFont("helvetica", "bold"); doc.setFontSize(10); const titleStr = `${d.title.toUpperCase()} AS AT ${asAtDate.toUpperCase()}`;
-                const splitTitle = doc.splitTextToSize(titleStr, 180); doc.text(splitTitle, 14, currentY); currentY += (splitTitle.length * 5) + 5;
+                    doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.text(`Clerk of Works: Name: ${String(d.cowName)}   Email: ${String(wEmail)}   Phone Number: ${String(wPhone)}`, 14, currentY); currentY += 8;
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(10); const titleStr = `${String(d.title).toUpperCase()} AS AT ${String(asAtDate).toUpperCase()}`;
+                    const splitTitle = doc.splitTextToSize(titleStr, 180); doc.text(splitTitle, 14, currentY); currentY += (splitTitle.length * 5) + 5;
 
-                // 1. Contract Data
-                doc.autoTable({
-                    startY: currentY, theme: 'grid', styles: { fontSize: 9, cellPadding: 3, lineColor: [180, 180, 180], lineWidth: 0.1 },
-                    headStyles: { fillColor: [60, 60, 60], textColor: 255, fontStyle: 'bold' }, columnStyles: { 0: { cellWidth: 15, halign: 'center' }, 1: { cellWidth: 45, fontStyle: 'bold' }, 2: { cellWidth: 120 } },
-                    head: [['S/NO', 'ITEM', 'DESCRIPTION']],
-                    body: [
-                        ['1', 'Project Name:', d.title.toUpperCase()], ['2', 'Contract Number:', wContractNo], ['3', 'Employer:', wEmployer], ['4', 'Procuring Entity:', wProcuring],
-                        ['5', 'Project Manager:', wManager], ['6', 'Contractor:', wContractor], ['7', 'Contract Sum:', wContractSum], ['8', 'Date of Handover:', wHandover], ['9', 'Commencement Date:', wCommencement]
-                    ]
-                }); currentY = doc.lastAutoTable.finalY + 8;
+                    doc.autoTable({
+                        startY: currentY, theme: 'grid', styles: { fontSize: 9, cellPadding: 3, lineColor: [180, 180, 180], lineWidth: 0.1 },
+                        headStyles: { fillColor: [60, 60, 60], textColor: 255, fontStyle: 'bold' }, columnStyles: { 0: { cellWidth: 15, halign: 'center' }, 1: { cellWidth: 45, fontStyle: 'bold' }, 2: { cellWidth: 120 } },
+                        head: [['S/NO', 'ITEM', 'DESCRIPTION']],
+                        body: [
+                            ['1', 'Project Name:', String(d.title).toUpperCase()], ['2', 'Contract Number:', String(wContractNo)], ['3', 'Employer:', String(wEmployer)], ['4', 'Procuring Entity:', String(wProcuring)],
+                            ['5', 'Project Manager:', String(wManager)], ['6', 'Contractor:', String(wContractor)], ['7', 'Contract Sum:', String(wContractSum)], ['8', 'Date of Handover:', String(wHandover)], ['9', 'Commencement Date:', String(wCommencement)]
+                        ]
+                    }); currentY = doc.lastAutoTable.finalY + 8;
 
-                // 2. Summary
-                if (currentY > 250) { doc.addPage(); currentY = 20; }
-                doc.autoTable({
-                    startY: currentY, theme: 'grid', styles: { fontSize: 9, cellPadding: 4, lineColor: [180, 180, 180], lineWidth: 0.1 },
-                    headStyles: { fillColor: [60, 60, 60], textColor: 255, fontStyle: 'bold', halign: 'left' },
-                    head: [['SUMMARY OF PROGRESS OF WORKS']], body: [[d.summary]]
-                }); currentY = doc.lastAutoTable.finalY + 8;
+                    if (currentY > 250) { doc.addPage(); currentY = 20; }
+                    doc.autoTable({
+                        startY: currentY, theme: 'grid', styles: { fontSize: 9, cellPadding: 4, lineColor: [180, 180, 180], lineWidth: 0.1 },
+                        headStyles: { fillColor: [60, 60, 60], textColor: 255, fontStyle: 'bold', halign: 'left' },
+                        head: [['SUMMARY OF PROGRESS OF WORKS']], body: [[String(d.summary)]]
+                    }); currentY = doc.lastAutoTable.finalY + 8;
 
-                // 3. Labour
-                if (currentY > 230) { doc.addPage(); currentY = 20; }
-                doc.autoTable({
-                    startY: currentY, theme: 'grid', styles: { fontSize: 9, cellPadding: 3, lineColor: [180, 180, 180], lineWidth: 0.1, valign: 'middle' },
-                    headStyles: { fillColor: [60, 60, 60], textColor: 255, fontStyle: 'bold', halign: 'center' },
-                    columnStyles: { 0: { cellWidth: 40 }, 1: { cellWidth: 35, halign: 'center' }, 2: { cellWidth: 35, halign: 'center' } },
-                    head: [['CATEGORY OF WORK', 'SKILLED WORKERS', 'CASUALS']],
-                    body: [
-                        ['Steel Fixers', d.vFix, ''], ['Masons', d.vMas, ''], ['Carpenters', d.vCar, ''], ['Safety Officer', d.vSaf, ''], ['Operators', d.vOpe, ''], ['Plumbers', d.vPlu, ''], ['Electrician', d.vEle, ''], ['Site Agent', d.vAgt, ''],
-                        [{ content: 'Casuals', fontStyle: 'bold', fillColor: [245, 245, 245] }, '', { content: d.vCas, fontStyle: 'bold', fillColor: [245, 245, 245] }],
-                        [{ content: 'TOTAL LABOUR ON SITE', fontStyle: 'bold', fillColor: [230, 230, 230] }, { content: totalSkilled, fontStyle: 'bold', fillColor: [230, 230, 230] }, { content: totalLabor, fontStyle: 'bold', fillColor: [230, 230, 230] }]
-                    ]
-                }); currentY = doc.lastAutoTable.finalY + 8;
+                    if (currentY > 230) { doc.addPage(); currentY = 20; }
+                    doc.autoTable({
+                        startY: currentY, theme: 'grid', styles: { fontSize: 9, cellPadding: 3, lineColor: [180, 180, 180], lineWidth: 0.1, valign: 'middle' },
+                        headStyles: { fillColor: [60, 60, 60], textColor: 255, fontStyle: 'bold', halign: 'center' },
+                        columnStyles: { 0: { cellWidth: 40 }, 1: { cellWidth: 35, halign: 'center' }, 2: { cellWidth: 35, halign: 'center' } },
+                        head: [['CATEGORY OF WORK', 'SKILLED WORKERS', 'CASUALS']],
+                        body: [
+                            ['Steel Fixers', String(d.vFix), ''], ['Masons', String(d.vMas), ''], ['Carpenters', String(d.vCar), ''], ['Safety Officer', String(d.vSaf), ''], ['Operators', String(d.vOpe), ''], ['Plumbers', String(d.vPlu), ''], ['Electrician', String(d.vEle), ''], ['Site Agent', String(d.vAgt), ''],
+                            [{ content: 'Casuals', fontStyle: 'bold', fillColor: [245, 245, 245] }, '', { content: String(d.vCas), fontStyle: 'bold', fillColor: [245, 245, 245] }],
+                            [{ content: 'TOTAL LABOUR ON SITE', fontStyle: 'bold', fillColor: [230, 230, 230] }, { content: String(totalSkilled), fontStyle: 'bold', fillColor: [230, 230, 230] }, { content: String(totalLabor), fontStyle: 'bold', fillColor: [230, 230, 230] }]
+                        ]
+                    }); currentY = doc.lastAutoTable.finalY + 8;
 
-                // 4. Equipment
-                if (currentY > 200) { doc.addPage(); currentY = 20; }
-                doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.text("PLANT AND EQUIPMENT ON SITE", 14, currentY); currentY += 4;
-                doc.autoTable({
-                    startY: currentY, theme: 'grid', styles: { fontSize: 8, cellPadding: 2, lineColor: [180, 180, 180], lineWidth: 0.1 },
-                    headStyles: { fillColor: [240, 240, 240], textColor: [20, 20, 20], fontStyle: 'bold' }, columnStyles: { 0: { cellWidth: 15, halign: 'center' }, 1: { cellWidth: 80 }, 2: { cellWidth: 30, halign: 'center' }, 3: { cellWidth: 55 } },
-                    head: [['Item', 'Description', 'QTY', 'Condition']], body: eqDataForPdf
-                }); currentY = doc.lastAutoTable.finalY + 8;
+                    if (currentY > 200) { doc.addPage(); currentY = 20; }
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.text("PLANT AND EQUIPMENT ON SITE", 14, currentY); currentY += 4;
+                    doc.autoTable({
+                        startY: currentY, theme: 'grid', styles: { fontSize: 8, cellPadding: 2, lineColor: [180, 180, 180], lineWidth: 0.1 },
+                        headStyles: { fillColor: [240, 240, 240], textColor: [20, 20, 20], fontStyle: 'bold' }, columnStyles: { 0: { cellWidth: 15, halign: 'center' }, 1: { cellWidth: 80 }, 2: { cellWidth: 30, halign: 'center' }, 3: { cellWidth: 55 } },
+                        head: [['Item', 'Description', 'QTY', 'Condition']], body: eqDataForPdf
+                    }); currentY = doc.lastAutoTable.finalY + 8;
 
-                // 5. Materials (DYNAMIC UPGRADE)
-                if (currentY > 200) { doc.addPage(); currentY = 20; }
-                doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.text("MATERIALS RECEIVED ON SITE", 14, currentY); currentY += 4;
-                doc.autoTable({
-                    startY: currentY, theme: 'grid', styles: { fontSize: 8, cellPadding: 3, lineColor: [180, 180, 180], lineWidth: 0.1 },
-                    headStyles: { fillColor: [240, 240, 240], textColor: [20, 20, 20], fontStyle: 'bold' }, columnStyles: { 0: { cellWidth: 15, halign: 'center' }, 1: { cellWidth: 100 }, 2: { cellWidth: 65, halign: 'center' } },
-                    head: [['Item', 'Material Description', 'Quantity & Unit']], body: matDataForPdf
-                }); currentY = doc.lastAutoTable.finalY + 8;
+                    if (currentY > 200) { doc.addPage(); currentY = 20; }
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.text("MATERIALS RECEIVED ON SITE", 14, currentY); currentY += 4;
+                    doc.autoTable({
+                        startY: currentY, theme: 'grid', styles: { fontSize: 8, cellPadding: 3, lineColor: [180, 180, 180], lineWidth: 0.1 },
+                        headStyles: { fillColor: [240, 240, 240], textColor: [20, 20, 20], fontStyle: 'bold' }, columnStyles: { 0: { cellWidth: 15, halign: 'center' }, 1: { cellWidth: 100 }, 2: { cellWidth: 65, halign: 'center' } },
+                        head: [['Item', 'Material Description', 'Quantity & Unit']], body: matDataForPdf
+                    }); currentY = doc.lastAutoTable.finalY + 8;
 
-                // 6. Admin
-                if (currentY > 230) { doc.addPage(); currentY = 20; }
-                doc.autoTable({
-                    startY: currentY, theme: 'grid', styles: { fontSize: 9, cellPadding: 4, lineColor: [180, 180, 180], lineWidth: 0.1 },
-                    columnStyles: { 0: { fontStyle: 'bold', fillColor: [245, 245, 245], cellWidth: 60, valign: 'middle' }, 1: { cellWidth: 120 } },
-                    body: [['VISITORS ON SITE\n(Name & Title)', d.admVis], ['DRAWINGS / DETAILS\nISSUED', d.admDra], ['SITE INSTRUCTION\nISSUED', d.admIns], ['REMARKS & CHALLENGES', d.admRem]]
-                }); currentY = doc.lastAutoTable.finalY + 15;
+                    if (currentY > 230) { doc.addPage(); currentY = 20; }
+                    doc.autoTable({
+                        startY: currentY, theme: 'grid', styles: { fontSize: 9, cellPadding: 4, lineColor: [180, 180, 180], lineWidth: 0.1 },
+                        columnStyles: { 0: { fontStyle: 'bold', fillColor: [245, 245, 245], cellWidth: 60, valign: 'middle' }, 1: { cellWidth: 120 } },
+                        body: [['VISITORS ON SITE\n(Name & Title)', String(d.admVis)], ['DRAWINGS / DETAILS\nISSUED', String(d.admDra)], ['SITE INSTRUCTION\nISSUED', String(d.admIns)], ['REMARKS & CHALLENGES', String(d.admRem)]]
+                    }); currentY = doc.lastAutoTable.finalY + 15;
 
-                if (currentY > 260) { doc.addPage(); currentY = 20; }
-                doc.autoTable({
-                    startY: currentY, theme: 'plain', styles: { fontSize: 10, fontStyle: 'bold', cellPadding: 2 },
-                    body: [[`Clerk of Works: ${d.cowName}`, 'Signature: __________________________', `Date: ${shortDate}`]]
-                });
+                    if (currentY > 260) { doc.addPage(); currentY = 20; }
+                    doc.autoTable({
+                        startY: currentY, theme: 'plain', styles: { fontSize: 10, fontStyle: 'bold', cellPadding: 2 },
+                        body: [[`Clerk of Works: ${String(d.cowName)}`, 'Signature: __________________________', `Date: ${String(shortDate)}`]]
+                    });
 
-                doc.addPage(); doc.setFont("helvetica", "bold"); doc.setFontSize(14); doc.text("PROGRESS PHOTOS", 105, 20, null, null, "center");
-                doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.5); doc.line(14, 25, 196, 25);
+                    if (batchData.length > 0) {
+                        doc.addPage(); doc.setFont("helvetica", "bold"); doc.setFontSize(14); doc.text("PROGRESS PHOTOS", 105, 20, null, null, "center");
+                        doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.5); doc.line(14, 25, 196, 25);
 
-                let imgY = 32;
-                batchData.forEach((item, index) => {
-                    if (index > 0 && index % 2 === 0) { doc.addPage(); imgY = 20; }
-                    const imgData = item.finalDataURL; const renderW = 180; const renderH = renderW * (item.originalImg.height / item.originalImg.width);
-                    doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.2); doc.rect(15, imgY, renderW, renderH); doc.addImage(imgData, 'JPEG', 15, imgY, renderW, renderH); imgY += renderH + 12; 
-                });
+                        let imgY = 32;
+                        batchData.forEach((item, index) => {
+                            if (index > 0 && index % 2 === 0) { doc.addPage(); imgY = 20; }
+                            const imgData = item.finalDataURL; const renderW = 180; const renderH = renderW * (item.originalImg.height / (item.originalImg.width || 1));
+                            doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.2); doc.rect(15, imgY, renderW, renderH); doc.addImage(imgData, 'JPEG', 15, imgY, renderW, renderH); imgY += renderH + 12; 
+                        });
+                    }
 
-                doc.save(`Weekly_Progress_Report_${shortDate.replace(/\//g, '-')}.pdf`); updateExportButton();
+                    doc.save(`Weekly_Progress_Report_${shortDate.replace(/\//g, '-')}.pdf`); 
+                    updateExportButton();
+
+                } catch (error) {
+                    console.error("PDF Generation Error:", error);
+                    alert("A fatal error occurred building the Weekly PDF: \n\n" + error.message + "\n\nThe button has been reset.");
+                    updateExportButton();
+                }
             }, 500); 
         }
 
