@@ -465,8 +465,8 @@
                     tasksHtml += `
                     <div class="flex items-center gap-2 mt-2 ml-4 border-l-2 border-blue-200 pl-3">
                         <input type="text" value="${task.name}" oninput="progressBlocks[${bIndex}].tasks[${tIndex}].name = this.value" placeholder="Task Name (e.g. Roof Casting)" class="flex-1 border border-slate-300 p-1.5 text-xs outline-none focus:border-blue-400 rounded-sm bg-white">
-                        <div class="relative w-20">
-                            <input type="number" value="${task.progress}" oninput="progressBlocks[${bIndex}].tasks[${tIndex}].progress = this.value" placeholder="%" class="w-full border border-slate-300 p-1.5 text-xs outline-none focus:border-blue-400 rounded-sm bg-white pr-4 text-center">
+                        <div class="relative w-24">
+                            <input type="number" value="${task.progress}" oninput="progressBlocks[${bIndex}].tasks[${tIndex}].progress = this.value" placeholder="0" class="w-full border border-slate-300 p-1.5 pr-6 text-xs outline-none focus:border-blue-400 rounded-sm bg-white text-center">
                             <span class="absolute right-2 top-1.5 text-xs text-slate-400 font-bold">%</span>
                         </div>
                         <input type="text" value="${task.status}" oninput="progressBlocks[${bIndex}].tasks[${tIndex}].status = this.value" placeholder="Status Remarks" class="w-32 border border-slate-300 p-1.5 text-xs outline-none focus:border-blue-400 rounded-sm bg-white">
