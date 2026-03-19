@@ -32,7 +32,7 @@
         .pac-item:hover { background-color: #f8fafc; }
         
         .report-fields { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-in-out, opacity 0.5s ease; opacity: 0; }
-        .report-fields.active { max-height: 4000px; opacity: 1; margin-top: 1rem; }
+        .report-fields.active { max-height: 8000px; opacity: 1; margin-top: 1rem; overflow: visible; }
     </style>
 </head>
 
@@ -87,18 +87,10 @@
                     </div>
 
                     <div class="grid grid-cols-1 gap-3 p-3 bg-slate-50 border border-slate-200 rounded-sm">
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Organization Name (Header 1)</label>
-                            <input type="text" id="orgName" value="MINISTRY OF LANDS, PUBLIC WORKS, HOUSING AND URBAN DEVELOPMENT" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Department / Subtitle (Header 2)</label>
-                            <input type="text" id="orgDept" value="State Department for Housing and Urban Development" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Department Division (Header 3)</label>
-                            <input type="text" id="orgSubDept" value="Slum Upgrading Department" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent">
-                        </div>
+                        <div><label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Country / Top Header (Header 0)</label><input type="text" id="orgCountry" value="REPUBLIC OF KENYA" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent"></div>
+                        <div><label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Organization Name (Header 1)</label><input type="text" id="orgName" value="MINISTRY OF LANDS, PUBLIC WORKS HOUSING & URBAN DEVELOPMENT" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent"></div>
+                        <div><label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Department / Subtitle (Header 2)</label><input type="text" id="orgDept" value="State Department for Housing and Urban Development" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent"></div>
+                        <div><label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Department Division (Header 3)</label><input type="text" id="orgSubDept" value="Slum Upgrading Department" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent"></div>
                     </div>
 
                     <div>
@@ -109,30 +101,15 @@
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="col-span-2">
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Project Title</label>
-                            <input type="text" id="locTitle" placeholder="e.g., PROPOSED CONSTRUCTION OF ESP MARKET..." class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent" oninput="debouncedRenderBatch()">
-                        </div>
-                        <div class="col-span-2">
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Detected Address</label>
-                            <input type="text" id="locAddress" placeholder="Auto-fills from search..." class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent" oninput="debouncedRenderBatch()">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Lat</label>
-                            <input type="text" id="lat" class="w-full border-b border-slate-300 p-2 text-sm text-slate-500 bg-transparent outline-none" readonly>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Long</label>
-                            <input type="text" id="lng" class="w-full border-b border-slate-300 p-2 text-sm text-slate-500 bg-transparent outline-none" readonly>
-                        </div>
+                        <div class="col-span-2"><label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Project Title</label><input type="text" id="locTitle" placeholder="e.g., PROPOSED CONSTRUCTION OF ESP MARKET..." class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent" oninput="debouncedRenderBatch()"></div>
+                        <div class="col-span-2"><label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Detected Address</label><input type="text" id="locAddress" placeholder="Auto-fills from search..." class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent" oninput="debouncedRenderBatch()"></div>
+                        <div><label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Lat</label><input type="text" id="lat" class="w-full border-b border-slate-300 p-2 text-sm text-slate-500 bg-transparent outline-none" readonly></div>
+                        <div><label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Long</label><input type="text" id="lng" class="w-full border-b border-slate-300 p-2 text-sm text-slate-500 bg-transparent outline-none" readonly></div>
                         <div class="col-span-2 flex gap-2 mt-1">
                             <button onclick="getLocation()" class="flex-1 border border-slate-300 hover:bg-slate-50 text-slate-600 text-[10px] font-bold uppercase tracking-widest py-3 transition rounded-sm">📍 My GPS</button>
                             <button onclick="openMap()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 text-[10px] font-bold uppercase tracking-widest py-3 transition rounded-sm">🗺️ Pick Map</button>
                         </div>
-                        <div class="col-span-2 mt-2">
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Report Generation Date</label>
-                            <input type="datetime-local" id="dateTimeInput" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent" oninput="debouncedRenderBatch()">
-                        </div>
+                        <div class="col-span-2 mt-2"><label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Report Generation Date</label><input type="datetime-local" id="dateTimeInput" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent" oninput="debouncedRenderBatch()"></div>
                     </div>
                 </div>
 
@@ -144,42 +121,22 @@
                         <option value="weekly">Template: Weekly Progress Report (1:1 Compliant)</option>
                     </select>
 
-                    <div id="dailyReportFields" class="report-fields">
+                    <div id="sharedReportFields" class="report-fields">
                         <div class="bg-slate-50 border border-slate-200 p-4 rounded-sm space-y-4">
                             
                             <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Start Date</label>
-                                    <input type="date" id="repStartDate" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-transparent outline-none">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Completion Date</label>
-                                    <input type="date" id="repCompletionDate" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-transparent outline-none">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Start Time</label>
-                                    <input type="time" id="repStartTime" value="08:00" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-transparent outline-none">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Closing Time</label>
-                                    <input type="time" id="repCloseTime" value="17:00" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-transparent outline-none">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Total Work Done (%)</label>
-                                    <input type="number" step="0.01" id="repWorkDone" placeholder="e.g. 8.19" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-transparent outline-none">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Time Elapsed (%)</label>
-                                    <input type="number" step="0.01" id="repTimeElapsed" placeholder="e.g. 139.01" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-transparent outline-none">
-                                </div>
+                                <div><label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Start Date</label><input type="date" id="repStartDate" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-transparent outline-none"></div>
+                                <div><label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Completion Date</label><input type="date" id="repCompletionDate" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-transparent outline-none"></div>
+                                <div><label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Start Time</label><input type="time" id="repStartTime" value="08:00" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-transparent outline-none"></div>
+                                <div><label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Closing Time</label><input type="time" id="repCloseTime" value="17:00" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-transparent outline-none"></div>
+                                <div><label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Work Done (%)</label><input type="number" step="0.01" id="repWorkDone" placeholder="e.g. 8.19" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-transparent outline-none"></div>
+                                <div><label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Time Elapsed (%)</label><input type="number" step="0.01" id="repTimeElapsed" placeholder="e.g. 139.01" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-transparent outline-none"></div>
                             </div>
                             
                             <div class="bg-white border border-slate-300 rounded-sm focus-within:border-[#D4AF37] transition overflow-hidden">
                                 <div class="bg-slate-100 border-b border-slate-200 px-3 py-2 flex items-center justify-between">
                                     <span class="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Summary of Work Done</span>
-                                    <div class="flex gap-2">
-                                        <button type="button" onclick="insertFormat('repSummary', '• ')" class="text-slate-500 hover:text-slate-900 text-xs font-bold bg-white px-2 py-0.5 rounded shadow-sm border border-slate-200" title="Add Bullet">List</button>
-                                    </div>
+                                    <button type="button" onclick="insertFormat('repSummary', '• ')" class="text-slate-500 hover:text-slate-900 text-xs font-bold bg-white px-2 py-0.5 rounded shadow-sm border border-slate-200">List</button>
                                 </div>
                                 <textarea id="repSummary" rows="3" placeholder="Click 'List' to start a bulleted list..." class="w-full p-3 text-sm bg-transparent outline-none resize-y border-none"></textarea>
                             </div>
@@ -201,13 +158,13 @@
 
                             <div class="h-[1px] bg-slate-200 my-2"></div>
                             
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Materials Received</label>
-                                <textarea id="repMaterials" rows="2" placeholder="List all materials..." class="w-full border border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-white outline-none rounded-sm resize-y"></textarea>
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Plants & Equipment on Site</label>
-                                <textarea id="repEquipment" rows="2" placeholder="List equipment..." class="w-full border border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-white outline-none rounded-sm resize-y"></textarea>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center border-b border-slate-200 pb-1">
+                                    <span class="text-[10px] font-bold text-slate-800 uppercase tracking-widest">Materials Received Ledger</span>
+                                    <button type="button" onclick="addMaterialRow()" class="text-[#D4AF37] hover:text-[#b5952f] text-[10px] font-bold uppercase tracking-widest">+ Add Material</button>
+                                </div>
+                                <div class="bg-white border border-slate-200 p-2 rounded-sm max-h-[250px] overflow-y-auto" id="materialsGridContainer">
+                                    </div>
                             </div>
 
                             <div class="h-[1px] bg-slate-200 my-2"></div>
@@ -220,7 +177,6 @@
                                     </div>
                                     <textarea id="admVisitors" rows="2" placeholder="Click 'List' to add visitors..." class="w-full p-2 text-sm bg-transparent outline-none resize-y border-none"></textarea>
                                 </div>
-
                                 <div class="bg-white border border-slate-300 rounded-sm focus-within:border-[#D4AF37] transition overflow-hidden">
                                     <div class="bg-slate-100 border-b border-slate-200 px-2 py-1.5 flex justify-between items-center">
                                         <label class="text-[10px] font-bold text-slate-600 uppercase">Drawings / Details Issued</label>
@@ -228,7 +184,6 @@
                                     </div>
                                     <textarea id="admDrawings" rows="2" placeholder="N/A or List..." class="w-full p-2 text-sm bg-transparent outline-none resize-y border-none"></textarea>
                                 </div>
-
                                 <div class="bg-white border border-slate-300 rounded-sm focus-within:border-[#D4AF37] transition overflow-hidden">
                                     <div class="bg-slate-100 border-b border-slate-200 px-2 py-1.5 flex justify-between items-center">
                                         <label class="text-[10px] font-bold text-slate-600 uppercase">Site Instructions Issued</label>
@@ -236,7 +191,6 @@
                                     </div>
                                     <textarea id="admInstructions" rows="2" placeholder="None or List..." class="w-full p-2 text-sm bg-transparent outline-none resize-y border-none"></textarea>
                                 </div>
-
                                 <div class="bg-white border border-slate-300 rounded-sm focus-within:border-[#D4AF37] transition overflow-hidden">
                                     <div class="bg-slate-100 border-b border-slate-200 px-2 py-1.5 flex justify-between items-center">
                                         <label class="text-[10px] font-bold text-slate-600 uppercase">Any Other Remarks</label>
@@ -250,141 +204,47 @@
                             
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-800 uppercase tracking-widest mb-1">Clerk of Works (Signatory Name)</label>
-                                <input type="text" id="cowNameDaily" placeholder="e.g. Emmanuel Kimwaki" class="w-full border-b border-[#D4AF37] p-2 text-sm font-semibold focus:bg-[#fffcf5] outline-none transition bg-transparent">
+                                <input type="text" id="cowName" placeholder="e.g. Emmanuel Kimwaki" class="w-full border-b border-[#D4AF37] p-2 text-sm font-semibold focus:bg-[#fffcf5] outline-none transition bg-transparent">
                             </div>
-
                         </div>
                     </div>
 
-                    <div id="weeklyReportFields" class="report-fields">
-                        <div class="bg-slate-50 border border-slate-200 p-4 rounded-sm space-y-5">
+                    <div id="weeklySpecificFields" class="report-fields">
+                        <div class="bg-slate-50 border border-[#D4AF37] p-4 rounded-sm space-y-5 shadow-inner">
+                            <h4 class="text-xs font-bold text-[#D4AF37] uppercase tracking-widest">📋 Weekly Master Data</h4>
                             
                             <div class="space-y-3">
-                                <span class="text-[10px] font-bold text-slate-800 uppercase tracking-widest block border-b border-slate-200 pb-1">Clerk of Works Details</span>
+                                <span class="text-[10px] font-bold text-slate-800 uppercase tracking-widest block border-b border-slate-200 pb-1">Extended Signatory Details</span>
                                 <div class="grid grid-cols-2 gap-3">
-                                    <div class="col-span-2">
-                                        <input type="text" id="cowNameWeekly" placeholder="Name (e.g. Emmanuel Kimwaki)" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-transparent outline-none">
-                                    </div>
-                                    <div>
-                                        <input type="email" id="cowEmailWeekly" placeholder="Email" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-transparent outline-none">
-                                    </div>
-                                    <div>
-                                        <input type="text" id="cowPhoneWeekly" placeholder="Phone Number" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-transparent outline-none">
-                                    </div>
+                                    <div><input type="email" id="cowEmail" placeholder="CoW Email Address" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-white outline-none"></div>
+                                    <div><input type="text" id="cowPhone" placeholder="CoW Phone Number" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-white outline-none"></div>
                                 </div>
                             </div>
 
                             <div class="space-y-3">
                                 <span class="text-[10px] font-bold text-slate-800 uppercase tracking-widest block border-b border-slate-200 pb-1">Contract Data Table</span>
                                 <div class="grid grid-cols-2 gap-3">
-                                    <div><label class="text-[9px] text-slate-500 uppercase">Contract No.</label><input type="text" id="w_contractNo" placeholder="e.g. 258/2023-2024" class="w-full border-b border-slate-300 p-1.5 text-sm bg-transparent outline-none"></div>
-                                    <div><label class="text-[9px] text-slate-500 uppercase">Contract Sum</label><input type="text" id="w_contractSum" placeholder="e.g. 151,147,05.00" class="w-full border-b border-slate-300 p-1.5 text-sm bg-transparent outline-none"></div>
+                                    <div><label class="text-[9px] text-slate-500 uppercase">Contract No.</label><input type="text" id="w_contractNo" placeholder="e.g. 258/2023-2024" class="w-full border-b border-slate-300 p-1.5 text-sm bg-white outline-none"></div>
+                                    <div><label class="text-[9px] text-slate-500 uppercase">Contract Sum</label><input type="text" id="w_contractSum" placeholder="e.g. 151,147,05.00" class="w-full border-b border-slate-300 p-1.5 text-sm bg-white outline-none"></div>
                                     
-                                    <div class="col-span-2"><label class="text-[9px] text-slate-500 uppercase">Employer</label><input type="text" id="w_employer" value="Ministry Of Lands, Public Works, Housing & Urban Development" class="w-full border-b border-slate-300 p-1.5 text-sm bg-transparent outline-none"></div>
-                                    <div class="col-span-2"><label class="text-[9px] text-slate-500 uppercase">Procuring Entity</label><input type="text" id="w_procuring" value="State Department for Housing & Urban Development" class="w-full border-b border-slate-300 p-1.5 text-sm bg-transparent outline-none"></div>
-                                    <div class="col-span-2"><label class="text-[9px] text-slate-500 uppercase">Project Manager</label><input type="text" id="w_manager" value="Director, Slum Upgrading Department" class="w-full border-b border-slate-300 p-1.5 text-sm bg-transparent outline-none"></div>
-                                    <div class="col-span-2"><label class="text-[9px] text-slate-500 uppercase">Contractor</label><input type="text" id="w_contractor" placeholder="e.g. Flolizz Contractors Limited" class="w-full border-b border-slate-300 p-1.5 text-sm bg-transparent outline-none"></div>
+                                    <div class="col-span-2"><label class="text-[9px] text-slate-500 uppercase">Employer</label><input type="text" id="w_employer" value="Ministry Of Lands, Public Works, Housing & Urban Development" class="w-full border-b border-slate-300 p-1.5 text-sm bg-white outline-none"></div>
+                                    <div class="col-span-2"><label class="text-[9px] text-slate-500 uppercase">Procuring Entity</label><input type="text" id="w_procuring" value="State Department for Housing & Urban Development" class="w-full border-b border-slate-300 p-1.5 text-sm bg-white outline-none"></div>
+                                    <div class="col-span-2"><label class="text-[9px] text-slate-500 uppercase">Project Manager</label><input type="text" id="w_manager" value="Director, Slum Upgrading Department" class="w-full border-b border-slate-300 p-1.5 text-sm bg-white outline-none"></div>
+                                    <div class="col-span-2"><label class="text-[9px] text-slate-500 uppercase">Contractor</label><input type="text" id="w_contractor" placeholder="e.g. Flolizz Contractors Limited" class="w-full border-b border-slate-300 p-1.5 text-sm bg-white outline-none"></div>
                                     
-                                    <div><label class="text-[9px] text-slate-500 uppercase">Handover Date</label><input type="date" id="w_handover" class="w-full border-b border-slate-300 p-1.5 text-sm bg-transparent outline-none"></div>
-                                    <div><label class="text-[9px] text-slate-500 uppercase">Commencement Date</label><input type="date" id="w_commencement" class="w-full border-b border-slate-300 p-1.5 text-sm bg-transparent outline-none"></div>
+                                    <div><label class="text-[9px] text-slate-500 uppercase">Handover Date</label><input type="date" id="w_handover" class="w-full border-b border-slate-300 p-1.5 text-sm bg-white outline-none"></div>
+                                    <div><label class="text-[9px] text-slate-500 uppercase">Commencement Date</label><input type="date" id="w_commencement" class="w-full border-b border-slate-300 p-1.5 text-sm bg-white outline-none"></div>
                                 </div>
                             </div>
 
                             <div class="space-y-3">
-                                <span class="text-[10px] font-bold text-slate-800 uppercase tracking-widest block border-b border-slate-200 pb-1">Plant and Equipment on Site</span>
+                                <div class="flex justify-between items-center border-b border-slate-200 pb-1">
+                                    <span class="text-[10px] font-bold text-slate-800 uppercase tracking-widest">Plant & Equipment Matrix</span>
+                                    <button type="button" onclick="addEquipmentRow()" class="text-[#D4AF37] hover:text-[#b5952f] text-[10px] font-bold uppercase tracking-widest">+ Add Equipment</button>
+                                </div>
                                 <div class="bg-white border border-slate-200 p-2 rounded-sm max-h-[300px] overflow-y-auto">
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
-                                        <div class="flex items-center gap-1 border-b border-slate-100 pb-1">
-                                            <span class="w-24 text-[10px] font-medium text-slate-700 truncate" title="Dumpy level">1. Dumpy level</span>
-                                            <input type="number" id="weq_q_1" value="0" class="w-10 border border-slate-300 p-1 text-[10px] text-center" title="Quantity">
-                                            <input type="text" id="weq_c_1" value="N/A" class="flex-1 border border-slate-300 p-1 text-[10px]" title="Condition">
+                                    <div class="grid grid-cols-1 gap-2" id="equipmentGridContainer">
                                         </div>
-                                        <div class="flex items-center gap-1 border-b border-slate-100 pb-1">
-                                            <span class="w-24 text-[10px] font-medium text-slate-700 truncate">2. Total Station</span>
-                                            <input type="number" id="weq_q_2" value="0" class="w-10 border border-slate-300 p-1 text-[10px] text-center">
-                                            <input type="text" id="weq_c_2" value="N/A" class="flex-1 border border-slate-300 p-1 text-[10px]">
-                                        </div>
-                                        <div class="flex items-center gap-1 border-b border-slate-100 pb-1">
-                                            <span class="w-24 text-[10px] font-medium text-slate-700 truncate">3. Tower Crane</span>
-                                            <input type="number" id="weq_q_3" value="0" class="w-10 border border-slate-300 p-1 text-[10px] text-center">
-                                            <input type="text" id="weq_c_3" value="N/A" class="flex-1 border border-slate-300 p-1 text-[10px]">
-                                        </div>
-                                        <div class="flex items-center gap-1 border-b border-slate-100 pb-1">
-                                            <span class="w-24 text-[10px] font-medium text-slate-700 truncate">4. Drill</span>
-                                            <input type="number" id="weq_q_4" value="0" class="w-10 border border-slate-300 p-1 text-[10px] text-center">
-                                            <input type="text" id="weq_c_4" value="N/A" class="flex-1 border border-slate-300 p-1 text-[10px]">
-                                        </div>
-                                        <div class="flex items-center gap-1 border-b border-slate-100 pb-1">
-                                            <span class="w-24 text-[10px] font-medium text-slate-700 truncate">5. Grinder</span>
-                                            <input type="number" id="weq_q_5" value="0" class="w-10 border border-slate-300 p-1 text-[10px] text-center">
-                                            <input type="text" id="weq_c_5" value="N/A" class="flex-1 border border-slate-300 p-1 text-[10px]">
-                                        </div>
-                                        <div class="flex items-center gap-1 border-b border-slate-100 pb-1">
-                                            <span class="w-24 text-[10px] font-medium text-slate-700 truncate">6. Backhoe</span>
-                                            <input type="number" id="weq_q_6" value="1" class="w-10 border border-slate-300 p-1 text-[10px] text-center">
-                                            <input type="text" id="weq_c_6" value="Good" class="flex-1 border border-slate-300 p-1 text-[10px]">
-                                        </div>
-                                        <div class="flex items-center gap-1 border-b border-slate-100 pb-1">
-                                            <span class="w-24 text-[10px] font-medium text-slate-700 truncate">7. Excavator</span>
-                                            <input type="number" id="weq_q_7" value="0" class="w-10 border border-slate-300 p-1 text-[10px] text-center">
-                                            <input type="text" id="weq_c_7" value="N/A" class="flex-1 border border-slate-300 p-1 text-[10px]">
-                                        </div>
-                                        <div class="flex items-center gap-1 border-b border-slate-100 pb-1">
-                                            <span class="w-24 text-[10px] font-medium text-slate-700 truncate">8. Hydraulic Breaker</span>
-                                            <input type="number" id="weq_q_8" value="0" class="w-10 border border-slate-300 p-1 text-[10px] text-center">
-                                            <input type="text" id="weq_c_8" value="N/A" class="flex-1 border border-slate-300 p-1 text-[10px]">
-                                        </div>
-                                        <div class="flex items-center gap-1 border-b border-slate-100 pb-1">
-                                            <span class="w-24 text-[10px] font-medium text-slate-700 truncate">9. Welding Machine</span>
-                                            <input type="number" id="weq_q_9" value="0" class="w-10 border border-slate-300 p-1 text-[10px] text-center">
-                                            <input type="text" id="weq_c_9" value="N/A" class="flex-1 border border-slate-300 p-1 text-[10px]">
-                                        </div>
-                                        <div class="flex items-center gap-1 border-b border-slate-100 pb-1">
-                                            <span class="w-24 text-[10px] font-medium text-slate-700 truncate">10. Wood saw machine</span>
-                                            <input type="number" id="weq_q_10" value="0" class="w-10 border border-slate-300 p-1 text-[10px] text-center">
-                                            <input type="text" id="weq_c_10" value="N/A" class="flex-1 border border-slate-300 p-1 text-[10px]">
-                                        </div>
-                                        <div class="flex items-center gap-1 border-b border-slate-100 pb-1">
-                                            <span class="w-24 text-[10px] font-medium text-slate-700 truncate">11. Steel Cutting Mac.</span>
-                                            <input type="number" id="weq_q_11" value="0" class="w-10 border border-slate-300 p-1 text-[10px] text-center">
-                                            <input type="text" id="weq_c_11" value="N/A" class="flex-1 border border-slate-300 p-1 text-[10px]">
-                                        </div>
-                                        <div class="flex items-center gap-1 border-b border-slate-100 pb-1">
-                                            <span class="w-24 text-[10px] font-medium text-slate-700 truncate">12. Steel Bending Mac.</span>
-                                            <input type="number" id="weq_q_12" value="0" class="w-10 border border-slate-300 p-1 text-[10px] text-center">
-                                            <input type="text" id="weq_c_12" value="N/A" class="flex-1 border border-slate-300 p-1 text-[10px]">
-                                        </div>
-                                        <div class="flex items-center gap-1 border-b border-slate-100 pb-1">
-                                            <span class="w-24 text-[10px] font-medium text-slate-700 truncate">13. Generator</span>
-                                            <input type="number" id="weq_q_13" value="0" class="w-10 border border-slate-300 p-1 text-[10px] text-center">
-                                            <input type="text" id="weq_c_13" value="N/A" class="flex-1 border border-slate-300 p-1 text-[10px]">
-                                        </div>
-                                        <div class="flex items-center gap-1 border-b border-slate-100 pb-1">
-                                            <span class="w-24 text-[10px] font-medium text-slate-700 truncate">14. Concrete Mixer</span>
-                                            <input type="number" id="weq_q_14" value="1" class="w-10 border border-slate-300 p-1 text-[10px] text-center">
-                                            <input type="text" id="weq_c_14" value="Good" class="flex-1 border border-slate-300 p-1 text-[10px]">
-                                        </div>
-                                        <div class="flex items-center gap-1 border-b border-slate-100 pb-1">
-                                            <span class="w-24 text-[10px] font-medium text-slate-700 truncate">15. Pedestal roller</span>
-                                            <input type="number" id="weq_q_15" value="0" class="w-10 border border-slate-300 p-1 text-[10px] text-center">
-                                            <input type="text" id="weq_c_15" value="N/A" class="flex-1 border border-slate-300 p-1 text-[10px]">
-                                        </div>
-                                        <div class="flex items-center gap-1 border-b border-slate-100 pb-1">
-                                            <span class="w-24 text-[10px] font-medium text-slate-700 truncate">16. Water Pump</span>
-                                            <input type="number" id="weq_q_16" value="0" class="w-10 border border-slate-300 p-1 text-[10px] text-center">
-                                            <input type="text" id="weq_c_16" value="N/A" class="flex-1 border border-slate-300 p-1 text-[10px]">
-                                        </div>
-                                        <div class="flex items-center gap-1 border-b border-slate-100 pb-1">
-                                            <span class="w-24 text-[10px] font-medium text-slate-700 truncate">17. Roller 7 Tons</span>
-                                            <input type="number" id="weq_q_17" value="0" class="w-10 border border-slate-300 p-1 text-[10px] text-center">
-                                            <input type="text" id="weq_c_17" value="N/A" class="flex-1 border border-slate-300 p-1 text-[10px]">
-                                        </div>
-                                        <div class="flex items-center gap-1 border-b border-slate-100 pb-1">
-                                            <span class="w-24 text-[10px] font-medium text-slate-700 truncate">18. Roller 20 Tons</span>
-                                            <input type="number" id="weq_q_18" value="0" class="w-10 border border-slate-300 p-1 text-[10px] text-center">
-                                            <input type="text" id="weq_c_18" value="N/A" class="flex-1 border border-slate-300 p-1 text-[10px]">
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -404,9 +264,7 @@
                 <h3 class="text-lg font-light tracking-widest uppercase text-center">Grid Preview</h3>
                 <p class="text-xs mt-2 text-center px-4">Upload multiple images to see them processed here.</p>
             </div>
-            
-            <div id="previewGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-max hidden">
-            </div>
+            <div id="previewGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-max hidden"></div>
         </div>
     </div>
     
@@ -452,37 +310,99 @@
         let tempLatLng = null;
         let debounceTimer; 
         let customLogoImg = null;
-        
         const weatherCache = {};
         let globalWeather = "Weather Unavailable";
 
+        // --- DYNAMIC DATA STATE MANAGERS ---
+        let eqList = [
+            {name: "Dumpy level", qty: 0, cond: "N/A"}, {name: "Total Station", qty: 0, cond: "N/A"},
+            {name: "Tower Crane", qty: 0, cond: "N/A"}, {name: "Drill", qty: 0, cond: "N/A"},
+            {name: "Grinder", qty: 0, cond: "N/A"}, {name: "Backhoe", qty: 1, cond: "Good"},
+            {name: "Excavator", qty: 0, cond: "N/A"}, {name: "Hydraulic Breaker", qty: 0, cond: "N/A"},
+            {name: "Welding Machine", qty: 0, cond: "N/A"}, {name: "Wood saw machine", qty: 0, cond: "N/A"},
+            {name: "Steel Cutting Machine", qty: 0, cond: "N/A"}, {name: "Steel Bending Machine", qty: 0, cond: "N/A"},
+            {name: "Generator", qty: 0, cond: "N/A"}, {name: "Concrete Mixer", qty: 1, cond: "Good"},
+            {name: "Pedestal roller", qty: 0, cond: "N/A"}, {name: "Water Pump", qty: 0, cond: "N/A"},
+            {name: "Roller 7 Tons", qty: 0, cond: "N/A"}, {name: "Roller 20 Tons", qty: 0, cond: "N/A"}
+        ];
+
+        let matList = [
+            {desc: "Cement", qty: "50 Bags"},
+            {desc: "Ballast", qty: "20 Tonnes"}
+        ];
+
+        // --- DYNAMIC RENDER FUNCTIONS ---
+        function renderEquipmentGrid() {
+            const container = document.getElementById('equipmentGridContainer');
+            container.innerHTML = '';
+            eqList.forEach((eq, index) => {
+                const html = `
+                <div class="flex items-center gap-2 border-b border-slate-100 pb-2">
+                    <span class="text-[10px] font-bold text-slate-400 w-4">${index + 1}.</span>
+                    <input type="text" value="${eq.name}" oninput="eqList[${index}].name = this.value" placeholder="Equipment Name" class="flex-1 border border-slate-300 p-1.5 text-xs outline-none focus:border-[#D4AF37] rounded-sm bg-slate-50">
+                    <input type="number" value="${eq.qty}" oninput="eqList[${index}].qty = this.value" placeholder="Qty" class="w-16 border border-slate-300 p-1.5 text-xs text-center outline-none focus:border-[#D4AF37] rounded-sm bg-slate-50">
+                    <input type="text" value="${eq.cond}" oninput="eqList[${index}].cond = this.value" placeholder="Condition" class="w-24 border border-slate-300 p-1.5 text-xs outline-none focus:border-[#D4AF37] rounded-sm bg-slate-50">
+                    <button type="button" onclick="removeEquipmentRow(${index})" class="text-red-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded transition" title="Remove Item">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>`;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        function renderMaterialsGrid() {
+            const container = document.getElementById('materialsGridContainer');
+            container.innerHTML = '';
+            matList.forEach((mat, index) => {
+                const html = `
+                <div class="flex items-center gap-2 border-b border-slate-100 pb-2 mb-2">
+                    <span class="text-[10px] font-bold text-slate-400 w-4">${index + 1}.</span>
+                    <input type="text" value="${mat.desc}" oninput="matList[${index}].desc = this.value" placeholder="Material Description (e.g. Cement)" class="flex-1 border border-slate-300 p-1.5 text-xs outline-none focus:border-[#D4AF37] rounded-sm bg-slate-50">
+                    <input type="text" value="${mat.qty}" oninput="matList[${index}].qty = this.value" placeholder="Qty / Unit (e.g. 50 Bags)" class="w-32 border border-slate-300 p-1.5 text-xs outline-none focus:border-[#D4AF37] rounded-sm bg-slate-50">
+                    <button type="button" onclick="removeMaterialRow(${index})" class="text-red-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded transition" title="Remove Item">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>`;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        function addEquipmentRow() { eqList.push({name: "", qty: 1, cond: "Good"}); renderEquipmentGrid(); }
+        function removeEquipmentRow(index) { eqList.splice(index, 1); renderEquipmentGrid(); }
+        
+        function addMaterialRow() { matList.push({desc: "", qty: ""}); renderMaterialsGrid(); }
+        function removeMaterialRow(index) { matList.splice(index, 1); renderMaterialsGrid(); }
+
+        // Initialize Dynamic Grids
+        renderEquipmentGrid();
+        renderMaterialsGrid();
+
+        // --- MINI EDITOR TOOL ---
         function insertFormat(elementId, textToInsert) {
             const el = document.getElementById(elementId);
             if (!el) return;
-            const start = el.selectionStart;
-            const end = el.selectionEnd;
-            const text = el.value;
+            const start = el.selectionStart; const end = el.selectionEnd; const text = el.value;
             if (text.length === 0) el.value = textToInsert;
             else el.value = text.substring(0, start) + '\n' + textToInsert + text.substring(end);
-            el.focus();
-            el.selectionStart = el.selectionEnd = start + textToInsert.length + 1;
+            el.focus(); el.selectionStart = el.selectionEnd = start + textToInsert.length + 1;
         }
 
-        // --- ENHANCED UI TOGGLE FOR BOTH REPORTS ---
+        // --- UNIFIED UI TOGGLE ---
         function toggleReportFields() {
             const mode = document.getElementById('exportMode').value;
-            const dailyFields = document.getElementById('dailyReportFields');
-            const weeklyFields = document.getElementById('weeklyReportFields');
+            const shared = document.getElementById('sharedReportFields');
+            const weekly = document.getElementById('weeklySpecificFields');
             const btnText = document.getElementById('exportBtnText');
             
-            dailyFields.classList.remove('active');
-            weeklyFields.classList.remove('active');
+            shared.classList.remove('active');
+            weekly.classList.remove('active');
             
             if(mode === 'daily') {
-                dailyFields.classList.add('active');
+                shared.classList.add('active');
                 if(batchData.length > 0) btnText.innerText = `GENERATE DAILY PDF`;
             } else if (mode === 'weekly') {
-                weeklyFields.classList.add('active');
+                shared.classList.add('active');
+                weekly.classList.add('active');
                 if(batchData.length > 0) btnText.innerText = `GENERATE WEEKLY PDF`;
             } else {
                 if(batchData.length > 0) updateExportButton(); 
@@ -498,25 +418,17 @@
                 const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current_weather=true`);
                 const data = await res.json();
                 if (data && data.current_weather) {
-                    const temp = data.current_weather.temperature;
-                    const code = data.current_weather.weathercode;
+                    const temp = data.current_weather.temperature; const code = data.current_weather.weathercode;
                     let desc = "Clear";
-                    if(code >= 1 && code <= 3) desc = "Partly Cloudy";
-                    else if(code >= 45 && code <= 48) desc = "Fog";
-                    else if(code >= 51 && code <= 67) desc = "Rain";
-                    else if(code >= 71 && code <= 77) desc = "Snow";
-                    else if(code >= 80 && code <= 82) desc = "Showers";
-                    else if(code >= 95) desc = "Thunderstorm";
-                    
-                    const weatherStr = `${desc}, ${temp}°C`;
-                    weatherCache[cacheKey] = weatherStr;
-                    return weatherStr;
+                    if(code >= 1 && code <= 3) desc = "Partly Cloudy"; else if(code >= 45 && code <= 48) desc = "Fog";
+                    else if(code >= 51 && code <= 67) desc = "Rain"; else if(code >= 71 && code <= 77) desc = "Snow";
+                    else if(code >= 80 && code <= 82) desc = "Showers"; else if(code >= 95) desc = "Thunderstorm";
+                    const weatherStr = `${desc}, ${temp}°C`; weatherCache[cacheKey] = weatherStr; return weatherStr;
                 }
             } catch(e) { console.warn("Weather API failed."); }
             return "Weather Unavailable";
         }
 
-        let rawLogoBase64 = null; 
         function handleLogoUpload(event) {
             const file = event.target.files[0];
             if(!file) return;
@@ -556,18 +468,13 @@
 
         function openSettings() { document.getElementById('apiKeyInput').value = localStorage.getItem('gmaps_api_key') || ''; document.getElementById('settingsModal').classList.add('active'); }
         function closeSettings() { document.getElementById('settingsModal').classList.remove('active'); }
-        function saveApiKey() {
-            const newKey = document.getElementById('apiKeyInput').value.trim();
-            if(newKey) { localStorage.setItem('gmaps_api_key', newKey); location.reload(); }
-        }
+        function saveApiKey() { const newKey = document.getElementById('apiKeyInput').value.trim(); if(newKey) { localStorage.setItem('gmaps_api_key', newKey); location.reload(); } }
 
         function loadGoogleMapsScript(apiKey) {
             if (!document.getElementById('gmaps-script')) {
-                const script = document.createElement('script');
-                script.id = 'gmaps-script';
+                const script = document.createElement('script'); script.id = 'gmaps-script';
                 script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initMap`;
-                script.async = true; script.defer = true;
-                document.head.appendChild(script);
+                script.async = true; script.defer = true; document.head.appendChild(script);
             }
         }
 
@@ -581,10 +488,8 @@
 
             autocomplete = new google.maps.places.Autocomplete(document.getElementById('smartSearch'));
             autocomplete.addListener('place_changed', async () => {
-                const place = autocomplete.getPlace();
-                if (!place.geometry || !place.geometry.location) return; 
-                const loc = place.geometry.location;
-                const finalLat = loc.lat().toFixed(6); const finalLng = loc.lng().toFixed(6);
+                const place = autocomplete.getPlace(); if (!place.geometry || !place.geometry.location) return; 
+                const loc = place.geometry.location; const finalLat = loc.lat().toFixed(6); const finalLng = loc.lng().toFixed(6);
                 
                 document.getElementById('lat').value = finalLat; document.getElementById('lng').value = finalLng;
                 document.getElementById('locAddress').value = place.formatted_address;
@@ -599,74 +504,50 @@
         window.onload = checkApiKey;
 
         function formatFullDate(dateStr) {
-            if(!dateStr) return "Invalid Date";
-            const d = new Date(dateStr);
-            if (isNaN(d.getTime())) return "Invalid Date";
+            if(!dateStr) return "Invalid Date"; const d = new Date(dateStr); if (isNaN(d.getTime())) return "Invalid Date";
             const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-            const dayName = days[d.getDay()];
-            const dd = String(d.getDate()).padStart(2, '0');
-            const mm = String(d.getMonth() + 1).padStart(2, '0');
-            const yyyy = d.getFullYear();
-            let hours = d.getHours();
-            const minutes = String(d.getMinutes()).padStart(2, '0');
-            const ampm = hours >= 12 ? 'PM' : 'AM';
-            hours = hours % 12; hours = hours ? hours : 12;
+            const dayName = days[d.getDay()]; const dd = String(d.getDate()).padStart(2, '0'); const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const yyyy = d.getFullYear(); let hours = d.getHours(); const minutes = String(d.getMinutes()).padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM'; hours = hours % 12; hours = hours ? hours : 12;
             const strTime = String(hours).padStart(2, '0') + ':' + minutes + ' ' + ampm;
-            const offset = -d.getTimezoneOffset();
-            const offsetHours = String(Math.floor(Math.abs(offset) / 60)).padStart(2, '0');
-            const offsetMins = String(Math.abs(offset) % 60).padStart(2, '0');
-            const offsetSign = offset >= 0 ? '+' : '-';
+            const offset = -d.getTimezoneOffset(); const offsetHours = String(Math.floor(Math.abs(offset) / 60)).padStart(2, '0');
+            const offsetMins = String(Math.abs(offset) % 60).padStart(2, '0'); const offsetSign = offset >= 0 ? '+' : '-';
             return `${dayName}, ${dd}/${mm}/${yyyy} ${strTime} GMT ${offsetSign}${offsetHours}:${offsetMins}`;
         }
 
         async function executeSmartSearch() {
             if(!geocoder) return alert("Google Maps API loading...");
-            const query = document.getElementById('smartSearch').value.trim();
-            if(!query) return;
-
-            document.getElementById('loadingOverlay').classList.remove('hidden');
-            document.getElementById('loadingOverlay').classList.add('flex');
+            const query = document.getElementById('smartSearch').value.trim(); if(!query) return;
+            document.getElementById('loadingOverlay').classList.remove('hidden'); document.getElementById('loadingOverlay').classList.add('flex');
 
             const match = query.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
             if (match) {
                 const lat = parseFloat(match[1]).toFixed(6); const lng = parseFloat(match[2]).toFixed(6);
-                document.getElementById('lat').value = lat; document.getElementById('lng').value = lng;
-                fetchAddressFromCoords(lat, lng);
+                document.getElementById('lat').value = lat; document.getElementById('lng').value = lng; fetchAddressFromCoords(lat, lng);
             } else {
                 geocoder.geocode({ address: query }, async (results, status) => {
                     if (status === "OK" && results[0]) {
-                        const loc = results[0].geometry.location;
-                        const finalLat = loc.lat().toFixed(6); const finalLng = loc.lng().toFixed(6);
+                        const loc = results[0].geometry.location; const finalLat = loc.lat().toFixed(6); const finalLng = loc.lng().toFixed(6);
                         document.getElementById('lat').value = finalLat; document.getElementById('lng').value = finalLng;
                         document.getElementById('locAddress').value = results[0].formatted_address;
                         let projName = results[0].address_components.find(c => c.types.includes('locality'))?.long_name || "";
                         if(projName) document.getElementById('locTitle').value = `${projName}`;
-                        
                         if(map) { map.setCenter(loc); marker.setPosition(loc); }
-                        globalWeather = await fetchWeather(finalLat, finalLng);
-                        renderBatch();
+                        globalWeather = await fetchWeather(finalLat, finalLng); renderBatch();
                     } else { alert("Could not find location."); }
-                    document.getElementById('loadingOverlay').classList.add('hidden');
-                    document.getElementById('loadingOverlay').classList.remove('flex');
+                    document.getElementById('loadingOverlay').classList.add('hidden'); document.getElementById('loadingOverlay').classList.remove('flex');
                 });
             }
         }
 
-        const imageInput = document.getElementById('imageInput');
-        const dropZone = document.getElementById('dropZone');
+        const imageInput = document.getElementById('imageInput'); const dropZone = document.getElementById('dropZone');
 
         function setDefaultTime() {
             const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             document.getElementById('dateTimeInput').value = now.toISOString().slice(0, 16);
-            
-            const dd = String(now.getDate()).padStart(2, '0');
-            const mm = String(now.getMonth() + 1).padStart(2, '0');
-            const yyyy = now.getFullYear();
+            const dd = String(now.getDate()).padStart(2, '0'); const mm = String(now.getMonth() + 1).padStart(2, '0'); const yyyy = now.getFullYear();
             const todayDate = `${yyyy}-${mm}-${dd}`;
-            
-            document.getElementById('repStartDate').value = todayDate;
-            document.getElementById('w_handover').value = todayDate;
-            document.getElementById('w_commencement').value = todayDate;
+            document.getElementById('repStartDate').value = todayDate; document.getElementById('w_handover').value = todayDate; document.getElementById('w_commencement').value = todayDate;
         }
         setDefaultTime();
 
@@ -681,8 +562,7 @@
             });
         }
 
-        dropZone.addEventListener('click', () => imageInput.click());
-        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('click', () => imageInput.click()); dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
         dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
         dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); if(e.dataTransfer.files.length) processMultipleFiles(e.dataTransfer.files); });
         imageInput.addEventListener('change', (e) => { if(e.target.files.length) processMultipleFiles(e.target.files); });
@@ -693,16 +573,12 @@
             let m = tag[1] && tag[1].numerator !== undefined ? tag[1].numerator / (tag[1].denominator || 1) : Number(tag[1] || 0);
             let s = tag[2] && tag[2].numerator !== undefined ? tag[2].numerator / (tag[2].denominator || 1) : Number(tag[2] || 0);
             let dd = d + (m / 60) + (s / 3600);
-            if (isNaN(dd)) return null; 
-            if (ref === "S" || ref === "W") dd = dd * -1;
-            return dd.toFixed(6);
+            if (isNaN(dd)) return null; if (ref === "S" || ref === "W") dd = dd * -1; return dd.toFixed(6);
         }
 
         async function processMultipleFiles(files) {
-            document.getElementById('placeholder-text').classList.add('hidden');
-            document.getElementById('previewGrid').classList.remove('hidden');
-            const overlay = document.getElementById('loadingOverlay');
-            const overlayText = document.getElementById('loadingText');
+            document.getElementById('placeholder-text').classList.add('hidden'); document.getElementById('previewGrid').classList.remove('hidden');
+            const overlay = document.getElementById('loadingOverlay'); const overlayText = document.getElementById('loadingText');
             overlay.classList.remove('hidden'); overlay.classList.add('flex'); overlayText.innerText = "Processing Files...";
 
             for (let i = 0; i < files.length; i++) {
@@ -724,9 +600,7 @@
                             const dateTimeOriginal = EXIF.getTag(this, "DateTimeOriginal");
                             if (latDMS && lngDMS) { fileExif.lat = parseExifToDecimal(latDMS, latRef); fileExif.lng = parseExifToDecimal(lngDMS, lngRef); }
                             if (dateTimeOriginal) {
-                                const parts = dateTimeOriginal.split(' ');
-                                const dateParts = parts[0].replace(/:/g, '-');
-                                const timeParts = parts[1].slice(0, 5); 
+                                const parts = dateTimeOriginal.split(' '); const dateParts = parts[0].replace(/:/g, '-'); const timeParts = parts[1].slice(0, 5); 
                                 fileExif.date = `${dateParts}T${timeParts}`;
                             }
                             resolve(); 
@@ -742,19 +616,12 @@
                     const reader = new FileReader();
                     reader.onload = function(event) {
                         const img = new Image();
-                        img.onload = function() {
-                            batchData.push({ id: Date.now() + i, originalName: renderFile.name, originalImg: img, exif: fileExif, finalDataURL: null });
-                            resolve(); 
-                        }
-                        img.onerror = () => { resolve(); } 
-                        img.src = event.target.result;
-                    }
-                    reader.onerror = () => { resolve(); } 
-                    reader.readAsDataURL(renderFile);
+                        img.onload = function() { batchData.push({ id: Date.now() + i, originalName: renderFile.name, originalImg: img, exif: fileExif, finalDataURL: null }); resolve(); }
+                        img.onerror = () => { resolve(); } ; img.src = event.target.result;
+                    }; reader.onerror = () => { resolve(); }; reader.readAsDataURL(renderFile);
                 });
             }
-            overlay.classList.add('hidden'); overlay.classList.remove('flex');
-            renderBatch();
+            overlay.classList.add('hidden'); overlay.classList.remove('flex'); renderBatch();
         }
 
         function getLocation() {
@@ -762,8 +629,7 @@
                 navigator.geolocation.getCurrentPosition(
                     function(position) {
                         const lat = position.coords.latitude.toFixed(6); const lng = position.coords.longitude.toFixed(6);
-                        document.getElementById('lat').value = lat; document.getElementById('lng').value = lng;
-                        fetchAddressFromCoords(lat, lng);
+                        document.getElementById('lat').value = lat; document.getElementById('lng').value = lng; fetchAddressFromCoords(lat, lng);
                     }, function(error) { alert("Enable location permissions."); }, { enableHighAccuracy: true }
                 );
             }
@@ -777,24 +643,18 @@
         function closeMap() { document.getElementById('mapModal').classList.remove('active'); }
         function confirmMapLocation() {
             if(tempLatLng) {
-                document.getElementById('lat').value = tempLatLng.lat.toFixed(6); document.getElementById('lng').value = tempLatLng.lng.toFixed(6);
-                fetchAddressFromCoords(tempLatLng.lat, tempLatLng.lng);
+                document.getElementById('lat').value = tempLatLng.lat.toFixed(6); document.getElementById('lng').value = tempLatLng.lng.toFixed(6); fetchAddressFromCoords(tempLatLng.lat, tempLatLng.lng);
             }
             closeMap();
         }
 
         function updateExportButton() {
-            const mode = document.getElementById('exportMode').value;
-            const btn = document.getElementById('exportBtn');
-            const btnText = document.getElementById('exportBtnText');
+            const mode = document.getElementById('exportMode').value; const btn = document.getElementById('exportBtn'); const btnText = document.getElementById('exportBtnText');
             if (batchData.length === 0) return;
-            
             btn.disabled = false; btn.classList.remove('opacity-50', 'cursor-not-allowed');
-            if (mode === 'daily') {
-                btnText.innerText = `GENERATE DAILY PDF`;
-            } else if (mode === 'weekly') {
-                btnText.innerText = `GENERATE WEEKLY PDF`;
-            } else {
+            if (mode === 'daily') { btnText.innerText = `GENERATE DAILY PDF`; } 
+            else if (mode === 'weekly') { btnText.innerText = `GENERATE WEEKLY PDF`; } 
+            else {
                 if (batchData.length < 5) btnText.innerText = `DOWNLOAD ${batchData.length} PHOTO${batchData.length > 1 ? 'S' : ''}`;
                 else btnText.innerText = `ZIP & EXPORT ${batchData.length} PHOTOS`;
             }
@@ -802,8 +662,7 @@
 
         function getFitFont(ctx, text, startSize, weight, fontFam, maxWidth) {
             let size = startSize; ctx.font = `${weight} ${size}px '${fontFam}', sans-serif`;
-            while(ctx.measureText(text).width > maxWidth && size > 10) { size -= 1; ctx.font = `${weight} ${size}px '${fontFam}', sans-serif`; }
-            return size; 
+            while(ctx.measureText(text).width > maxWidth && size > 10) { size -= 1; ctx.font = `${weight} ${size}px '${fontFam}', sans-serif`; } return size; 
         }
 
         function drawRoundedRect(ctx, x, y, width, height, radius) {
@@ -884,7 +743,6 @@
             updateExportButton();
         }
 
-        // --- MASTER EXPORT ROUTER ---
         function executeExport() {
             const mode = document.getElementById('exportMode').value;
             if (mode === 'daily') exportDailyPDF(); 
@@ -892,366 +750,266 @@
             else exportZip();
         }
 
-        // --- STEP 1: DAILY PDF ENGINE ---
+        // --- DATA HARVESTING ---
+        function fetchSharedFormData() {
+            const formatInputDate = (dateStr) => { if(!dateStr) return "N/A"; const d = new Date(dateStr); return isNaN(d) ? dateStr : d.toLocaleDateString('en-GB'); };
+            
+            // Generate formatted Materials string for Daily Report
+            let compiledMaterialsText = matList.map(m => `• ${m.desc} : ${m.qty}`).join('\n');
+            if (compiledMaterialsText.trim() === '•  :') compiledMaterialsText = "None recorded";
+
+            return {
+                orgCountry: document.getElementById('orgCountry').value || "REPUBLIC OF KENYA",
+                orgName: document.getElementById('orgName').value || "ORGANIZATION NAME",
+                orgDept: document.getElementById('orgDept').value || "",
+                orgSubDept: document.getElementById('orgSubDept').value || "",
+                title: document.getElementById('locTitle').value || "NOT SPECIFIED",
+                startDate: formatInputDate(document.getElementById('repStartDate').value),
+                compDate: formatInputDate(document.getElementById('repCompletionDate').value),
+                workDone: document.getElementById('repWorkDone').value || "0.00",
+                timeElapsed: document.getElementById('repTimeElapsed').value || "0.00",
+                sTime: document.getElementById('repStartTime').value || "08:00",
+                cTime: document.getElementById('repCloseTime').value || "17:00",
+                wtr: globalWeather,
+                summary: document.getElementById('repSummary').value || "None",
+                materialsStr: compiledMaterialsText,
+                admVis: document.getElementById('admVisitors').value || "None",
+                admDra: document.getElementById('admDrawings').value || "N/A",
+                admIns: document.getElementById('admInstructions').value || "None",
+                admRem: document.getElementById('admRemarks').value || "None",
+                cowName: document.getElementById('cowName').value || "_________________________",
+                vFix: parseInt(document.getElementById('labFixers').value) || 0,
+                vMas: parseInt(document.getElementById('labMasons').value) || 0,
+                vCar: parseInt(document.getElementById('labCarpenters').value) || 0,
+                vSaf: parseInt(document.getElementById('labSafety').value) || 0,
+                vOpe: parseInt(document.getElementById('labOperators').value) || 0,
+                vPlu: parseInt(document.getElementById('labPlumbers').value) || 0,
+                vEle: parseInt(document.getElementById('labElectricians').value) || 0,
+                vAgt: parseInt(document.getElementById('labAgents').value) || 0,
+                vCas: parseInt(document.getElementById('labCasuals').value) || 0
+            };
+        }
+
+        // --- DAILY PDF ENGINE ---
         function exportDailyPDF() {
             if (batchData.length === 0) return alert("Please upload images first.");
-            const btn = document.getElementById('exportBtn');
-            const btnText = document.getElementById('exportBtnText');
-            btn.disabled = true; btnText.innerText = "GENERATING PDF...";
+            document.getElementById('exportBtn').disabled = true; document.getElementById('exportBtnText').innerText = "GENERATING PDF...";
 
             setTimeout(() => {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-                
-                const orgName = document.getElementById('orgName').value || "ORGANIZATION NAME";
-                const orgDept = document.getElementById('orgDept').value || "";
-                const orgSubDept = document.getElementById('orgSubDept').value || "";
-                const title = document.getElementById('locTitle').value || "NOT SPECIFIED";
-                
-                const formatInputDate = (dateStr) => {
-                    if(!dateStr) return "N/A";
-                    const d = new Date(dateStr);
-                    if(isNaN(d)) return dateStr;
-                    return d.toLocaleDateString('en-GB');
-                };
-
-                const startDate = formatInputDate(document.getElementById('repStartDate').value);
-                const compDate = formatInputDate(document.getElementById('repCompletionDate').value);
-                
+                const { jsPDF } = window.jspdf; const doc = new jsPDF(); const d = fetchSharedFormData();
                 const rDateObj = new Date(document.getElementById('dateTimeInput').value);
                 const rDate = isNaN(rDateObj) ? new Date().toLocaleDateString('en-GB') : rDateObj.toLocaleDateString('en-GB');
-
-                const workDone = document.getElementById('repWorkDone').value || "0.00";
-                const timeElapsed = document.getElementById('repTimeElapsed').value || "0.00";
-                const wtr = globalWeather;
-                const sTime = document.getElementById('repStartTime').value || "08:00";
-                const cTime = document.getElementById('repCloseTime').value || "17:00";
-                
-                const summary = document.getElementById('repSummary').value || "None";
-                const materials = document.getElementById('repMaterials').value || "N/A";
-                const equipment = document.getElementById('repEquipment').value || "N/A";
-                const admVis = document.getElementById('admVisitors').value || "None";
-                const admDra = document.getElementById('admDrawings').value || "N/A";
-                const admIns = document.getElementById('admInstructions').value || "None";
-                const admRem = document.getElementById('admRemarks').value || "None";
-                
-                const vFix = parseInt(document.getElementById('labFixers').value) || 0;
-                const vMas = parseInt(document.getElementById('labMasons').value) || 0;
-                const vCar = parseInt(document.getElementById('labCarpenters').value) || 0;
-                const vSaf = parseInt(document.getElementById('labSafety').value) || 0;
-                const vOpe = parseInt(document.getElementById('labOperators').value) || 0;
-                const vPlu = parseInt(document.getElementById('labPlumbers').value) || 0;
-                const vEle = parseInt(document.getElementById('labElectricians').value) || 0;
-                const vAgt = parseInt(document.getElementById('labAgents').value) || 0;
-                const vCas = parseInt(document.getElementById('labCasuals').value) || 0;
-                
-                const totalSkilled = vFix + vMas + vCar + vSaf + vOpe + vPlu + vEle + vAgt;
-                const totalLabor = totalSkilled + vCas;
-                const cowName = document.getElementById('cowNameDaily').value || "_________________________";
+                const totalSkilled = d.vFix + d.vMas + d.vCar + d.vSaf + d.vOpe + d.vPlu + d.vEle + d.vAgt; const totalLabor = totalSkilled + d.vCas;
 
                 let currentY = 15;
-
                 if (rawLogoBase64 && customLogoImg) {
-                    const ratio = customLogoImg.width / customLogoImg.height;
-                    const h = 22; const w = h * ratio;
-                    const x = (210 - w) / 2; 
-                    doc.addImage(rawLogoBase64, 'PNG', x, currentY, w, h);
-                    currentY += h + 6;
+                    const ratio = customLogoImg.width / customLogoImg.height; const h = 22; const w = h * ratio; const x = (210 - w) / 2; 
+                    doc.addImage(rawLogoBase64, 'PNG', x, currentY, w, h); currentY += h + 6;
                 } else { currentY += 10; }
 
-                doc.setFont("helvetica", "bold"); doc.setFontSize(13);
-                doc.text(orgName.toUpperCase(), 105, currentY, null, null, "center");
-                currentY += 6;
-                
-                if (orgDept.trim() !== "") {
-                    doc.setFont("helvetica", "normal"); doc.setFontSize(11);
-                    doc.text(orgDept, 105, currentY, null, null, "center");
-                    currentY += 6;
-                }
-                if (orgSubDept.trim() !== "") {
-                    doc.setFont("helvetica", "normal"); doc.setFontSize(10);
-                    doc.text(orgSubDept, 105, currentY, null, null, "center");
-                    currentY += 6;
-                } else { currentY += 2; }
-                
-                doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.5); doc.line(14, currentY, 196, currentY);
-                currentY += 8;
+                doc.setFont("helvetica", "bold"); doc.setFontSize(13); doc.text(d.orgName.toUpperCase(), 105, currentY, null, null, "center"); currentY += 6;
+                if (d.orgDept.trim() !== "") { doc.setFont("helvetica", "normal"); doc.setFontSize(11); doc.text(d.orgDept, 105, currentY, null, null, "center"); currentY += 6; }
+                if (d.orgSubDept.trim() !== "") { doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.text(d.orgSubDept, 105, currentY, null, null, "center"); currentY += 6; } else { currentY += 2; }
+                doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.5); doc.line(14, currentY, 196, currentY); currentY += 8;
 
-                doc.setFont("helvetica", "bold"); doc.setFontSize(14);
-                doc.text("DAILY SITE REPORT", 105, currentY, null, null, "center");
-                currentY += 8;
+                doc.setFont("helvetica", "bold"); doc.setFontSize(14); doc.text("DAILY SITE REPORT", 105, currentY, null, null, "center"); currentY += 8;
 
                 doc.autoTable({
-                    startY: currentY, theme: 'grid',
-                    styles: { fontSize: 9, cellPadding: 3, lineColor: [200, 200, 200], lineWidth: 0.1, textColor: [40, 40, 40] },
+                    startY: currentY, theme: 'grid', styles: { fontSize: 9, cellPadding: 3, lineColor: [200, 200, 200], lineWidth: 0.1, textColor: [40, 40, 40] },
                     columnStyles: { 0: { fontStyle: 'bold', fillColor: [245, 245, 245], cellWidth: 40 }, 1: { cellWidth: 50 }, 2: { fontStyle: 'bold', fillColor: [245, 245, 245], cellWidth: 40 }, 3: { cellWidth: 50 } },
                     body: [
-                        ['PROJECT TITLE:', { content: title.toUpperCase(), colSpan: 3 }],
-                        ['START DATE:', startDate, 'REPORT DATE:', rDate],
-                        ['COMPLETION DATE:', compDate, 'WEATHER:', wtr],
-                        ['START TIME:', sTime, 'CLOSING TIME:', cTime],
-                        ['WORK DONE %:', `${workDone}%`, 'TIME ELAPSED %:', `${timeElapsed}%`]
+                        ['PROJECT TITLE:', { content: d.title.toUpperCase(), colSpan: 3 }],
+                        ['START DATE:', d.startDate, 'REPORT DATE:', rDate],
+                        ['COMPLETION DATE:', d.compDate, 'WEATHER:', d.wtr],
+                        ['START TIME:', d.sTime, 'CLOSING TIME:', d.cTime],
+                        ['WORK DONE %:', `${d.workDone}%`, 'TIME ELAPSED %:', `${d.timeElapsed}%`]
                     ]
                 });
                 currentY = doc.lastAutoTable.finalY + 8;
 
                 doc.autoTable({
-                    startY: currentY, theme: 'grid',
-                    styles: { fontSize: 9, cellPadding: 4, lineColor: [200, 200, 200], lineWidth: 0.1 },
+                    startY: currentY, theme: 'grid', styles: { fontSize: 9, cellPadding: 4, lineColor: [200, 200, 200], lineWidth: 0.1 },
                     headStyles: { fillColor: [60, 60, 60], textColor: 255, fontStyle: 'bold', halign: 'left' },
-                    head: [['SUMMARY OF WORK DONE']],
-                    body: [[summary]]
+                    head: [['SUMMARY OF WORK DONE']], body: [[d.summary]]
                 });
                 currentY = doc.lastAutoTable.finalY + 8;
 
                 doc.autoTable({
-                    startY: currentY, theme: 'grid',
-                    styles: { fontSize: 9, cellPadding: 3, lineColor: [200, 200, 200], lineWidth: 0.1, valign: 'middle' },
+                    startY: currentY, theme: 'grid', styles: { fontSize: 9, cellPadding: 3, lineColor: [200, 200, 200], lineWidth: 0.1, valign: 'middle' },
                     headStyles: { fillColor: [60, 60, 60], textColor: 255, fontStyle: 'bold', halign: 'center' },
                     columnStyles: { 0: { cellWidth: 35 }, 1: { cellWidth: 25, halign: 'center' }, 2: { cellWidth: 20, halign: 'center' }, 3: { cellWidth: 50 }, 4: { cellWidth: 50 } },
                     head: [['CATEGORY OF WORK', 'SKILLED WORKERS', 'CASUALS', 'MATERIALS RECEIVED', 'PLANTS AND EQUIPMENT']],
                     body: [
-                        ['Steel Fixers', vFix, '', { content: materials, rowSpan: 9 }, { content: equipment, rowSpan: 9 }],
-                        ['Masons', vMas, '', '', ''],
-                        ['Carpenters', vCar, '', '', ''],
-                        ['Safety Officer', vSaf, '', '', ''],
-                        ['Operators', vOpe, '', '', ''],
-                        ['Plumbers', vPlu, '', '', ''],
-                        ['Electrician', vEle, '', '', ''],
-                        ['Site Agent', vAgt, '', '', ''],
-                        [{ content: 'Casuals', fontStyle: 'bold', fillColor: [245, 245, 245] }, '', { content: vCas, fontStyle: 'bold', fillColor: [245, 245, 245] }, '', ''],
+                        ['Steel Fixers', d.vFix, '', { content: d.materialsStr, rowSpan: 9 }, { content: 'See Next Section / Attached', rowSpan: 9 }],
+                        ['Masons', d.vMas, '', '', ''], ['Carpenters', d.vCar, '', '', ''],
+                        ['Safety Officer', d.vSaf, '', '', ''], ['Operators', d.vOpe, '', '', ''],
+                        ['Plumbers', d.vPlu, '', '', ''], ['Electrician', d.vEle, '', '', ''], ['Site Agent', d.vAgt, '', '', ''],
+                        [{ content: 'Casuals', fontStyle: 'bold', fillColor: [245, 245, 245] }, '', { content: d.vCas, fontStyle: 'bold', fillColor: [245, 245, 245] }, '', ''],
                         [{ content: 'TOTAL', fontStyle: 'bold', fillColor: [230, 230, 230] }, { content: totalSkilled, fontStyle: 'bold', fillColor: [230, 230, 230] }, { content: totalLabor, fontStyle: 'bold', fillColor: [230, 230, 230] }, { content: '', fillColor: [230, 230, 230] }, { content: '', fillColor: [230, 230, 230] }]
                     ]
                 });
                 currentY = doc.lastAutoTable.finalY + 8;
 
+                if (currentY > 260) { doc.addPage(); currentY = 20; }
                 doc.autoTable({
-                    startY: currentY, theme: 'grid',
-                    styles: { fontSize: 9, cellPadding: 4, lineColor: [200, 200, 200], lineWidth: 0.1 },
+                    startY: currentY, theme: 'grid', styles: { fontSize: 9, cellPadding: 4, lineColor: [200, 200, 200], lineWidth: 0.1 },
                     columnStyles: { 0: { fontStyle: 'bold', fillColor: [245, 245, 245], cellWidth: 60, valign: 'middle' }, 1: { cellWidth: 120 } },
-                    body: [
-                        ['VISITORS RECEIVED\n(Name & Title)', admVis],
-                        ['DRAWINGS / DETAILS\nISSUED', admDra],
-                        ['SITE INSTRUCTION\nISSUED', admIns],
-                        ['ANY OTHER REMARKS', admRem]
-                    ]
+                    body: [['VISITORS RECEIVED\n(Name & Title)', d.admVis], ['DRAWINGS / DETAILS\nISSUED', d.admDra], ['SITE INSTRUCTION\nISSUED', d.admIns], ['ANY OTHER REMARKS', d.admRem]]
                 });
                 currentY = doc.lastAutoTable.finalY + 15;
 
                 if (currentY > 260) { doc.addPage(); currentY = 20; }
                 doc.autoTable({
                     startY: currentY, theme: 'plain', styles: { fontSize: 10, fontStyle: 'bold', cellPadding: 2 },
-                    body: [[`Clerk of Works: ${cowName}`, 'Signature: __________________________', `Date: ${rDate}`]]
+                    body: [[`Clerk of Works: ${d.cowName}`, 'Signature: __________________________', `Date: ${rDate}`]]
                 });
 
-                // PROGRESS PHOTOS PAGE
-                doc.addPage();
-                doc.setFont("helvetica", "bold"); doc.setFontSize(14);
-                doc.text("PROGRESS PHOTOS", 105, 20, null, null, "center");
+                doc.addPage(); doc.setFont("helvetica", "bold"); doc.setFontSize(14); doc.text("PROGRESS PHOTOS", 105, 20, null, null, "center");
                 doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.5); doc.line(14, 25, 196, 25);
 
                 let imgY = 32;
                 batchData.forEach((item, index) => {
                     if (index > 0 && index % 2 === 0) { doc.addPage(); imgY = 20; }
-                    const imgData = item.finalDataURL;
-                    const origW = item.originalImg.width; const origH = item.originalImg.height;
-                    const renderW = 180; const renderH = renderW * (origH / origW);
-                    doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.2); doc.rect(15, imgY, renderW, renderH);
-                    doc.addImage(imgData, 'JPEG', 15, imgY, renderW, renderH);
-                    imgY += renderH + 12; 
+                    const imgData = item.finalDataURL; const renderW = 180; const renderH = renderW * (item.originalImg.height / item.originalImg.width);
+                    doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.2); doc.rect(15, imgY, renderW, renderH); doc.addImage(imgData, 'JPEG', 15, imgY, renderW, renderH); imgY += renderH + 12; 
                 });
 
-                doc.save(`Daily_Site_Report_${rDate.replace(/\//g, '-')}.pdf`);
-                updateExportButton();
+                doc.save(`Daily_Site_Report_${rDate.replace(/\//g, '-')}.pdf`); updateExportButton();
             }, 500); 
         }
 
-        // --- STEP 2: WEEKLY PDF ENGINE (1:1 GOLD STANDARD) ---
+        // --- WEEKLY MEGA-PDF ENGINE ---
         function exportWeeklyPDF() {
             if (batchData.length === 0) return alert("Please upload images first.");
-            const btn = document.getElementById('exportBtn');
-            const btnText = document.getElementById('exportBtnText');
-            btn.disabled = true; btnText.innerText = "GENERATING WEEKLY PDF...";
+            document.getElementById('exportBtn').disabled = true; document.getElementById('exportBtnText').innerText = "GENERATING MEGA-PDF...";
 
             setTimeout(() => {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-                
-                // Fetch Global Headers
-                const orgName = document.getElementById('orgName').value || "ORGANIZATION NAME";
-                const orgDept = document.getElementById('orgDept').value || "";
-                const orgSubDept = document.getElementById('orgSubDept').value || "";
-                const title = document.getElementById('locTitle').value || "NOT SPECIFIED";
+                const { jsPDF } = window.jspdf; const doc = new jsPDF(); const d = fetchSharedFormData();
                 
                 const rDateObj = new Date(document.getElementById('dateTimeInput').value);
-                // The Weekly template asks for specific "AS AT DDTH MONTH YYYY" string, let's format nice
                 const options = { day: 'numeric', month: 'long', year: 'numeric' };
                 const asAtDate = isNaN(rDateObj) ? new Date().toLocaleDateString('en-GB', options) : rDateObj.toLocaleDateString('en-GB', options);
                 const shortDate = isNaN(rDateObj) ? new Date().toLocaleDateString('en-GB') : rDateObj.toLocaleDateString('en-GB');
 
-                // Clerk of Works info
-                const wName = document.getElementById('cowNameWeekly').value || "N/A";
-                const wEmail = document.getElementById('cowEmailWeekly').value || "N/A";
-                const wPhone = document.getElementById('cowPhoneWeekly').value || "N/A";
+                const formatWeeklyDate = (dateStr) => { if(!dateStr) return "N/A"; const x = new Date(dateStr); return isNaN(x) ? dateStr : x.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }); };
 
-                // Contract Data
-                const wContractNo = document.getElementById('w_contractNo').value || "N/A";
-                const wContractSum = document.getElementById('w_contractSum').value || "N/A";
-                const wEmployer = document.getElementById('w_employer').value || "N/A";
-                const wProcuring = document.getElementById('w_procuring').value || "N/A";
-                const wManager = document.getElementById('w_manager').value || "N/A";
-                const wContractor = document.getElementById('w_contractor').value || "N/A";
-                
-                const formatInputDate = (dateStr) => {
-                    if(!dateStr) return "N/A";
-                    const d = new Date(dateStr);
-                    if(isNaN(d)) return dateStr;
-                    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-                };
-                const wHandover = formatInputDate(document.getElementById('w_handover').value);
-                const wCommencement = formatInputDate(document.getElementById('w_commencement').value);
+                const wEmail = document.getElementById('cowEmail').value || "N/A"; const wPhone = document.getElementById('cowPhone').value || "N/A";
+                const wContractNo = document.getElementById('w_contractNo').value || "N/A"; const wContractSum = document.getElementById('w_contractSum').value || "N/A";
+                const wEmployer = document.getElementById('w_employer').value || "N/A"; const wProcuring = document.getElementById('w_procuring').value || "N/A";
+                const wManager = document.getElementById('w_manager').value || "N/A"; const wContractor = document.getElementById('w_contractor').value || "N/A";
+                const wHandover = formatWeeklyDate(document.getElementById('w_handover').value); const wCommencement = formatWeeklyDate(document.getElementById('w_commencement').value);
 
-                // Equipment Array mapping
-                const eqNames = [
-                    "Dumpy level", "Total Station", "Tower Crane", "Drill", "Grinder", "Backhoe",
-                    "Excavator", "Hydraulic Breaker", "Welding Machine", "Wood saw machine",
-                    "Steel Cutting Machine", "Steel Bending Machine", "Generator", "Concrete Mixer",
-                    "Pedestal roller", "Water Pump", "Roller 7 Tons", "Roller 20 Tons"
-                ];
-                
-                let eqData = [];
-                for(let i=1; i<=18; i++) {
-                    let q = document.getElementById(`weq_q_${i}`).value || "0";
-                    let c = document.getElementById(`weq_c_${i}`).value || "N/A";
-                    eqData.push([`${i}.`, eqNames[i-1], q, c]);
-                }
+                // Harvest Dynamic Arrays
+                let eqDataForPdf = eqList.map((eq, i) => [`${i+1}.`, eq.name, eq.qty, eq.cond]);
+                if (eqDataForPdf.length === 0) eqDataForPdf.push(['-', 'No equipment recorded', '-', '-']);
 
-                // --- PDF CONSTRUCTION ---
+                let matDataForPdf = matList.map((mat, i) => [`${i+1}.`, mat.desc, mat.qty]);
+                if (matDataForPdf.length === 0) matDataForPdf.push(['-', 'No materials recorded', '-']);
+
+                const totalSkilled = d.vFix + d.vMas + d.vCar + d.vSaf + d.vOpe + d.vPlu + d.vEle + d.vAgt; const totalLabor = totalSkilled + d.vCas;
+
                 let currentY = 15;
-
-                // 1. Logo
                 if (rawLogoBase64 && customLogoImg) {
-                    const ratio = customLogoImg.width / customLogoImg.height;
-                    const h = 22; const w = h * ratio;
-                    const x = (210 - w) / 2; 
-                    doc.addImage(rawLogoBase64, 'PNG', x, currentY, w, h);
-                    currentY += h + 6;
+                    const ratio = customLogoImg.width / customLogoImg.height; const h = 22; const w = h * ratio; const x = (210 - w) / 2; 
+                    doc.addImage(rawLogoBase64, 'PNG', x, currentY, w, h); currentY += h + 6;
                 } else { currentY += 10; }
 
-                // 2. Letterhead
-                doc.setFont("helvetica", "bold"); doc.setFontSize(13);
-                doc.text(orgName.toUpperCase(), 105, currentY, null, null, "center");
-                currentY += 6;
+                doc.setFont("helvetica", "bold"); doc.setFontSize(14);
+                if (d.orgCountry.trim() !== "") { doc.text(d.orgCountry.toUpperCase(), 105, currentY, null, null, "center"); currentY += 6; }
+                doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.text(d.orgName.toUpperCase(), 105, currentY, null, null, "center"); currentY += 6;
                 
-                if (orgDept.trim() !== "") {
-                    doc.setFont("helvetica", "normal"); doc.setFontSize(11);
-                    doc.text(orgDept.toUpperCase(), 105, currentY, null, null, "center");
-                    currentY += 6;
-                }
-                if (orgSubDept.trim() !== "") {
-                    doc.setFont("helvetica", "normal"); doc.setFontSize(10);
-                    doc.text(orgSubDept, 105, currentY, null, null, "center");
-                    currentY += 8;
-                } else { currentY += 2; }
+                if (d.orgDept.trim() !== "") { doc.setFont("helvetica", "normal"); doc.setFontSize(11); doc.text(d.orgDept.toUpperCase(), 105, currentY, null, null, "center"); currentY += 6; }
+                if (d.orgSubDept.trim() !== "") { doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.text(d.orgSubDept, 105, currentY, null, null, "center"); currentY += 8; } else { currentY += 2; }
 
-                // 3. Document Titles
-                doc.setFont("helvetica", "bold"); doc.setFontSize(12);
-                doc.text(`PROGRESS REPORT AS AT ${asAtDate.toUpperCase()}`, 105, currentY, null, null, "center");
-                currentY += 6;
-                doc.setFontSize(11);
-                doc.text(`CONTRACT NO. ${wContractNo.toUpperCase()}`, 105, currentY, null, null, "center");
-                currentY += 10;
+                doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.text(`PROGRESS REPORT AS AT ${asAtDate.toUpperCase()}`, 105, currentY, null, null, "center"); currentY += 6;
+                doc.setFontSize(11); doc.text(`CONTRACT NO. ${wContractNo.toUpperCase()}`, 105, currentY, null, null, "center"); currentY += 10;
 
-                // 4. Clerk of works text
-                doc.setFont("helvetica", "normal"); doc.setFontSize(10);
-                doc.text(`Clerk of Works: Name: ${wName}   Email: ${wEmail}   Phone Number: ${wPhone}`, 14, currentY);
-                currentY += 10;
-                
-                // 5. Project Intro Text
-                doc.setFont("helvetica", "bold"); doc.setFontSize(10);
-                const titleStr = `${title.toUpperCase()} AS AT ${asAtDate.toUpperCase()}`;
-                const splitTitle = doc.splitTextToSize(titleStr, 180);
-                doc.text(splitTitle, 14, currentY);
-                currentY += (splitTitle.length * 5) + 5;
+                doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.text(`Clerk of Works: Name: ${d.cowName}   Email: ${wEmail}   Phone Number: ${wPhone}`, 14, currentY); currentY += 8;
+                doc.setFont("helvetica", "bold"); doc.setFontSize(10); const titleStr = `${d.title.toUpperCase()} AS AT ${asAtDate.toUpperCase()}`;
+                const splitTitle = doc.splitTextToSize(titleStr, 180); doc.text(splitTitle, 14, currentY); currentY += (splitTitle.length * 5) + 5;
 
-                // 6. Table 1: Contract Data
+                // 1. Contract Data
                 doc.autoTable({
-                    startY: currentY,
-                    theme: 'grid',
-                    styles: { fontSize: 9, cellPadding: 3, lineColor: [180, 180, 180], lineWidth: 0.1 },
-                    headStyles: { fillColor: [240, 240, 240], textColor: [20, 20, 20], fontStyle: 'bold' },
-                    columnStyles: { 0: { cellWidth: 15, halign: 'center' }, 1: { cellWidth: 45, fontStyle: 'bold' }, 2: { cellWidth: 120 } },
+                    startY: currentY, theme: 'grid', styles: { fontSize: 9, cellPadding: 3, lineColor: [180, 180, 180], lineWidth: 0.1 },
+                    headStyles: { fillColor: [60, 60, 60], textColor: 255, fontStyle: 'bold' }, columnStyles: { 0: { cellWidth: 15, halign: 'center' }, 1: { cellWidth: 45, fontStyle: 'bold' }, 2: { cellWidth: 120 } },
                     head: [['S/NO', 'ITEM', 'DESCRIPTION']],
                     body: [
-                        ['1', 'Project Name:', title.toUpperCase()],
-                        ['2', 'Contract Number:', wContractNo],
-                        ['3', 'Employer:', wEmployer],
-                        ['4', 'Procuring Entity:', wProcuring],
-                        ['5', 'Project Manager:', wManager],
-                        ['6', 'Contractor:', wContractor],
-                        ['8', 'Contract Sum:', wContractSum],
-                        ['9', 'Date of handover:', wHandover],
-                        ['10', 'Commencement Date:', wCommencement]
+                        ['1', 'Project Name:', d.title.toUpperCase()], ['2', 'Contract Number:', wContractNo], ['3', 'Employer:', wEmployer], ['4', 'Procuring Entity:', wProcuring],
+                        ['5', 'Project Manager:', wManager], ['6', 'Contractor:', wContractor], ['7', 'Contract Sum:', wContractSum], ['8', 'Date of Handover:', wHandover], ['9', 'Commencement Date:', wCommencement]
                     ]
-                });
-                currentY = doc.lastAutoTable.finalY + 12;
+                }); currentY = doc.lastAutoTable.finalY + 8;
 
-                // Need to check space for Equipment table, if too tight, add page.
-                if (currentY > 200) { doc.addPage(); currentY = 20; }
-
-                doc.setFont("helvetica", "bold"); doc.setFontSize(11);
-                doc.text("Plant and equipment", 14, currentY);
-                currentY += 4;
-
-                // 7. Table 2: Plant & Equipment (18 strict items)
+                // 2. Summary
+                if (currentY > 250) { doc.addPage(); currentY = 20; }
                 doc.autoTable({
-                    startY: currentY,
-                    theme: 'grid',
-                    styles: { fontSize: 9, cellPadding: 2.5, lineColor: [180, 180, 180], lineWidth: 0.1 },
-                    headStyles: { fillColor: [240, 240, 240], textColor: [20, 20, 20], fontStyle: 'bold' },
-                    columnStyles: { 0: { cellWidth: 15, halign: 'center' }, 1: { cellWidth: 80 }, 2: { cellWidth: 30, halign: 'center' }, 3: { cellWidth: 55 } },
-                    head: [['Item', 'Description', 'QTY', 'Condition']],
-                    body: eqData
+                    startY: currentY, theme: 'grid', styles: { fontSize: 9, cellPadding: 4, lineColor: [180, 180, 180], lineWidth: 0.1 },
+                    headStyles: { fillColor: [60, 60, 60], textColor: 255, fontStyle: 'bold', halign: 'left' },
+                    head: [['SUMMARY OF PROGRESS OF WORKS']], body: [[d.summary]]
+                }); currentY = doc.lastAutoTable.finalY + 8;
+
+                // 3. Labour
+                if (currentY > 230) { doc.addPage(); currentY = 20; }
+                doc.autoTable({
+                    startY: currentY, theme: 'grid', styles: { fontSize: 9, cellPadding: 3, lineColor: [180, 180, 180], lineWidth: 0.1, valign: 'middle' },
+                    headStyles: { fillColor: [60, 60, 60], textColor: 255, fontStyle: 'bold', halign: 'center' },
+                    columnStyles: { 0: { cellWidth: 40 }, 1: { cellWidth: 35, halign: 'center' }, 2: { cellWidth: 35, halign: 'center' } },
+                    head: [['CATEGORY OF WORK', 'SKILLED WORKERS', 'CASUALS']],
+                    body: [
+                        ['Steel Fixers', d.vFix, ''], ['Masons', d.vMas, ''], ['Carpenters', d.vCar, ''], ['Safety Officer', d.vSaf, ''], ['Operators', d.vOpe, ''], ['Plumbers', d.vPlu, ''], ['Electrician', d.vEle, ''], ['Site Agent', d.vAgt, ''],
+                        [{ content: 'Casuals', fontStyle: 'bold', fillColor: [245, 245, 245] }, '', { content: d.vCas, fontStyle: 'bold', fillColor: [245, 245, 245] }],
+                        [{ content: 'TOTAL LABOUR ON SITE', fontStyle: 'bold', fillColor: [230, 230, 230] }, { content: totalSkilled, fontStyle: 'bold', fillColor: [230, 230, 230] }, { content: totalLabor, fontStyle: 'bold', fillColor: [230, 230, 230] }]
+                    ]
+                }); currentY = doc.lastAutoTable.finalY + 8;
+
+                // 4. Equipment
+                if (currentY > 200) { doc.addPage(); currentY = 20; }
+                doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.text("PLANT AND EQUIPMENT ON SITE", 14, currentY); currentY += 4;
+                doc.autoTable({
+                    startY: currentY, theme: 'grid', styles: { fontSize: 8, cellPadding: 2, lineColor: [180, 180, 180], lineWidth: 0.1 },
+                    headStyles: { fillColor: [240, 240, 240], textColor: [20, 20, 20], fontStyle: 'bold' }, columnStyles: { 0: { cellWidth: 15, halign: 'center' }, 1: { cellWidth: 80 }, 2: { cellWidth: 30, halign: 'center' }, 3: { cellWidth: 55 } },
+                    head: [['Item', 'Description', 'QTY', 'Condition']], body: eqDataForPdf
+                }); currentY = doc.lastAutoTable.finalY + 8;
+
+                // 5. Materials (DYNAMIC UPGRADE)
+                if (currentY > 200) { doc.addPage(); currentY = 20; }
+                doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.text("MATERIALS RECEIVED ON SITE", 14, currentY); currentY += 4;
+                doc.autoTable({
+                    startY: currentY, theme: 'grid', styles: { fontSize: 8, cellPadding: 3, lineColor: [180, 180, 180], lineWidth: 0.1 },
+                    headStyles: { fillColor: [240, 240, 240], textColor: [20, 20, 20], fontStyle: 'bold' }, columnStyles: { 0: { cellWidth: 15, halign: 'center' }, 1: { cellWidth: 100 }, 2: { cellWidth: 65, halign: 'center' } },
+                    head: [['Item', 'Material Description', 'Quantity & Unit']], body: matDataForPdf
+                }); currentY = doc.lastAutoTable.finalY + 8;
+
+                // 6. Admin
+                if (currentY > 230) { doc.addPage(); currentY = 20; }
+                doc.autoTable({
+                    startY: currentY, theme: 'grid', styles: { fontSize: 9, cellPadding: 4, lineColor: [180, 180, 180], lineWidth: 0.1 },
+                    columnStyles: { 0: { fontStyle: 'bold', fillColor: [245, 245, 245], cellWidth: 60, valign: 'middle' }, 1: { cellWidth: 120 } },
+                    body: [['VISITORS ON SITE\n(Name & Title)', d.admVis], ['DRAWINGS / DETAILS\nISSUED', d.admDra], ['SITE INSTRUCTION\nISSUED', d.admIns], ['REMARKS & CHALLENGES', d.admRem]]
+                }); currentY = doc.lastAutoTable.finalY + 15;
+
+                if (currentY > 260) { doc.addPage(); currentY = 20; }
+                doc.autoTable({
+                    startY: currentY, theme: 'plain', styles: { fontSize: 10, fontStyle: 'bold', cellPadding: 2 },
+                    body: [[`Clerk of Works: ${d.cowName}`, 'Signature: __________________________', `Date: ${shortDate}`]]
                 });
 
-                // --- PROGRESS PHOTOS PAGE ---
-                doc.addPage();
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(14);
-                doc.text("PROGRESS PHOTOS", 105, 20, null, null, "center");
-                
-                doc.setDrawColor(200, 200, 200);
-                doc.setLineWidth(0.5);
-                doc.line(14, 25, 196, 25);
+                doc.addPage(); doc.setFont("helvetica", "bold"); doc.setFontSize(14); doc.text("PROGRESS PHOTOS", 105, 20, null, null, "center");
+                doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.5); doc.line(14, 25, 196, 25);
 
                 let imgY = 32;
                 batchData.forEach((item, index) => {
-                    if (index > 0 && index % 2 === 0) {
-                        doc.addPage();
-                        imgY = 20;
-                    }
-                    const imgData = item.finalDataURL;
-                    const origW = item.originalImg.width;
-                    const origH = item.originalImg.height;
-                    const renderW = 180;
-                    const renderH = renderW * (origH / origW);
-
-                    doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.2); doc.rect(15, imgY, renderW, renderH);
-                    doc.addImage(imgData, 'JPEG', 15, imgY, renderW, renderH);
-                    imgY += renderH + 12; 
+                    if (index > 0 && index % 2 === 0) { doc.addPage(); imgY = 20; }
+                    const imgData = item.finalDataURL; const renderW = 180; const renderH = renderW * (item.originalImg.height / item.originalImg.width);
+                    doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.2); doc.rect(15, imgY, renderW, renderH); doc.addImage(imgData, 'JPEG', 15, imgY, renderW, renderH); imgY += renderH + 12; 
                 });
 
-                doc.save(`Weekly_Progress_Report_${shortDate.replace(/\//g, '-')}.pdf`);
-                updateExportButton();
-                
+                doc.save(`Weekly_Progress_Report_${shortDate.replace(/\//g, '-')}.pdf`); updateExportButton();
             }, 500); 
         }
 
         function exportZip() {
             if (batchData.length === 0) return alert("Please upload images first.");
-            const btn = document.getElementById('exportBtn');
-            const btnText = document.getElementById('exportBtnText');
-            btn.disabled = true;
+            const btn = document.getElementById('exportBtn'); const btnText = document.getElementById('exportBtnText'); btn.disabled = true;
 
             if (batchData.length < 5) {
                 btnText.innerText = "DOWNLOADING...";
