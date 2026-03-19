@@ -169,9 +169,14 @@
                                 </div>
                             </div>
                             
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Summary of Work Done</label>
-                                <textarea id="repSummary" rows="3" placeholder="• Column and Base reinforcement started..." class="w-full border border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-white outline-none rounded-sm resize-none"></textarea>
+                            <div class="bg-white border border-slate-300 rounded-sm focus-within:border-[#D4AF37] transition overflow-hidden">
+                                <div class="bg-slate-100 border-b border-slate-200 px-3 py-2 flex items-center justify-between">
+                                    <span class="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Summary of Work Done</span>
+                                    <div class="flex gap-2">
+                                        <button type="button" onclick="insertFormat('repSummary', '• ')" class="text-slate-500 hover:text-slate-900 text-xs font-bold bg-white px-2 py-0.5 rounded shadow-sm border border-slate-200" title="Add Bullet">List</button>
+                                    </div>
+                                </div>
+                                <textarea id="repSummary" rows="3" placeholder="Click 'List' to start a bulleted list..." class="w-full p-3 text-sm bg-transparent outline-none resize-y border-none"></textarea>
                             </div>
 
                             <div class="h-[1px] bg-slate-200 my-2"></div>
@@ -193,19 +198,48 @@
                             
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Materials Received</label>
-                                <textarea id="repMaterials" rows="2" placeholder="List all materials..." class="w-full border border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-white outline-none rounded-sm resize-none"></textarea>
+                                <textarea id="repMaterials" rows="2" placeholder="List all materials..." class="w-full border border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-white outline-none rounded-sm resize-y"></textarea>
                             </div>
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Plants & Equipment on Site</label>
-                                <textarea id="repEquipment" rows="2" placeholder="List equipment..." class="w-full border border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-white outline-none rounded-sm resize-none"></textarea>
+                                <textarea id="repEquipment" rows="2" placeholder="List equipment..." class="w-full border border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-white outline-none rounded-sm resize-y"></textarea>
                             </div>
 
                             <div class="h-[1px] bg-slate-200 my-2"></div>
 
-                            <div><label class="text-[10px] font-bold text-slate-500 uppercase">Visitors Received</label><input type="text" id="admVisitors" placeholder="Names & Titles..." class="w-full border-b border-slate-300 p-2 text-sm bg-transparent mb-2"></div>
-                            <div><label class="text-[10px] font-bold text-slate-500 uppercase">Drawings/Details Issued</label><input type="text" id="admDrawings" placeholder="NA or List..." class="w-full border-b border-slate-300 p-2 text-sm bg-transparent mb-2"></div>
-                            <div><label class="text-[10px] font-bold text-slate-500 uppercase">Site Instructions Issued</label><input type="text" id="admInstructions" placeholder="None or List..." class="w-full border-b border-slate-300 p-2 text-sm bg-transparent mb-2"></div>
-                            <div><label class="text-[10px] font-bold text-slate-500 uppercase">Any Other Remarks</label><input type="text" id="admRemarks" placeholder="None or details..." class="w-full border-b border-slate-300 p-2 text-sm bg-transparent mb-2"></div>
+                            <div class="space-y-4">
+                                <div class="bg-white border border-slate-300 rounded-sm focus-within:border-[#D4AF37] transition overflow-hidden">
+                                    <div class="bg-slate-100 border-b border-slate-200 px-2 py-1.5 flex justify-between items-center">
+                                        <label class="text-[10px] font-bold text-slate-600 uppercase">Visitors Received (Name & Title)</label>
+                                        <button type="button" onclick="insertFormat('admVisitors', '• ')" class="text-slate-500 hover:text-slate-900 text-[10px] font-bold bg-white px-2 py-0.5 rounded shadow-sm border border-slate-200">List</button>
+                                    </div>
+                                    <textarea id="admVisitors" rows="2" placeholder="Click 'List' to add visitors..." class="w-full p-2 text-sm bg-transparent outline-none resize-y border-none"></textarea>
+                                </div>
+
+                                <div class="bg-white border border-slate-300 rounded-sm focus-within:border-[#D4AF37] transition overflow-hidden">
+                                    <div class="bg-slate-100 border-b border-slate-200 px-2 py-1.5 flex justify-between items-center">
+                                        <label class="text-[10px] font-bold text-slate-600 uppercase">Drawings / Details Issued</label>
+                                        <button type="button" onclick="insertFormat('admDrawings', '• ')" class="text-slate-500 hover:text-slate-900 text-[10px] font-bold bg-white px-2 py-0.5 rounded shadow-sm border border-slate-200">List</button>
+                                    </div>
+                                    <textarea id="admDrawings" rows="2" placeholder="NA or List..." class="w-full p-2 text-sm bg-transparent outline-none resize-y border-none"></textarea>
+                                </div>
+
+                                <div class="bg-white border border-slate-300 rounded-sm focus-within:border-[#D4AF37] transition overflow-hidden">
+                                    <div class="bg-slate-100 border-b border-slate-200 px-2 py-1.5 flex justify-between items-center">
+                                        <label class="text-[10px] font-bold text-slate-600 uppercase">Site Instructions Issued</label>
+                                        <button type="button" onclick="insertFormat('admInstructions', '• ')" class="text-slate-500 hover:text-slate-900 text-[10px] font-bold bg-white px-2 py-0.5 rounded shadow-sm border border-slate-200">List</button>
+                                    </div>
+                                    <textarea id="admInstructions" rows="2" placeholder="None or List..." class="w-full p-2 text-sm bg-transparent outline-none resize-y border-none"></textarea>
+                                </div>
+
+                                <div class="bg-white border border-slate-300 rounded-sm focus-within:border-[#D4AF37] transition overflow-hidden">
+                                    <div class="bg-slate-100 border-b border-slate-200 px-2 py-1.5 flex justify-between items-center">
+                                        <label class="text-[10px] font-bold text-slate-600 uppercase">Any Other Remarks</label>
+                                        <button type="button" onclick="insertFormat('admRemarks', '• ')" class="text-slate-500 hover:text-slate-900 text-[10px] font-bold bg-white px-2 py-0.5 rounded shadow-sm border border-slate-200">List</button>
+                                    </div>
+                                    <textarea id="admRemarks" rows="2" placeholder="None or details..." class="w-full p-2 text-sm bg-transparent outline-none resize-y border-none"></textarea>
+                                </div>
+                            </div>
 
                             <div class="h-[1px] bg-slate-200 my-2"></div>
                             
@@ -282,6 +316,26 @@
         
         const weatherCache = {};
         let globalWeather = "Weather Unavailable";
+
+        // --- MINI EDITOR FORMATTING FUNCTION ---
+        function insertFormat(elementId, textToInsert) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            const start = el.selectionStart;
+            const end = el.selectionEnd;
+            const text = el.value;
+            
+            // If the field is currently empty, just insert the bullet
+            if (text.length === 0) {
+                el.value = textToInsert;
+            } else {
+                // Insert a new line and then the bullet
+                el.value = text.substring(0, start) + '\n' + textToInsert + text.substring(end);
+            }
+            
+            el.focus();
+            el.selectionStart = el.selectionEnd = start + textToInsert.length + 1;
+        }
 
         function toggleReportFields() {
             const mode = document.getElementById('exportMode').value;
@@ -726,7 +780,15 @@
                 const wtr = globalWeather;
                 const sTime = document.getElementById('repStartTime').value || "08:00";
                 const cTime = document.getElementById('repCloseTime').value || "17:00";
+                
+                // Fetch Multiline Text Data
                 const summary = document.getElementById('repSummary').value || "None";
+                const materials = document.getElementById('repMaterials').value || "N/A";
+                const equipment = document.getElementById('repEquipment').value || "N/A";
+                const admVis = document.getElementById('admVisitors').value || "None";
+                const admDra = document.getElementById('admDrawings').value || "N/A";
+                const admIns = document.getElementById('admInstructions').value || "None";
+                const admRem = document.getElementById('admRemarks').value || "None";
                 
                 // Fetch Exact Labour Data
                 const vFix = parseInt(document.getElementById('labFixers').value) || 0;
@@ -741,15 +803,7 @@
                 
                 const totalSkilled = vFix + vMas + vCar + vSaf + vOpe + vPlu + vEle + vAgt;
                 const totalLabor = totalSkilled + vCas;
-
-                const materials = document.getElementById('repMaterials').value || "N/A";
-                const equipment = document.getElementById('repEquipment').value || "N/A";
                 
-                // Fetch Admin Data
-                const admVis = document.getElementById('admVisitors').value || "None";
-                const admDra = document.getElementById('admDrawings').value || "N/A";
-                const admIns = document.getElementById('admInstructions').value || "None";
-                const admRem = document.getElementById('admRemarks').value || "None";
                 const cowName = document.getElementById('cowName').value || "_________________________";
 
                 // --- PDF CONSTRUCTION ---
@@ -766,7 +820,7 @@
                     currentY += 10; 
                 }
 
-                // 2. Dynamic Letterhead Header (Enhanced Typography)
+                // 2. Dynamic Letterhead Header
                 doc.setFont("helvetica", "bold"); doc.setFontSize(13);
                 doc.text(orgName.toUpperCase(), 105, currentY, null, null, "center");
                 currentY += 6;
@@ -779,7 +833,6 @@
                     currentY += 2;
                 }
                 
-                // Divider Line
                 doc.setDrawColor(200, 200, 200);
                 doc.setLineWidth(0.5);
                 doc.line(14, currentY, 196, currentY);
@@ -789,7 +842,7 @@
                 doc.text("DAILY SITE REPORT", 105, currentY, null, null, "center");
                 currentY += 8;
 
-                // 3. Metadata block (UPGRADED TO TABULAR GRID)
+                // 3. Metadata block 
                 doc.autoTable({
                     startY: currentY,
                     theme: 'grid',
@@ -810,7 +863,7 @@
                 });
                 currentY = doc.lastAutoTable.finalY + 8;
 
-                // 4. Work Summary (UPGRADED TO BOXED AREA)
+                // 4. Work Summary
                 doc.autoTable({
                     startY: currentY,
                     theme: 'grid',
@@ -821,7 +874,7 @@
                 });
                 currentY = doc.lastAutoTable.finalY + 8;
 
-                // 5. Strict 1:1 Labor Matrix (Enhanced Shading)
+                // 5. Strict 1:1 Labor Matrix
                 doc.autoTable({
                     startY: currentY,
                     theme: 'grid',
@@ -850,16 +903,16 @@
                 });
                 currentY = doc.lastAutoTable.finalY + 8;
 
-                // 6. Strict Admin Table
+                // 6. Strict Admin Table (Now supports multiline perfectly!)
                 doc.autoTable({
                     startY: currentY,
                     theme: 'grid',
-                    styles: { fontSize: 9, cellPadding: 3, lineColor: [200, 200, 200], lineWidth: 0.1 },
-                    columnStyles: { 0: { fontStyle: 'bold', fillColor: [245, 245, 245], cellWidth: 60 }, 1: { cellWidth: 120 } },
+                    styles: { fontSize: 9, cellPadding: 4, lineColor: [200, 200, 200], lineWidth: 0.1 },
+                    columnStyles: { 0: { fontStyle: 'bold', fillColor: [245, 245, 245], cellWidth: 60, valign: 'middle' }, 1: { cellWidth: 120 } },
                     body: [
-                        ['VISITORS RECEIVED (Name & Title)', admVis],
-                        ['DRAWINGS / DETAILS ISSUED', admDra],
-                        ['SITE INSTRUCTION ISSUED', admIns],
+                        ['VISITORS RECEIVED\n(Name & Title)', admVis],
+                        ['DRAWINGS / DETAILS\nISSUED', admDra],
+                        ['SITE INSTRUCTION\nISSUED', admIns],
                         ['ANY OTHER REMARKS', admRem]
                     ]
                 });
