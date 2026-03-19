@@ -32,7 +32,7 @@
         .pac-item:hover { background-color: #f8fafc; }
         
         .report-fields { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-in-out, opacity 0.5s ease; opacity: 0; }
-        .report-fields.active { max-height: 8000px; opacity: 1; margin-top: 1rem; overflow: visible; }
+        .report-fields.active { max-height: 15000px; opacity: 1; margin-top: 1rem; overflow: visible; }
     </style>
 </head>
 
@@ -87,10 +87,10 @@
                     </div>
 
                     <div class="grid grid-cols-1 gap-3 p-3 bg-slate-50 border border-slate-200 rounded-sm">
-                        <div><label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Country / Top Header (Header 0)</label><input type="text" id="orgCountry" value="REPUBLIC OF KENYA" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent"></div>
-                        <div><label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Organization Name (Header 1)</label><input type="text" id="orgName" value="MINISTRY OF LANDS, PUBLIC WORKS HOUSING & URBAN DEVELOPMENT" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent"></div>
-                        <div><label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Department / Subtitle (Header 2)</label><input type="text" id="orgDept" value="State Department for Housing and Urban Development" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent"></div>
-                        <div><label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Department Division (Header 3)</label><input type="text" id="orgSubDept" value="Slum Upgrading Department" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent"></div>
+                        <div><label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Country / Top Header</label><input type="text" id="orgCountry" value="REPUBLIC OF KENYA" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent"></div>
+                        <div><label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Organization Name</label><input type="text" id="orgName" value="MINISTRY OF LANDS, PUBLIC WORKS HOUSING & URBAN DEVELOPMENT" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent"></div>
+                        <div><label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Department / Subtitle</label><input type="text" id="orgDept" value="State Department for Housing and Urban Development" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent"></div>
+                        <div><label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Department Division</label><input type="text" id="orgSubDept" value="Slum Upgrading Department" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent"></div>
                     </div>
 
                     <div>
@@ -109,7 +109,7 @@
                             <button onclick="getLocation()" class="flex-1 border border-slate-300 hover:bg-slate-50 text-slate-600 text-[10px] font-bold uppercase tracking-widest py-3 transition rounded-sm">📍 My GPS</button>
                             <button onclick="openMap()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 text-[10px] font-bold uppercase tracking-widest py-3 transition rounded-sm">🗺️ Pick Map</button>
                         </div>
-                        <div class="col-span-2 mt-2"><label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Report Generation Date</label><input type="datetime-local" id="dateTimeInput" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent" oninput="debouncedRenderBatch()"></div>
+                        <div class="col-span-2 mt-2"><label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Report Generation Date</label><input type="datetime-local" id="dateTimeInput" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent" oninput="debouncedRenderBatch(); calculateAutoElapsed();"></div>
                     </div>
                 </div>
 
@@ -119,6 +119,7 @@
                         <option value="zip">Photos Only (ZIP Archive)</option>
                         <option value="daily">Template: Daily Site Report (1:1 Compliant)</option>
                         <option value="weekly">Template: Weekly Progress Report (1:1 Compliant)</option>
+                        <option value="monthly">Template: Executive Monthly Report (Enterprise)</option>
                     </select>
 
                     <div id="sharedReportFields" class="report-fields">
@@ -129,8 +130,9 @@
                                 <div><label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Completion Date</label><input type="date" id="repCompletionDate" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-transparent outline-none"></div>
                                 <div><label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Start Time</label><input type="time" id="repStartTime" value="08:00" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-transparent outline-none"></div>
                                 <div><label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Closing Time</label><input type="time" id="repCloseTime" value="17:00" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-transparent outline-none"></div>
-                                <div><label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Work Done (%)</label><input type="number" step="0.01" id="repWorkDone" placeholder="e.g. 8.19" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-transparent outline-none"></div>
-                                <div><label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Time Elapsed (%)</label><input type="number" step="0.01" id="repTimeElapsed" placeholder="e.g. 139.01" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-transparent outline-none"></div>
+                                
+                                <div class="daily-only-stat"><label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Work Done (%)</label><input type="number" step="0.01" id="repWorkDone" placeholder="e.g. 8.19" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-transparent outline-none"></div>
+                                <div class="daily-only-stat"><label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Time Elapsed (%)</label><input type="number" step="0.01" id="repTimeElapsed" placeholder="e.g. 139.01" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-transparent outline-none"></div>
                             </div>
                             
                             <div class="bg-white border border-slate-300 rounded-sm focus-within:border-[#D4AF37] transition overflow-hidden">
@@ -163,8 +165,7 @@
                                     <span class="text-[10px] font-bold text-slate-800 uppercase tracking-widest">Materials Received Ledger</span>
                                     <button type="button" onclick="addMaterialRow()" class="text-[#D4AF37] hover:text-[#b5952f] text-[10px] font-bold uppercase tracking-widest">+ Add Material</button>
                                 </div>
-                                <div class="bg-white border border-slate-200 p-2 rounded-sm max-h-[250px] overflow-y-auto" id="materialsGridContainer">
-                                    </div>
+                                <div class="bg-white border border-slate-200 p-2 rounded-sm max-h-[250px] overflow-y-auto" id="materialsGridContainer"></div>
                             </div>
 
                             <div class="h-[1px] bg-slate-200 my-2"></div>
@@ -211,7 +212,7 @@
 
                     <div id="weeklySpecificFields" class="report-fields">
                         <div class="bg-slate-50 border border-[#D4AF37] p-4 rounded-sm space-y-5 shadow-inner">
-                            <h4 class="text-xs font-bold text-[#D4AF37] uppercase tracking-widest">📋 Weekly Master Data</h4>
+                            <h4 class="text-xs font-bold text-[#D4AF37] uppercase tracking-widest">📋 Master Contract Data</h4>
                             
                             <div class="space-y-3">
                                 <span class="text-[10px] font-bold text-slate-800 uppercase tracking-widest block border-b border-slate-200 pb-1">Extended Signatory Details</span>
@@ -222,7 +223,7 @@
                             </div>
 
                             <div class="space-y-3">
-                                <span class="text-[10px] font-bold text-slate-800 uppercase tracking-widest block border-b border-slate-200 pb-1">Contract Data Table</span>
+                                <span class="text-[10px] font-bold text-slate-800 uppercase tracking-widest block border-b border-slate-200 pb-1">Contract Identifiers</span>
                                 <div class="grid grid-cols-2 gap-3">
                                     <div><label class="text-[9px] text-slate-500 uppercase">Contract No.</label><input type="text" id="w_contractNo" placeholder="e.g. 258/2023-2024" class="w-full border-b border-slate-300 p-1.5 text-sm bg-white outline-none"></div>
                                     <div><label class="text-[9px] text-slate-500 uppercase">Contract Sum</label><input type="text" id="w_contractSum" placeholder="e.g. 151,147,05.00" class="w-full border-b border-slate-300 p-1.5 text-sm bg-white outline-none"></div>
@@ -233,7 +234,7 @@
                                     <div class="col-span-2"><label class="text-[9px] text-slate-500 uppercase">Contractor</label><input type="text" id="w_contractor" placeholder="e.g. Flolizz Contractors Limited" class="w-full border-b border-slate-300 p-1.5 text-sm bg-white outline-none"></div>
                                     
                                     <div><label class="text-[9px] text-slate-500 uppercase">Handover Date</label><input type="date" id="w_handover" class="w-full border-b border-slate-300 p-1.5 text-sm bg-white outline-none"></div>
-                                    <div><label class="text-[9px] text-slate-500 uppercase">Commencement Date</label><input type="date" id="w_commencement" class="w-full border-b border-slate-300 p-1.5 text-sm bg-white outline-none"></div>
+                                    <div><label class="text-[9px] text-slate-500 uppercase">Commencement Date</label><input type="date" id="w_commencement" class="w-full border-b border-slate-300 p-1.5 text-sm bg-white outline-none" oninput="calculateAutoElapsed()"></div>
                                 </div>
                             </div>
 
@@ -243,12 +244,80 @@
                                     <button type="button" onclick="addEquipmentRow()" class="text-[#D4AF37] hover:text-[#b5952f] text-[10px] font-bold uppercase tracking-widest">+ Add Equipment</button>
                                 </div>
                                 <div class="bg-white border border-slate-200 p-2 rounded-sm max-h-[300px] overflow-y-auto">
-                                    <div class="grid grid-cols-1 gap-2" id="equipmentGridContainer">
-                                        </div>
+                                    <div class="grid grid-cols-1 gap-2" id="equipmentGridContainer"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
+
+                    <div id="monthlySpecificFields" class="report-fields">
+                        <div class="bg-blue-50/50 border border-blue-200 p-4 rounded-sm space-y-6 shadow-inner">
+                            <h4 class="text-xs font-bold text-blue-800 uppercase tracking-widest flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                EXECUTIVE MONTHLY DATA
+                            </h4>
+                            
+                            <div class="bg-white p-3 border border-blue-100 rounded shadow-sm space-y-3">
+                                <div class="col-span-2"><label class="text-[9px] text-slate-500 uppercase font-bold text-blue-600">Financier</label><input type="text" id="m_financier" value="Ministry of Lands, Public Works, Housing and Urban Development" class="w-full border-b border-slate-300 p-1.5 text-sm bg-transparent outline-none"></div>
+                                
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div><label class="text-[9px] text-slate-500 uppercase">Contract Period (WEEKS)</label><input type="number" id="m_periodWeeks" placeholder="e.g. 24" class="w-full border-b border-slate-300 p-1.5 text-sm bg-transparent outline-none" oninput="calculateAutoElapsed()"></div>
+                                    <div><label class="text-[9px] text-slate-500 uppercase">Revised Period (If Any)</label><input type="text" id="m_revisedPeriod" placeholder="N/A" class="w-full border-b border-slate-300 p-1.5 text-sm bg-transparent outline-none"></div>
+                                    <div><label class="text-[9px] text-slate-500 uppercase font-bold text-green-600">Time Elapsed (DAYS)</label><input type="text" id="m_timeElapsedAuto" placeholder="Auto-calculated" class="w-full border-b border-green-300 p-1.5 text-sm bg-green-50 font-bold text-green-700 outline-none" readonly></div>
+                                    <div><label class="text-[9px] text-slate-500 uppercase font-bold text-green-600">% Period Elapsed</label><input type="text" id="m_pctElapsedAuto" placeholder="Auto-calculated" class="w-full border-b border-green-300 p-1.5 text-sm bg-green-50 font-bold text-green-700 outline-none" readonly></div>
+                                </div>
+                            </div>
+
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center border-b border-blue-200 pb-1">
+                                    <span class="text-[10px] font-bold text-slate-800 uppercase tracking-widest">Tools Inventory Ledger</span>
+                                    <button type="button" onclick="addToolRow()" class="text-blue-600 hover:text-blue-800 text-[10px] font-bold uppercase tracking-widest">+ Add Tool</button>
+                                </div>
+                                <div class="bg-white border border-blue-100 p-2 rounded-sm max-h-[200px] overflow-y-auto" id="toolsGridContainer"></div>
+                            </div>
+
+                            <div class="space-y-3 pt-2">
+                                <div class="flex justify-between items-center border-b border-blue-300 pb-2">
+                                    <span class="text-[11px] font-bold text-slate-900 uppercase tracking-widest">Physical Progress Milestones</span>
+                                    <button type="button" onclick="addProgressCategory()" class="bg-blue-600 text-white px-3 py-1 rounded text-[10px] font-bold uppercase tracking-widest shadow hover:bg-blue-700 transition">+ Add Work Category</button>
+                                </div>
+                                <div id="blockProgressContainer" class="space-y-4">
+                                    </div>
+                            </div>
+
+                            <div class="space-y-4 pt-4 border-t border-blue-200">
+                                <div class="bg-white border border-blue-100 rounded-sm focus-within:border-blue-400 transition overflow-hidden">
+                                    <div class="bg-blue-50/50 border-b border-blue-100 px-2 py-1.5 flex justify-between items-center">
+                                        <label class="text-[10px] font-bold text-blue-900 uppercase">Contractual Issues</label>
+                                        <button type="button" onclick="insertFormat('m_contractual', '• ')" class="text-blue-500 hover:text-blue-900 text-[10px] font-bold bg-white px-2 py-0.5 rounded shadow-sm border border-blue-200">List</button>
+                                    </div>
+                                    <textarea id="m_contractual" rows="2" placeholder="There were no contractual issues met..." class="w-full p-2 text-sm bg-transparent outline-none resize-y border-none"></textarea>
+                                </div>
+                                <div class="bg-white border border-blue-100 rounded-sm focus-within:border-blue-400 transition overflow-hidden">
+                                    <div class="bg-blue-50/50 border-b border-blue-100 px-2 py-1.5 flex justify-between items-center">
+                                        <label class="text-[10px] font-bold text-blue-900 uppercase">Samples and Tests Cubes</label>
+                                        <button type="button" onclick="insertFormat('m_samples', '• ')" class="text-blue-500 hover:text-blue-900 text-[10px] font-bold bg-white px-2 py-0.5 rounded shadow-sm border border-blue-200">List</button>
+                                    </div>
+                                    <textarea id="m_samples" rows="2" placeholder="None or List..." class="w-full p-2 text-sm bg-transparent outline-none resize-y border-none"></textarea>
+                                </div>
+                                <div class="bg-white border border-blue-100 rounded-sm focus-within:border-blue-400 transition overflow-hidden">
+                                    <div class="bg-blue-50/50 border-b border-blue-100 px-2 py-1.5 flex justify-between items-center">
+                                        <label class="text-[10px] font-bold text-blue-900 uppercase">Health and Safety Factors</label>
+                                        <button type="button" onclick="insertFormat('m_health', '• ')" class="text-blue-500 hover:text-blue-900 text-[10px] font-bold bg-white px-2 py-0.5 rounded shadow-sm border border-blue-200">List</button>
+                                    </div>
+                                    <textarea id="m_health" rows="2" placeholder="Contractor has provided enough helmets..." class="w-full p-2 text-sm bg-transparent outline-none resize-y border-none"></textarea>
+                                </div>
+                                <div class="bg-white border border-blue-100 rounded-sm focus-within:border-blue-400 transition overflow-hidden">
+                                    <div class="bg-blue-50/50 border-b border-blue-100 px-2 py-1.5 flex justify-between items-center">
+                                        <label class="text-[10px] font-bold text-blue-900 uppercase">Challenges Encountered on Site</label>
+                                        <button type="button" onclick="insertFormat('m_challenges', '• ')" class="text-blue-500 hover:text-blue-900 text-[10px] font-bold bg-white px-2 py-0.5 rounded shadow-sm border border-blue-200">List</button>
+                                    </div>
+                                    <textarea id="m_challenges" rows="3" placeholder="• Intermittent power outages..." class="w-full p-2 text-sm bg-transparent outline-none resize-y border-none"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
                 <button id="exportBtn" onclick="executeExport()" class="w-full bg-[#D4AF37] hover:bg-[#c4a030] text-white font-medium tracking-widest py-4 rounded-sm transition shadow-md text-xs uppercase flex justify-center items-center gap-2 opacity-50 cursor-not-allowed" disabled>
@@ -318,18 +387,25 @@
         let eqList = [
             {name: "Dumpy level", qty: 0, cond: "N/A"}, {name: "Total Station", qty: 0, cond: "N/A"},
             {name: "Tower Crane", qty: 0, cond: "N/A"}, {name: "Drill", qty: 0, cond: "N/A"},
-            {name: "Grinder", qty: 0, cond: "N/A"}, {name: "Backhoe", qty: 1, cond: "Good"},
-            {name: "Excavator", qty: 0, cond: "N/A"}, {name: "Hydraulic Breaker", qty: 0, cond: "N/A"},
-            {name: "Welding Machine", qty: 0, cond: "N/A"}, {name: "Wood saw machine", qty: 0, cond: "N/A"},
-            {name: "Steel Cutting Machine", qty: 0, cond: "N/A"}, {name: "Steel Bending Machine", qty: 0, cond: "N/A"},
-            {name: "Generator", qty: 0, cond: "N/A"}, {name: "Concrete Mixer", qty: 1, cond: "Good"},
-            {name: "Pedestal roller", qty: 0, cond: "N/A"}, {name: "Water Pump", qty: 0, cond: "N/A"},
-            {name: "Roller 7 Tons", qty: 0, cond: "N/A"}, {name: "Roller 20 Tons", qty: 0, cond: "N/A"}
+            {name: "Backhoe", qty: 1, cond: "Good"}, {name: "Concrete Mixer", qty: 1, cond: "Good"}
         ];
 
         let matList = [
-            {desc: "Cement", qty: "50 Bags"},
-            {desc: "Ballast", qty: "20 Tonnes"}
+            {desc: "Cement", qty: "50 Bags"}, {desc: "Ballast", qty: "20 Tonnes"}
+        ];
+
+        let toolsList = [
+            {name: "Spades", qty: 10, cond: "Good"}, {name: "Wheelbarrows", qty: 5, cond: "Fair"}
+        ];
+
+        let progressBlocks = [
+            {
+                category: "MARKET BLOCK",
+                tasks: [
+                    { name: "Earthworks", progress: "100", status: "Complete" },
+                    { name: "Foundation footing", progress: "100", status: "Complete" }
+                ]
+            }
         ];
 
         // --- DYNAMIC RENDER FUNCTIONS ---
@@ -343,9 +419,7 @@
                     <input type="text" value="${eq.name}" oninput="eqList[${index}].name = this.value" placeholder="Equipment Name" class="flex-1 border border-slate-300 p-1.5 text-xs outline-none focus:border-[#D4AF37] rounded-sm bg-slate-50">
                     <input type="number" value="${eq.qty}" oninput="eqList[${index}].qty = this.value" placeholder="Qty" class="w-16 border border-slate-300 p-1.5 text-xs text-center outline-none focus:border-[#D4AF37] rounded-sm bg-slate-50">
                     <input type="text" value="${eq.cond}" oninput="eqList[${index}].cond = this.value" placeholder="Condition" class="w-24 border border-slate-300 p-1.5 text-xs outline-none focus:border-[#D4AF37] rounded-sm bg-slate-50">
-                    <button type="button" onclick="removeEquipmentRow(${index})" class="text-red-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded transition" title="Remove Item">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
+                    <button type="button" onclick="removeEquipmentRow(${index})" class="text-red-400 hover:text-red-600 p-1.5 transition">✕</button>
                 </div>`;
                 container.insertAdjacentHTML('beforeend', html);
             });
@@ -358,23 +432,74 @@
                 const html = `
                 <div class="flex items-center gap-2 border-b border-slate-100 pb-2 mb-2">
                     <span class="text-[10px] font-bold text-slate-400 w-4">${index + 1}.</span>
-                    <input type="text" value="${mat.desc}" oninput="matList[${index}].desc = this.value" placeholder="Material Description (e.g. Cement)" class="flex-1 border border-slate-300 p-1.5 text-xs outline-none focus:border-[#D4AF37] rounded-sm bg-slate-50">
-                    <input type="text" value="${mat.qty}" oninput="matList[${index}].qty = this.value" placeholder="Qty / Unit (e.g. 50 Bags)" class="w-32 border border-slate-300 p-1.5 text-xs outline-none focus:border-[#D4AF37] rounded-sm bg-slate-50">
-                    <button type="button" onclick="removeMaterialRow(${index})" class="text-red-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded transition" title="Remove Item">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
+                    <input type="text" value="${mat.desc}" oninput="matList[${index}].desc = this.value" placeholder="Material Description" class="flex-1 border border-slate-300 p-1.5 text-xs outline-none focus:border-[#D4AF37] rounded-sm bg-slate-50">
+                    <input type="text" value="${mat.qty}" oninput="matList[${index}].qty = this.value" placeholder="Qty / Unit" class="w-32 border border-slate-300 p-1.5 text-xs outline-none focus:border-[#D4AF37] rounded-sm bg-slate-50">
+                    <button type="button" onclick="removeMaterialRow(${index})" class="text-red-400 hover:text-red-600 p-1.5 transition">✕</button>
                 </div>`;
                 container.insertAdjacentHTML('beforeend', html);
             });
         }
 
+        function renderToolsGrid() {
+            const container = document.getElementById('toolsGridContainer');
+            container.innerHTML = '';
+            toolsList.forEach((tool, index) => {
+                const html = `
+                <div class="flex items-center gap-2 border-b border-blue-50 pb-2 mb-2">
+                    <span class="text-[10px] font-bold text-slate-400 w-4">${index + 1}.</span>
+                    <input type="text" value="${tool.name}" oninput="toolsList[${index}].name = this.value" placeholder="Tool Name" class="flex-1 border border-slate-300 p-1.5 text-xs outline-none focus:border-blue-400 rounded-sm bg-white">
+                    <input type="number" value="${tool.qty}" oninput="toolsList[${index}].qty = this.value" placeholder="Qty" class="w-16 border border-slate-300 p-1.5 text-xs text-center outline-none focus:border-blue-400 rounded-sm bg-white">
+                    <input type="text" value="${tool.cond}" oninput="toolsList[${index}].cond = this.value" placeholder="Condition" class="w-24 border border-slate-300 p-1.5 text-xs outline-none focus:border-blue-400 rounded-sm bg-white">
+                    <button type="button" onclick="removeToolRow(${index})" class="text-red-400 hover:text-red-600 p-1.5 transition">✕</button>
+                </div>`;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        function renderProgressBlocks() {
+            const container = document.getElementById('blockProgressContainer');
+            container.innerHTML = '';
+            progressBlocks.forEach((block, bIndex) => {
+                let tasksHtml = '';
+                block.tasks.forEach((task, tIndex) => {
+                    tasksHtml += `
+                    <div class="flex items-center gap-2 mt-2 ml-4 border-l-2 border-blue-200 pl-3">
+                        <input type="text" value="${task.name}" oninput="progressBlocks[${bIndex}].tasks[${tIndex}].name = this.value" placeholder="Task Name (e.g. Roof Casting)" class="flex-1 border border-slate-300 p-1.5 text-xs outline-none focus:border-blue-400 rounded-sm bg-white">
+                        <div class="relative w-20">
+                            <input type="number" value="${task.progress}" oninput="progressBlocks[${bIndex}].tasks[${tIndex}].progress = this.value" placeholder="%" class="w-full border border-slate-300 p-1.5 text-xs outline-none focus:border-blue-400 rounded-sm bg-white pr-4 text-center">
+                            <span class="absolute right-2 top-1.5 text-xs text-slate-400 font-bold">%</span>
+                        </div>
+                        <input type="text" value="${task.status}" oninput="progressBlocks[${bIndex}].tasks[${tIndex}].status = this.value" placeholder="Status Remarks" class="w-32 border border-slate-300 p-1.5 text-xs outline-none focus:border-blue-400 rounded-sm bg-white">
+                        <button type="button" onclick="removeProgressTask(${bIndex}, ${tIndex})" class="text-slate-400 hover:text-red-500 transition text-xs font-bold">✕</button>
+                    </div>`;
+                });
+
+                const blockHtml = `
+                <div class="bg-slate-50 border border-blue-200 rounded p-3 relative">
+                    <button type="button" onclick="removeProgressCategory(${bIndex})" class="absolute top-2 right-2 text-red-400 hover:text-red-600 text-xs font-bold bg-white px-2 py-1 rounded border border-red-100 shadow-sm">Delete Block</button>
+                    <input type="text" value="${block.category}" oninput="progressBlocks[${bIndex}].category = this.value" placeholder="MASTER CATEGORY (e.g. ABLUTION BLOCK)" class="w-2/3 border-b-2 border-blue-400 p-1.5 text-sm font-bold text-blue-900 bg-transparent outline-none uppercase mb-2">
+                    ${tasksHtml}
+                    <button type="button" onclick="addProgressTask(${bIndex})" class="ml-4 mt-3 text-[10px] font-bold text-slate-500 hover:text-blue-600 uppercase tracking-widest flex items-center gap-1">+ Add Task</button>
+                </div>`;
+                container.insertAdjacentHTML('beforeend', blockHtml);
+            });
+        }
+
+        // Add/Remove functions
         function addEquipmentRow() { eqList.push({name: "", qty: 1, cond: "Good"}); renderEquipmentGrid(); }
         function removeEquipmentRow(index) { eqList.splice(index, 1); renderEquipmentGrid(); }
         function addMaterialRow() { matList.push({desc: "", qty: ""}); renderMaterialsGrid(); }
         function removeMaterialRow(index) { matList.splice(index, 1); renderMaterialsGrid(); }
+        function addToolRow() { toolsList.push({name: "", qty: 1, cond: "Good"}); renderToolsGrid(); }
+        function removeToolRow(index) { toolsList.splice(index, 1); renderToolsGrid(); }
+        
+        function addProgressCategory() { progressBlocks.push({category: "", tasks: [{name: "", progress: "", status: ""}]}); renderProgressBlocks(); }
+        function removeProgressCategory(index) { progressBlocks.splice(index, 1); renderProgressBlocks(); }
+        function addProgressTask(bIndex) { progressBlocks[bIndex].tasks.push({name: "", progress: "", status: ""}); renderProgressBlocks(); }
+        function removeProgressTask(bIndex, tIndex) { progressBlocks[bIndex].tasks.splice(tIndex, 1); renderProgressBlocks(); }
 
-        renderEquipmentGrid();
-        renderMaterialsGrid();
+        // Init builders
+        renderEquipmentGrid(); renderMaterialsGrid(); renderToolsGrid(); renderProgressBlocks();
 
         function insertFormat(elementId, textToInsert) {
             const el = document.getElementById(elementId);
@@ -385,19 +510,46 @@
             el.focus(); el.selectionStart = el.selectionEnd = start + textToInsert.length + 1;
         }
 
+        function calculateAutoElapsed() {
+            const commDate = new Date(document.getElementById('w_commencement').value);
+            const reportDate = new Date(document.getElementById('dateTimeInput').value);
+            const periodWeeks = parseFloat(document.getElementById('m_periodWeeks').value) || 0;
+
+            const timeElapF = document.getElementById('m_timeElapsedAuto');
+            const pctElapF = document.getElementById('m_pctElapsedAuto');
+
+            if (!isNaN(commDate.getTime()) && !isNaN(reportDate.getTime())) {
+                const diffTime = Math.abs(reportDate - commDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                timeElapF.value = diffDays;
+
+                if (periodWeeks > 0) {
+                    const totalDays = periodWeeks * 7;
+                    const pct = ((diffDays / totalDays) * 100).toFixed(2);
+                    pctElapF.value = pct + '%';
+                } else { pctElapF.value = 'N/A'; }
+            } else {
+                timeElapF.value = ''; pctElapF.value = '';
+            }
+        }
+
         function toggleReportFields() {
             const mode = document.getElementById('exportMode').value;
             const shared = document.getElementById('sharedReportFields');
             const weekly = document.getElementById('weeklySpecificFields');
+            const monthly = document.getElementById('monthlySpecificFields');
+            const dailyStats = document.querySelectorAll('.daily-only-stat');
             
-            shared.classList.remove('active');
-            weekly.classList.remove('active');
+            shared.classList.remove('active'); weekly.classList.remove('active'); monthly.classList.remove('active');
+            dailyStats.forEach(el => el.style.display = 'none');
             
             if(mode === 'daily') {
                 shared.classList.add('active');
+                dailyStats.forEach(el => el.style.display = 'block');
             } else if (mode === 'weekly') {
-                shared.classList.add('active');
-                weekly.classList.add('active');
+                shared.classList.add('active'); weekly.classList.add('active');
+            } else if (mode === 'monthly') {
+                shared.classList.add('active'); weekly.classList.add('active'); monthly.classList.add('active');
             }
             updateExportButton(); 
         }
@@ -541,6 +693,7 @@
             const dd = String(now.getDate()).padStart(2, '0'); const mm = String(now.getMonth() + 1).padStart(2, '0'); const yyyy = now.getFullYear();
             const todayDate = `${yyyy}-${mm}-${dd}`;
             document.getElementById('repStartDate').value = todayDate; document.getElementById('w_handover').value = todayDate; document.getElementById('w_commencement').value = todayDate;
+            calculateAutoElapsed();
         }
         setDefaultTime();
 
@@ -641,27 +794,21 @@
             closeMap();
         }
 
-        // --- ENFORCING STRICT VALIDATION ---
         function updateExportButton() {
             const mode = document.getElementById('exportMode').value; 
             const btn = document.getElementById('exportBtn'); 
             const btnText = document.getElementById('exportBtnText');
             
             if (batchData.length === 0) {
-                btn.disabled = true;
-                btn.classList.add('opacity-50', 'cursor-not-allowed');
-                btnText.innerText = "EXPORT PHOTOS";
-                return;
+                btn.disabled = true; btn.classList.add('opacity-50', 'cursor-not-allowed'); btnText.innerText = "EXPORT PHOTOS"; return;
             }
 
-            btn.disabled = false; 
-            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            btn.disabled = false; btn.classList.remove('opacity-50', 'cursor-not-allowed');
             
-            if (mode === 'daily') { 
-                btnText.innerText = `GENERATE DAILY PDF`; 
-            } else if (mode === 'weekly') { 
-                btnText.innerText = `GENERATE WEEKLY PDF`; 
-            } else {
+            if (mode === 'daily') { btnText.innerText = `GENERATE DAILY PDF`; } 
+            else if (mode === 'weekly') { btnText.innerText = `GENERATE WEEKLY PDF`; } 
+            else if (mode === 'monthly') { btnText.innerText = `GENERATE MONTHLY PDF`; } 
+            else {
                 if (batchData.length < 5) btnText.innerText = `DOWNLOAD ${batchData.length} PHOTO${batchData.length > 1 ? 'S' : ''}`;
                 else btnText.innerText = `ZIP & EXPORT ${batchData.length} PHOTOS`;
             }
@@ -754,15 +901,21 @@
             const mode = document.getElementById('exportMode').value;
             if (mode === 'daily') exportDailyPDF(); 
             else if (mode === 'weekly') exportWeeklyPDF();
+            else if (mode === 'monthly') exportMonthlyPDF();
             else exportZip();
         }
 
         // --- DATA HARVESTING ---
         function fetchSharedFormData() {
             const formatInputDate = (dateStr) => { if(!dateStr) return "N/A"; const d = new Date(dateStr); return isNaN(d) ? dateStr : d.toLocaleDateString('en-GB'); };
-            
+            const formatLongDate = (dateStr) => { if(!dateStr) return "N/A"; const x = new Date(dateStr); return isNaN(x) ? dateStr : x.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }); };
+
             let compiledMaterialsText = matList.map(m => `• ${m.desc} : ${m.qty}`).join('\n');
             if (compiledMaterialsText.trim() === '•  :') compiledMaterialsText = "None recorded";
+
+            const rDateObj = new Date(document.getElementById('dateTimeInput').value);
+            const asAtDate = isNaN(rDateObj) ? new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : rDateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+            const shortDate = isNaN(rDateObj) ? new Date().toLocaleDateString('en-GB') : rDateObj.toLocaleDateString('en-GB');
 
             return {
                 orgCountry: document.getElementById('orgCountry').value || "REPUBLIC OF KENYA",
@@ -784,6 +937,28 @@
                 admIns: document.getElementById('admInstructions').value || "None",
                 admRem: document.getElementById('admRemarks').value || "None",
                 cowName: document.getElementById('cowName').value || "_________________________",
+                cowEmail: document.getElementById('cowEmail').value || "N/A",
+                cowPhone: document.getElementById('cowPhone').value || "N/A",
+                wContractNo: document.getElementById('w_contractNo').value || "N/A",
+                wContractSum: document.getElementById('w_contractSum').value || "N/A",
+                wEmployer: document.getElementById('w_employer').value || "N/A",
+                wProcuring: document.getElementById('w_procuring').value || "N/A",
+                wManager: document.getElementById('w_manager').value || "N/A",
+                wContractor: document.getElementById('w_contractor').value || "N/A",
+                wHandover: formatLongDate(document.getElementById('w_handover').value),
+                wCommencement: formatLongDate(document.getElementById('w_commencement').value),
+                
+                // Monthly specifics
+                mFinancier: document.getElementById('m_financier').value || "N/A",
+                mPeriod: document.getElementById('m_periodWeeks').value ? document.getElementById('m_periodWeeks').value + " Weeks" : "N/A",
+                mRevisedPeriod: document.getElementById('m_revisedPeriod').value || "N/A",
+                mTimeElap: document.getElementById('m_timeElapsedAuto').value || "N/A",
+                mPctElap: document.getElementById('m_pctElapsedAuto').value || "N/A",
+                mContractual: document.getElementById('m_contractual').value || "None recorded",
+                mSamples: document.getElementById('m_samples').value || "None recorded",
+                mHealth: document.getElementById('m_health').value || "None recorded",
+                mChallenges: document.getElementById('m_challenges').value || "None recorded",
+
                 vFix: parseInt(document.getElementById('labFixers').value) || 0,
                 vMas: parseInt(document.getElementById('labMasons').value) || 0,
                 vCar: parseInt(document.getElementById('labCarpenters').value) || 0,
@@ -792,8 +967,15 @@
                 vPlu: parseInt(document.getElementById('labPlumbers').value) || 0,
                 vEle: parseInt(document.getElementById('labElectricians').value) || 0,
                 vAgt: parseInt(document.getElementById('labAgents').value) || 0,
-                vCas: parseInt(document.getElementById('labCasuals').value) || 0
+                vCas: parseInt(document.getElementById('labCasuals').value) || 0,
+                
+                asAtDate: asAtDate, shortDate: shortDate
             };
+        }
+
+        function checkPageBreak(doc, currentY, requiredSpace) {
+            if (currentY + requiredSpace > 275) { doc.addPage(); return 20; }
+            return currentY;
         }
 
         // --- BULLETPROOF DAILY PDF ENGINE ---
@@ -804,12 +986,9 @@
             setTimeout(() => {
                 try {
                     const { jsPDF } = window.jspdf; const doc = new jsPDF(); const d = fetchSharedFormData();
-                    const rDateObj = new Date(document.getElementById('dateTimeInput').value);
-                    const rDate = isNaN(rDateObj) ? new Date().toLocaleDateString('en-GB') : rDateObj.toLocaleDateString('en-GB');
                     const totalSkilled = d.vFix + d.vMas + d.vCar + d.vSaf + d.vOpe + d.vPlu + d.vEle + d.vAgt; const totalLabor = totalSkilled + d.vCas;
 
                     let currentY = 15;
-                    // Format Safety Check for Logo
                     if (rawLogoBase64 && customLogoImg) {
                         const ratio = customLogoImg.width / (customLogoImg.height || 1); const h = 22; const w = h * ratio; const x = (210 - w) / 2; 
                         const format = rawLogoBase64.includes('image/jpeg') ? 'JPEG' : 'PNG';
@@ -828,63 +1007,49 @@
                         columnStyles: { 0: { fontStyle: 'bold', fillColor: [245, 245, 245], cellWidth: 40 }, 1: { cellWidth: 50 }, 2: { fontStyle: 'bold', fillColor: [245, 245, 245], cellWidth: 40 }, 3: { cellWidth: 50 } },
                         body: [
                             ['PROJECT TITLE:', { content: String(d.title).toUpperCase(), colSpan: 3 }],
-                            ['START DATE:', String(d.startDate), 'REPORT DATE:', String(rDate)],
+                            ['START DATE:', String(d.startDate), 'REPORT DATE:', String(d.shortDate)],
                             ['COMPLETION DATE:', String(d.compDate), 'WEATHER:', String(d.wtr)],
                             ['START TIME:', String(d.sTime), 'CLOSING TIME:', String(d.cTime)],
                             ['WORK DONE %:', `${d.workDone}%`, 'TIME ELAPSED %:', `${d.timeElapsed}%`]
                         ]
-                    });
-                    currentY = doc.lastAutoTable.finalY + 8;
+                    }); currentY = doc.lastAutoTable.finalY + 8;
 
                     doc.autoTable({
                         startY: currentY, theme: 'grid', styles: { fontSize: 9, cellPadding: 4, lineColor: [200, 200, 200], lineWidth: 0.1 },
                         headStyles: { fillColor: [60, 60, 60], textColor: 255, fontStyle: 'bold', halign: 'left' },
                         head: [['SUMMARY OF WORK DONE']], body: [[String(d.summary)]]
-                    });
-                    currentY = doc.lastAutoTable.finalY + 8;
+                    }); currentY = doc.lastAutoTable.finalY + 8;
 
-                    // FIX: Perfectly aligned array lengths to prevent rowSpan collision crashes
                     doc.autoTable({
                         startY: currentY, theme: 'grid', styles: { fontSize: 9, cellPadding: 3, lineColor: [200, 200, 200], lineWidth: 0.1, valign: 'middle' },
                         headStyles: { fillColor: [60, 60, 60], textColor: 255, fontStyle: 'bold', halign: 'center' },
                         columnStyles: { 0: { cellWidth: 35 }, 1: { cellWidth: 25, halign: 'center' }, 2: { cellWidth: 20, halign: 'center' }, 3: { cellWidth: 50 }, 4: { cellWidth: 50 } },
                         head: [['CATEGORY OF WORK', 'SKILLED WORKERS', 'CASUALS', 'MATERIALS RECEIVED', 'PLANTS AND EQUIPMENT']],
                         body: [
-                            // Row 1 spans columns 3 & 4 downwards for 9 rows
                             ['Steel Fixers', String(d.vFix), '', { content: String(d.materialsStr), rowSpan: 9 }, { content: 'See Next Section / Attached', rowSpan: 9 }],
-                            // Rows 2 through 9 MUST only have 3 elements (because columns 3 & 4 are taken)
-                            ['Masons', String(d.vMas), ''], 
-                            ['Carpenters', String(d.vCar), ''],
-                            ['Safety Officer', String(d.vSaf), ''], 
-                            ['Operators', String(d.vOpe), ''],
-                            ['Plumbers', String(d.vPlu), ''], 
-                            ['Electrician', String(d.vEle), ''], 
-                            ['Site Agent', String(d.vAgt), ''],
+                            ['Masons', String(d.vMas), ''], ['Carpenters', String(d.vCar), ''], ['Safety Officer', String(d.vSaf), ''], ['Operators', String(d.vOpe), ''],
+                            ['Plumbers', String(d.vPlu), ''], ['Electrician', String(d.vEle), ''], ['Site Agent', String(d.vAgt), ''],
                             [{ content: 'Casuals', fontStyle: 'bold', fillColor: [245, 245, 245] }, '', { content: String(d.vCas), fontStyle: 'bold', fillColor: [245, 245, 245] }],
-                            // Row 10 is OUT of the rowSpan, it needs all 5 elements again
                             [{ content: 'TOTAL', fontStyle: 'bold', fillColor: [230, 230, 230] }, { content: String(totalSkilled), fontStyle: 'bold', fillColor: [230, 230, 230] }, { content: String(totalLabor), fontStyle: 'bold', fillColor: [230, 230, 230] }, { content: '', fillColor: [230, 230, 230] }, { content: '', fillColor: [230, 230, 230] }]
                         ]
-                    });
-                    currentY = doc.lastAutoTable.finalY + 8;
+                    }); currentY = doc.lastAutoTable.finalY + 8;
 
-                    if (currentY > 260) { doc.addPage(); currentY = 20; }
+                    currentY = checkPageBreak(doc, currentY, 60);
                     doc.autoTable({
                         startY: currentY, theme: 'grid', styles: { fontSize: 9, cellPadding: 4, lineColor: [200, 200, 200], lineWidth: 0.1 },
                         columnStyles: { 0: { fontStyle: 'bold', fillColor: [245, 245, 245], cellWidth: 60, valign: 'middle' }, 1: { cellWidth: 120 } },
                         body: [['VISITORS RECEIVED\n(Name & Title)', String(d.admVis)], ['DRAWINGS / DETAILS\nISSUED', String(d.admDra)], ['SITE INSTRUCTION\nISSUED', String(d.admIns)], ['ANY OTHER REMARKS', String(d.admRem)]]
-                    });
-                    currentY = doc.lastAutoTable.finalY + 15;
+                    }); currentY = doc.lastAutoTable.finalY + 15;
 
-                    if (currentY > 260) { doc.addPage(); currentY = 20; }
+                    currentY = checkPageBreak(doc, currentY, 30);
                     doc.autoTable({
                         startY: currentY, theme: 'plain', styles: { fontSize: 10, fontStyle: 'bold', cellPadding: 2 },
-                        body: [[`Clerk of Works: ${String(d.cowName)}`, 'Signature: __________________________', `Date: ${String(rDate)}`]]
+                        body: [[`Clerk of Works: ${String(d.cowName)}`, 'Signature: __________________________', `Date: ${String(d.shortDate)}`]]
                     });
 
                     if (batchData.length > 0) {
                         doc.addPage(); doc.setFont("helvetica", "bold"); doc.setFontSize(14); doc.text("PROGRESS PHOTOS", 105, 20, null, null, "center");
                         doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.5); doc.line(14, 25, 196, 25);
-
                         let imgY = 32;
                         batchData.forEach((item, index) => {
                             if (index > 0 && index % 2 === 0) { doc.addPage(); imgY = 20; }
@@ -893,13 +1058,9 @@
                         });
                     }
 
-                    doc.save(`Daily_Site_Report_${rDate.replace(/\//g, '-')}.pdf`); 
-                    updateExportButton();
-
+                    doc.save(`Daily_Site_Report_${d.shortDate.replace(/\//g, '-')}.pdf`); updateExportButton();
                 } catch (error) {
-                    console.error("PDF Generation Error:", error);
-                    alert("A fatal error occurred building the Daily PDF: \n\n" + error.message + "\n\nThe button has been reset.");
-                    updateExportButton();
+                    console.error("PDF Error:", error); alert("Fatal error building PDF:\n" + error.message); updateExportButton();
                 }
             }, 500); 
         }
@@ -912,26 +1073,10 @@
             setTimeout(() => {
                 try {
                     const { jsPDF } = window.jspdf; const doc = new jsPDF(); const d = fetchSharedFormData();
-                    
-                    const rDateObj = new Date(document.getElementById('dateTimeInput').value);
-                    const options = { day: 'numeric', month: 'long', year: 'numeric' };
-                    const asAtDate = isNaN(rDateObj) ? new Date().toLocaleDateString('en-GB', options) : rDateObj.toLocaleDateString('en-GB', options);
-                    const shortDate = isNaN(rDateObj) ? new Date().toLocaleDateString('en-GB') : rDateObj.toLocaleDateString('en-GB');
-
-                    const formatWeeklyDate = (dateStr) => { if(!dateStr) return "N/A"; const x = new Date(dateStr); return isNaN(x) ? dateStr : x.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }); };
-
-                    const wEmail = document.getElementById('cowEmail').value || "N/A"; const wPhone = document.getElementById('cowPhone').value || "N/A";
-                    const wContractNo = document.getElementById('w_contractNo').value || "N/A"; const wContractSum = document.getElementById('w_contractSum').value || "N/A";
-                    const wEmployer = document.getElementById('w_employer').value || "N/A"; const wProcuring = document.getElementById('w_procuring').value || "N/A";
-                    const wManager = document.getElementById('w_manager').value || "N/A"; const wContractor = document.getElementById('w_contractor').value || "N/A";
-                    const wHandover = formatWeeklyDate(document.getElementById('w_handover').value); const wCommencement = formatWeeklyDate(document.getElementById('w_commencement').value);
-
                     let eqDataForPdf = eqList.map((eq, i) => [String(i+1) + '.', String(eq.name), String(eq.qty), String(eq.cond)]);
                     if (eqDataForPdf.length === 0) eqDataForPdf.push(['-', 'No equipment recorded', '-', '-']);
-
                     let matDataForPdf = matList.map((mat, i) => [String(i+1) + '.', String(mat.desc), String(mat.qty)]);
                     if (matDataForPdf.length === 0) matDataForPdf.push(['-', 'No materials recorded', '-']);
-
                     const totalSkilled = d.vFix + d.vMas + d.vCar + d.vSaf + d.vOpe + d.vPlu + d.vEle + d.vAgt; const totalLabor = totalSkilled + d.vCas;
 
                     let currentY = 15;
@@ -943,36 +1088,34 @@
 
                     doc.setFont("helvetica", "bold"); doc.setFontSize(14);
                     if (d.orgCountry.trim() !== "") { doc.text(String(d.orgCountry).toUpperCase(), 105, currentY, null, null, "center"); currentY += 6; }
-                    doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.text(String(d.orgName).toUpperCase(), 105, currentY, null, null, "center"); currentY += 6;
-                    
+                    doc.setFontSize(12); doc.text(String(d.orgName).toUpperCase(), 105, currentY, null, null, "center"); currentY += 6;
                     if (d.orgDept.trim() !== "") { doc.setFont("helvetica", "normal"); doc.setFontSize(11); doc.text(String(d.orgDept).toUpperCase(), 105, currentY, null, null, "center"); currentY += 6; }
-                    if (d.orgSubDept.trim() !== "") { doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.text(String(d.orgSubDept), 105, currentY, null, null, "center"); currentY += 8; } else { currentY += 2; }
+                    if (d.orgSubDept.trim() !== "") { doc.setFontSize(10); doc.text(String(d.orgSubDept), 105, currentY, null, null, "center"); currentY += 8; } else { currentY += 2; }
 
-                    doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.text(`PROGRESS REPORT AS AT ${String(asAtDate).toUpperCase()}`, 105, currentY, null, null, "center"); currentY += 6;
-                    doc.setFontSize(11); doc.text(`CONTRACT NO. ${String(wContractNo).toUpperCase()}`, 105, currentY, null, null, "center"); currentY += 10;
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.text(`PROGRESS REPORT AS AT ${String(d.asAtDate).toUpperCase()}`, 105, currentY, null, null, "center"); currentY += 6;
+                    doc.setFontSize(11); doc.text(`CONTRACT NO. ${String(d.wContractNo).toUpperCase()}`, 105, currentY, null, null, "center"); currentY += 10;
 
-                    doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.text(`Clerk of Works: Name: ${String(d.cowName)}   Email: ${String(wEmail)}   Phone Number: ${String(wPhone)}`, 14, currentY); currentY += 8;
-                    doc.setFont("helvetica", "bold"); doc.setFontSize(10); const titleStr = `${String(d.title).toUpperCase()} AS AT ${String(asAtDate).toUpperCase()}`;
-                    const splitTitle = doc.splitTextToSize(titleStr, 180); doc.text(splitTitle, 14, currentY); currentY += (splitTitle.length * 5) + 5;
+                    doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.text(`Clerk of Works: Name: ${String(d.cowName)}   Email: ${String(d.cowEmail)}   Phone Number: ${String(d.cowPhone)}`, 14, currentY); currentY += 8;
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(10); const splitTitle = doc.splitTextToSize(`${String(d.title).toUpperCase()} AS AT ${String(d.asAtDate).toUpperCase()}`, 180); doc.text(splitTitle, 14, currentY); currentY += (splitTitle.length * 5) + 5;
 
                     doc.autoTable({
                         startY: currentY, theme: 'grid', styles: { fontSize: 9, cellPadding: 3, lineColor: [180, 180, 180], lineWidth: 0.1 },
                         headStyles: { fillColor: [60, 60, 60], textColor: 255, fontStyle: 'bold' }, columnStyles: { 0: { cellWidth: 15, halign: 'center' }, 1: { cellWidth: 45, fontStyle: 'bold' }, 2: { cellWidth: 120 } },
                         head: [['S/NO', 'ITEM', 'DESCRIPTION']],
                         body: [
-                            ['1', 'Project Name:', String(d.title).toUpperCase()], ['2', 'Contract Number:', String(wContractNo)], ['3', 'Employer:', String(wEmployer)], ['4', 'Procuring Entity:', String(wProcuring)],
-                            ['5', 'Project Manager:', String(wManager)], ['6', 'Contractor:', String(wContractor)], ['7', 'Contract Sum:', String(wContractSum)], ['8', 'Date of Handover:', String(wHandover)], ['9', 'Commencement Date:', String(wCommencement)]
+                            ['1', 'Project Name:', String(d.title).toUpperCase()], ['2', 'Contract Number:', String(d.wContractNo)], ['3', 'Employer:', String(d.wEmployer)], ['4', 'Procuring Entity:', String(d.wProcuring)],
+                            ['5', 'Project Manager:', String(d.wManager)], ['6', 'Contractor:', String(d.wContractor)], ['7', 'Contract Sum:', String(d.wContractSum)], ['8', 'Date of Handover:', String(d.wHandover)], ['9', 'Commencement Date:', String(d.wCommencement)]
                         ]
                     }); currentY = doc.lastAutoTable.finalY + 8;
 
-                    if (currentY > 250) { doc.addPage(); currentY = 20; }
+                    currentY = checkPageBreak(doc, currentY, 50);
                     doc.autoTable({
                         startY: currentY, theme: 'grid', styles: { fontSize: 9, cellPadding: 4, lineColor: [180, 180, 180], lineWidth: 0.1 },
                         headStyles: { fillColor: [60, 60, 60], textColor: 255, fontStyle: 'bold', halign: 'left' },
                         head: [['SUMMARY OF PROGRESS OF WORKS']], body: [[String(d.summary)]]
                     }); currentY = doc.lastAutoTable.finalY + 8;
 
-                    if (currentY > 230) { doc.addPage(); currentY = 20; }
+                    currentY = checkPageBreak(doc, currentY, 80);
                     doc.autoTable({
                         startY: currentY, theme: 'grid', styles: { fontSize: 9, cellPadding: 3, lineColor: [180, 180, 180], lineWidth: 0.1, valign: 'middle' },
                         headStyles: { fillColor: [60, 60, 60], textColor: 255, fontStyle: 'bold', halign: 'center' },
@@ -985,7 +1128,7 @@
                         ]
                     }); currentY = doc.lastAutoTable.finalY + 8;
 
-                    if (currentY > 200) { doc.addPage(); currentY = 20; }
+                    currentY = checkPageBreak(doc, currentY, 60);
                     doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.text("PLANT AND EQUIPMENT ON SITE", 14, currentY); currentY += 4;
                     doc.autoTable({
                         startY: currentY, theme: 'grid', styles: { fontSize: 8, cellPadding: 2, lineColor: [180, 180, 180], lineWidth: 0.1 },
@@ -993,7 +1136,7 @@
                         head: [['Item', 'Description', 'QTY', 'Condition']], body: eqDataForPdf
                     }); currentY = doc.lastAutoTable.finalY + 8;
 
-                    if (currentY > 200) { doc.addPage(); currentY = 20; }
+                    currentY = checkPageBreak(doc, currentY, 50);
                     doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.text("MATERIALS RECEIVED ON SITE", 14, currentY); currentY += 4;
                     doc.autoTable({
                         startY: currentY, theme: 'grid', styles: { fontSize: 8, cellPadding: 3, lineColor: [180, 180, 180], lineWidth: 0.1 },
@@ -1001,23 +1144,22 @@
                         head: [['Item', 'Material Description', 'Quantity & Unit']], body: matDataForPdf
                     }); currentY = doc.lastAutoTable.finalY + 8;
 
-                    if (currentY > 230) { doc.addPage(); currentY = 20; }
+                    currentY = checkPageBreak(doc, currentY, 60);
                     doc.autoTable({
                         startY: currentY, theme: 'grid', styles: { fontSize: 9, cellPadding: 4, lineColor: [180, 180, 180], lineWidth: 0.1 },
                         columnStyles: { 0: { fontStyle: 'bold', fillColor: [245, 245, 245], cellWidth: 60, valign: 'middle' }, 1: { cellWidth: 120 } },
                         body: [['VISITORS ON SITE\n(Name & Title)', String(d.admVis)], ['DRAWINGS / DETAILS\nISSUED', String(d.admDra)], ['SITE INSTRUCTION\nISSUED', String(d.admIns)], ['REMARKS & CHALLENGES', String(d.admRem)]]
                     }); currentY = doc.lastAutoTable.finalY + 15;
 
-                    if (currentY > 260) { doc.addPage(); currentY = 20; }
+                    currentY = checkPageBreak(doc, currentY, 30);
                     doc.autoTable({
                         startY: currentY, theme: 'plain', styles: { fontSize: 10, fontStyle: 'bold', cellPadding: 2 },
-                        body: [[`Clerk of Works: ${String(d.cowName)}`, 'Signature: __________________________', `Date: ${String(shortDate)}`]]
+                        body: [[`Clerk of Works: ${String(d.cowName)}`, 'Signature: __________________________', `Date: ${String(d.shortDate)}`]]
                     });
 
                     if (batchData.length > 0) {
                         doc.addPage(); doc.setFont("helvetica", "bold"); doc.setFontSize(14); doc.text("PROGRESS PHOTOS", 105, 20, null, null, "center");
                         doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.5); doc.line(14, 25, 196, 25);
-
                         let imgY = 32;
                         batchData.forEach((item, index) => {
                             if (index > 0 && index % 2 === 0) { doc.addPage(); imgY = 20; }
@@ -1026,13 +1168,183 @@
                         });
                     }
 
-                    doc.save(`Weekly_Progress_Report_${shortDate.replace(/\//g, '-')}.pdf`); 
-                    updateExportButton();
-
+                    doc.save(`Weekly_Progress_Report_${d.shortDate.replace(/\//g, '-')}.pdf`); updateExportButton();
                 } catch (error) {
-                    console.error("PDF Generation Error:", error);
-                    alert("A fatal error occurred building the Weekly PDF: \n\n" + error.message + "\n\nThe button has been reset.");
-                    updateExportButton();
+                    console.error("PDF Error:", error); alert("Fatal error building Weekly PDF:\n" + error.message); updateExportButton();
+                }
+            }, 500); 
+        }
+
+        // --- ENTERPRISE MONTHLY DOSSIER ENGINE ---
+        function exportMonthlyPDF() {
+            if (batchData.length === 0) return alert("Please upload images first.");
+            document.getElementById('exportBtn').disabled = true; document.getElementById('exportBtnText').innerText = "GENERATING EXECUTIVE DOSSIER...";
+
+            setTimeout(() => {
+                try {
+                    const { jsPDF } = window.jspdf; const doc = new jsPDF(); const d = fetchSharedFormData();
+                    
+                    // Arrays
+                    let eqDataForPdf = eqList.map((eq, i) => [String(i+1)+'.', String(eq.name), String(eq.qty), String(eq.cond)]);
+                    if (eqDataForPdf.length === 0) eqDataForPdf.push(['-', 'No equipment recorded', '-', '-']);
+                    
+                    let matDataForPdf = matList.map((mat, i) => [String(i+1)+'.', String(mat.desc), String(mat.qty)]);
+                    if (matDataForPdf.length === 0) matDataForPdf.push(['-', 'No materials recorded', '-']);
+                    
+                    let toolsDataForPdf = toolsList.map((tool, i) => [String(i+1)+'.', String(tool.name), String(tool.qty), String(tool.cond)]);
+                    if (toolsDataForPdf.length === 0) toolsDataForPdf.push(['-', 'No tools recorded', '-', '-']);
+
+                    const totalSkilled = d.vFix + d.vMas + d.vCar + d.vSaf + d.vOpe + d.vPlu + d.vEle + d.vAgt; const totalLabor = totalSkilled + d.vCas;
+
+                    // 1. EXECUTIVE COVER PAGE
+                    doc.setDrawColor(212, 175, 55); doc.setLineWidth(1.0); doc.rect(10, 10, 190, 277);
+                    doc.setLineWidth(0.3); doc.rect(12, 12, 186, 273);
+                    
+                    let coverY = 40;
+                    if (rawLogoBase64 && customLogoImg) {
+                        const ratio = customLogoImg.width / (customLogoImg.height || 1); const h = 35; const w = h * ratio; const x = (210 - w) / 2; 
+                        const format = rawLogoBase64.includes('image/jpeg') ? 'JPEG' : 'PNG';
+                        doc.addImage(rawLogoBase64, format, x, coverY, w, h); coverY += h + 15;
+                    } else { coverY += 20; }
+
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(22); doc.text(String(d.orgCountry).toUpperCase(), 105, coverY, null, null, "center"); coverY += 12;
+                    doc.setFontSize(16); doc.text(String(d.orgName).toUpperCase(), 105, coverY, {maxWidth: 160, align: "center"}); coverY += 15;
+                    
+                    doc.setDrawColor(200, 200, 200); doc.line(30, coverY, 180, coverY); coverY += 10;
+                    
+                    if (d.orgDept.trim() !== "") { doc.setFont("helvetica", "normal"); doc.setFontSize(14); doc.text(String(d.orgDept).toUpperCase(), 105, coverY, {maxWidth: 160, align: "center"}); coverY += 10; }
+                    if (d.orgSubDept.trim() !== "") { doc.setFontSize(12); doc.text(String(d.orgSubDept), 105, coverY, null, null, "center"); coverY += 15; }
+
+                    doc.setFont("helvetica", "bold"); doc.setTextColor(20, 50, 100); doc.setFontSize(18); 
+                    doc.text("MONTHLY PROJECT PROGRESS REPORT", 105, coverY, null, null, "center"); doc.setTextColor(0, 0, 0); coverY += 25;
+
+                    doc.setFontSize(14); doc.text("PROJECT:", 105, coverY, null, null, "center"); coverY += 8;
+                    doc.setFont("helvetica", "normal"); doc.setFontSize(13); doc.text(String(d.title).toUpperCase(), 105, coverY, {maxWidth: 160, align: "center"}); coverY += 20;
+
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.text("CONTRACT NO:", 105, coverY, null, null, "center"); coverY += 6;
+                    doc.setFont("helvetica", "normal"); doc.text(String(d.wContractNo).toUpperCase(), 105, coverY, null, null, "center"); coverY += 25;
+
+                    doc.setDrawColor(212, 175, 55); doc.setFillColor(250, 250, 250); doc.rect(55, coverY, 100, 15, 'FD');
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(12);
+                    doc.text(`AS AT ${String(d.asAtDate).toUpperCase()}`, 105, coverY + 10, null, null, "center");
+
+                    // 2. CONTRACT DATA MATRIX
+                    doc.addPage();
+                    let cy = 20;
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(16); doc.text("1.0 CONTRACT DATA", 14, cy); cy += 8;
+
+                    doc.autoTable({
+                        startY: cy, theme: 'grid', styles: { fontSize: 10, cellPadding: 4, lineColor: [180, 180, 180], lineWidth: 0.1 },
+                        headStyles: { fillColor: [30, 41, 59], textColor: 255, fontStyle: 'bold' }, columnStyles: { 0: { cellWidth: 50, fontStyle: 'bold', fillColor: [248, 250, 252] }, 1: { cellWidth: 130 } },
+                        body: [
+                            ['Project Title', String(d.title).toUpperCase()], ['Financier', String(d.mFinancier)], ['Employer', String(d.wEmployer)],
+                            ['Project Manager', String(d.wManager)], ['Main Contractor', String(d.wContractor)], ['Contract No.', String(d.wContractNo)],
+                            ['Contract Sum', String(d.wContractSum)], ['Date of Handover', String(d.wHandover)], ['Commencement Date', String(d.wCommencement)],
+                            ['Contract Period', String(d.mPeriod)], ['Revised Contract Period', String(d.mRevisedPeriod)], 
+                            [{ content: 'Time Elapsed (Days)', textColor: [0, 100, 0] }, { content: String(d.mTimeElap), textColor: [0, 100, 0], fontStyle: 'bold' }], 
+                            [{ content: '% of Period Elapsed', textColor: [0, 100, 0] }, { content: String(d.mPctElap), textColor: [0, 100, 0], fontStyle: 'bold' }]
+                        ]
+                    }); cy = doc.lastAutoTable.finalY + 15;
+
+                    // 3. MOBILIZATION & LOGISTICS
+                    cy = checkPageBreak(doc, cy, 100);
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(16); doc.text("2.0 SITE MOBILIZATION & LOGISTICS", 14, cy); cy += 8;
+                    
+                    doc.setFontSize(12); doc.text("2.1 Personnel on Site (Average)", 14, cy); cy += 5;
+                    doc.autoTable({
+                        startY: cy, theme: 'grid', styles: { fontSize: 9, cellPadding: 3, lineColor: [180, 180, 180], lineWidth: 0.1, valign: 'middle' },
+                        headStyles: { fillColor: [71, 85, 105], textColor: 255, fontStyle: 'bold', halign: 'center' }, columnStyles: { 0: { cellWidth: 40 }, 1: { cellWidth: 35, halign: 'center' }, 2: { cellWidth: 35, halign: 'center' } },
+                        head: [['CATEGORY', 'SKILLED WORKERS', 'CASUALS']],
+                        body: [
+                            ['Steel Fixers', String(d.vFix), ''], ['Masons', String(d.vMas), ''], ['Carpenters', String(d.vCar), ''], ['Safety Officer', String(d.vSaf), ''], ['Operators', String(d.vOpe), ''], ['Plumbers', String(d.vPlu), ''], ['Electrician', String(d.vEle), ''], ['Site Agent', String(d.vAgt), ''],
+                            [{ content: 'Casuals', fontStyle: 'bold', fillColor: [245, 245, 245] }, '', { content: String(d.vCas), fontStyle: 'bold', fillColor: [245, 245, 245] }],
+                            [{ content: 'TOTAL LABOUR', fontStyle: 'bold', fillColor: [230, 230, 230] }, { content: String(totalSkilled), fontStyle: 'bold', fillColor: [230, 230, 230] }, { content: String(totalLabor), fontStyle: 'bold', fillColor: [230, 230, 230] }]
+                        ]
+                    }); cy = doc.lastAutoTable.finalY + 10;
+
+                    cy = checkPageBreak(doc, cy, 60);
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.text("2.2 Plant and Equipment", 14, cy); cy += 5;
+                    doc.autoTable({
+                        startY: cy, theme: 'grid', styles: { fontSize: 9, cellPadding: 3, lineColor: [180, 180, 180], lineWidth: 0.1 },
+                        headStyles: { fillColor: [71, 85, 105], textColor: 255, fontStyle: 'bold' }, columnStyles: { 0: { cellWidth: 15, halign: 'center' }, 1: { cellWidth: 80 }, 2: { cellWidth: 30, halign: 'center' }, 3: { cellWidth: 55 } },
+                        head: [['No.', 'Description', 'Quantity', 'Condition']], body: eqDataForPdf
+                    }); cy = doc.lastAutoTable.finalY + 10;
+
+                    cy = checkPageBreak(doc, cy, 60);
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.text("2.3 Tools Inventory", 14, cy); cy += 5;
+                    doc.autoTable({
+                        startY: cy, theme: 'grid', styles: { fontSize: 9, cellPadding: 3, lineColor: [180, 180, 180], lineWidth: 0.1 },
+                        headStyles: { fillColor: [71, 85, 105], textColor: 255, fontStyle: 'bold' }, columnStyles: { 0: { cellWidth: 15, halign: 'center' }, 1: { cellWidth: 80 }, 2: { cellWidth: 30, halign: 'center' }, 3: { cellWidth: 55 } },
+                        head: [['No.', 'Description', 'Quantity', 'Condition']], body: toolsDataForPdf
+                    }); cy = doc.lastAutoTable.finalY + 10;
+
+                    cy = checkPageBreak(doc, cy, 60);
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.text("2.4 Materials Delivered", 14, cy); cy += 5;
+                    doc.autoTable({
+                        startY: cy, theme: 'grid', styles: { fontSize: 9, cellPadding: 3, lineColor: [180, 180, 180], lineWidth: 0.1 },
+                        headStyles: { fillColor: [71, 85, 105], textColor: 255, fontStyle: 'bold' }, columnStyles: { 0: { cellWidth: 15, halign: 'center' }, 1: { cellWidth: 100 }, 2: { cellWidth: 65, halign: 'center' } },
+                        head: [['No.', 'Material Description', 'Quantity & Unit']], body: matDataForPdf
+                    }); cy = doc.lastAutoTable.finalY + 15;
+
+                    // 4. PHYSICAL PROGRESS
+                    doc.addPage(); cy = 20;
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(16); doc.text("3.0 PHYSICAL PROGRESS OF WORKS", 14, cy); cy += 8;
+                    
+                    if (progressBlocks.length === 0) {
+                        doc.setFont("helvetica", "normal"); doc.setFontSize(11); doc.text("No specific milestones recorded.", 14, cy); cy += 10;
+                    } else {
+                        progressBlocks.forEach(block => {
+                            cy = checkPageBreak(doc, cy, 40);
+                            let blockBody = block.tasks.map(t => [String(t.name), String(t.progress) + "%", String(t.status)]);
+                            if (blockBody.length === 0) blockBody = [["No tasks", "-", "-"]];
+                            
+                            doc.autoTable({
+                                startY: cy, theme: 'grid', styles: { fontSize: 9, cellPadding: 4, lineColor: [180, 180, 180], lineWidth: 0.1 },
+                                headStyles: { fillColor: [212, 175, 55], textColor: [20, 20, 20], fontStyle: 'bold' }, columnStyles: { 0: { cellWidth: 90 }, 1: { cellWidth: 30, halign: 'center', fontStyle: 'bold' }, 2: { cellWidth: 60 } },
+                                head: [[{ content: String(block.category).toUpperCase() || 'UNCATEGORIZED', colSpan: 3 }]],
+                                body: blockBody
+                            });
+                            cy = doc.lastAutoTable.finalY + 8;
+                        });
+                    }
+
+                    // 5. ADMINISTRATIVE & OTHER ISSUES
+                    cy = checkPageBreak(doc, cy, 90);
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(16); doc.text("4.0 ADMINISTRATIVE & OTHER ISSUES", 14, cy); cy += 8;
+
+                    doc.autoTable({
+                        startY: cy, theme: 'grid', styles: { fontSize: 9, cellPadding: 4, lineColor: [180, 180, 180], lineWidth: 0.1 },
+                        columnStyles: { 0: { fontStyle: 'bold', fillColor: [248, 250, 252], cellWidth: 50, valign: 'middle' }, 1: { cellWidth: 130 } },
+                        body: [
+                            ['Contractual Issues', String(d.mContractual)], ['Visitors on Site', String(d.admVis)],
+                            ['Samples & Tests', String(d.mSamples)], ['Site Instructions Issued', String(d.admIns)],
+                            ['Health & Safety Factors', String(d.mHealth)], ['Challenges Encountered', String(d.mChallenges)]
+                        ]
+                    }); cy = doc.lastAutoTable.finalY + 20;
+
+                    cy = checkPageBreak(doc, cy, 40);
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(11);
+                    doc.text("Prepared By:", 14, cy); cy += 6;
+                    doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+                    doc.text(`Clerk of Works: ${String(d.cowName)}`, 14, cy); cy += 6;
+                    doc.text("Signature: __________________________", 14, cy); cy += 6;
+                    doc.text(`Date: ${String(d.shortDate)}`, 14, cy);
+
+                    // 6. PHOTOS
+                    if (batchData.length > 0) {
+                        doc.addPage(); doc.setFont("helvetica", "bold"); doc.setFontSize(16); doc.text("5.0 PROGRESS PHOTOS", 105, 20, null, null, "center");
+                        doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.5); doc.line(14, 25, 196, 25);
+                        let imgY = 32;
+                        batchData.forEach((item, index) => {
+                            if (index > 0 && index % 2 === 0) { doc.addPage(); imgY = 20; }
+                            const imgData = item.finalDataURL; const renderW = 180; const renderH = renderW * (item.originalImg.height / (item.originalImg.width || 1));
+                            doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.2); doc.rect(15, imgY, renderW, renderH); doc.addImage(imgData, 'JPEG', 15, imgY, renderW, renderH); imgY += renderH + 12; 
+                        });
+                    }
+
+                    doc.save(`Monthly_Executive_Report_${d.shortDate.replace(/\//g, '-')}.pdf`); updateExportButton();
+                } catch (error) {
+                    console.error("PDF Error:", error); alert("Fatal error building Monthly PDF:\n" + error.message); updateExportButton();
                 }
             }, 500); 
         }
