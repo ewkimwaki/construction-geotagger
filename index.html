@@ -3,11 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mobillio Luxe | Field Reporting & Geotagger</title>
+    <title>Mobillio Luxe | Enterprise Site Administration</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Montserrat', sans-serif; }
@@ -26,6 +30,9 @@
         .pac-container { font-family: 'Montserrat', sans-serif; border-radius: 0.5rem; border: 1px solid #e2e8f0; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
         .pac-item { padding: 10px; font-size: 14px; cursor: pointer; }
         .pac-item:hover { background-color: #f8fafc; }
+        
+        .report-fields { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-in-out, opacity 0.5s ease; opacity: 0; }
+        .report-fields.active { max-height: 3000px; opacity: 1; margin-top: 1rem; }
     </style>
 </head>
 
@@ -47,8 +54,8 @@
             <div class="p-5 lg:p-6 space-y-6">
                 
                 <div>
-                    <h1 class="text-xl sm:text-2xl font-light text-slate-900 tracking-tight mb-1">Field Site Geotagger</h1>
-                    <p class="text-slate-500 text-[11px] sm:text-xs leading-relaxed">Global settings apply to images missing EXIF data. Weather and HEIC automatically supported.</p>
+                    <h1 class="text-xl sm:text-2xl font-light text-slate-900 tracking-tight mb-1">Site Administration</h1>
+                    <p class="text-slate-500 text-[11px] sm:text-xs leading-relaxed">Select export format below to generate compliant Ministry standard reports or ZIP archives.</p>
                 </div>
 
                 <div id="dropZone" class="drop-zone border-2 border-dashed border-slate-300 rounded-lg p-6 text-center bg-slate-50 cursor-pointer hover:border-[#D4AF37] transition">
@@ -63,7 +70,7 @@
                 <div class="space-y-5 relative">
                     <div class="flex items-center gap-2 mb-2">
                         <div class="h-[1px] bg-slate-200 flex-1"></div>
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Report Settings</span>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Global Variables</span>
                         <div class="h-[1px] bg-slate-200 flex-1"></div>
                     </div>
 
@@ -74,8 +81,8 @@
 
                     <div>
                         <input type="file" id="logoInput" accept="image/png, image/jpeg" class="hidden" onchange="handleLogoUpload(event)">
-                        <button onclick="document.getElementById('logoInput').click()" class="w-full border border-slate-300 hover:bg-slate-50 text-slate-600 text-[10px] font-bold uppercase tracking-widest py-3 transition rounded-sm flex justify-center items-center gap-2">
-                            <span id="logoStatusText">📷 Add Custom Logo Watermark</span>
+                        <button onclick="document.getElementById('logoInput').click()" class="w-full border border-[#D4AF37] bg-[#fffcf5] text-slate-800 text-[10px] font-bold uppercase tracking-widest py-3 transition rounded-sm flex justify-center items-center gap-2">
+                            <span id="logoStatusText">🏛️ Upload Official Report Header Logo</span>
                         </button>
                     </div>
 
@@ -88,19 +95,19 @@
 
                     <div class="grid grid-cols-2 gap-4">
                         <div class="col-span-2">
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Project Name</label>
-                            <input type="text" id="locTitle" placeholder="e.g., Mobillio HQ" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent" oninput="debouncedRenderBatch()">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Project Title</label>
+                            <input type="text" id="locTitle" placeholder="e.g., CONSTRUCTION OF ESP MARKET..." class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent" oninput="debouncedRenderBatch()">
                         </div>
                         <div class="col-span-2">
                             <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Detected Address</label>
                             <input type="text" id="locAddress" placeholder="Auto-fills from search..." class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent" oninput="debouncedRenderBatch()">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Fallback Lat</label>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Lat</label>
                             <input type="text" id="lat" class="w-full border-b border-slate-300 p-2 text-sm text-slate-500 bg-transparent outline-none" readonly>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Fallback Long</label>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Long</label>
                             <input type="text" id="lng" class="w-full border-b border-slate-300 p-2 text-sm text-slate-500 bg-transparent outline-none" readonly>
                         </div>
                         <div class="col-span-2 flex gap-2 mt-1">
@@ -108,13 +115,91 @@
                             <button onclick="openMap()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 text-[10px] font-bold uppercase tracking-widest py-3 transition rounded-sm">🗺️ Pick Map</button>
                         </div>
                         <div class="col-span-2 mt-2">
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Fallback Timestamp</label>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Report Generation Date</label>
                             <input type="datetime-local" id="dateTimeInput" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] outline-none transition bg-transparent" oninput="debouncedRenderBatch()">
                         </div>
                     </div>
                 </div>
 
-                <button id="exportBtn" onclick="exportBatch()" class="w-full bg-[#D4AF37] hover:bg-[#c4a030] text-white font-medium tracking-widest py-4 rounded-sm transition shadow-md text-xs uppercase flex justify-center items-center gap-2 opacity-50 cursor-not-allowed" disabled>
+                <div class="pt-4 border-t border-slate-200">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Export Format</label>
+                    <select id="exportMode" onchange="toggleReportFields()" class="w-full border border-slate-300 p-3 text-sm focus:border-[#D4AF37] outline-none transition bg-slate-50 rounded-sm font-medium">
+                        <option value="zip">Photos Only (ZIP Archive)</option>
+                        <option value="daily">Template: Daily Site Report (1:1 Compliant)</option>
+                    </select>
+
+                    <div id="dailyReportFields" class="report-fields">
+                        <div class="bg-slate-50 border border-slate-200 p-4 rounded-sm space-y-4">
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Start Date</label>
+                                    <input type="date" id="repStartDate" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-transparent outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Completion Date</label>
+                                    <input type="date" id="repCompletionDate" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-transparent outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Start Time</label>
+                                    <input type="time" id="repStartTime" value="08:00" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-transparent outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Closing Time</label>
+                                    <input type="time" id="repCloseTime" value="17:00" class="w-full border-b border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-transparent outline-none">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Summary of Work Done</label>
+                                <textarea id="repSummary" rows="3" placeholder="• Column and Base reinforcement started..." class="w-full border border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-white outline-none rounded-sm resize-none"></textarea>
+                            </div>
+
+                            <div class="h-[1px] bg-slate-200 my-2"></div>
+                            <span class="text-[10px] font-bold text-slate-800 uppercase tracking-widest mb-2 block">Strict Labour Matrix</span>
+                            
+                            <div class="grid grid-cols-3 gap-2">
+                                <div><label class="text-[9px] text-slate-500 uppercase">Steel Fixers</label><input type="number" id="labFixers" placeholder="0" class="w-full border-b border-slate-300 p-1 text-sm bg-transparent"></div>
+                                <div><label class="text-[9px] text-slate-500 uppercase">Masons</label><input type="number" id="labMasons" placeholder="0" class="w-full border-b border-slate-300 p-1 text-sm bg-transparent"></div>
+                                <div><label class="text-[9px] text-slate-500 uppercase">Carpenters</label><input type="number" id="labCarpenters" placeholder="0" class="w-full border-b border-slate-300 p-1 text-sm bg-transparent"></div>
+                                <div><label class="text-[9px] text-slate-500 uppercase">Safety Officers</label><input type="number" id="labSafety" placeholder="0" class="w-full border-b border-slate-300 p-1 text-sm bg-transparent"></div>
+                                <div><label class="text-[9px] text-slate-500 uppercase">Operators</label><input type="number" id="labOperators" placeholder="0" class="w-full border-b border-slate-300 p-1 text-sm bg-transparent"></div>
+                                <div><label class="text-[9px] text-slate-500 uppercase">Plumbers</label><input type="number" id="labPlumbers" placeholder="0" class="w-full border-b border-slate-300 p-1 text-sm bg-transparent"></div>
+                                <div><label class="text-[9px] text-slate-500 uppercase">Electricians</label><input type="number" id="labElectricians" placeholder="0" class="w-full border-b border-slate-300 p-1 text-sm bg-transparent"></div>
+                                <div><label class="text-[9px] text-slate-500 uppercase">Site Agents</label><input type="number" id="labAgents" placeholder="0" class="w-full border-b border-slate-300 p-1 text-sm bg-transparent"></div>
+                                <div><label class="text-[9px] text-slate-500 uppercase font-bold text-blue-600">Casuals</label><input type="number" id="labCasuals" placeholder="0" class="w-full border-b border-blue-300 p-1 text-sm bg-blue-50"></div>
+                            </div>
+
+                            <div class="h-[1px] bg-slate-200 my-2"></div>
+                            
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Materials Received</label>
+                                <textarea id="repMaterials" rows="2" placeholder="List all materials..." class="w-full border border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-white outline-none rounded-sm resize-none"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Plants & Equipment on Site</label>
+                                <textarea id="repEquipment" rows="2" placeholder="List equipment..." class="w-full border border-slate-300 p-2 text-sm focus:border-[#D4AF37] bg-white outline-none rounded-sm resize-none"></textarea>
+                            </div>
+
+                            <div class="h-[1px] bg-slate-200 my-2"></div>
+
+                            <div><label class="text-[10px] font-bold text-slate-500 uppercase">Visitors Received</label><input type="text" id="admVisitors" placeholder="Names & Titles..." class="w-full border-b border-slate-300 p-2 text-sm bg-transparent mb-2"></div>
+                            <div><label class="text-[10px] font-bold text-slate-500 uppercase">Drawings/Details Issued</label><input type="text" id="admDrawings" placeholder="NA or List..." class="w-full border-b border-slate-300 p-2 text-sm bg-transparent mb-2"></div>
+                            <div><label class="text-[10px] font-bold text-slate-500 uppercase">Site Instructions Issued</label><input type="text" id="admInstructions" placeholder="None or List..." class="w-full border-b border-slate-300 p-2 text-sm bg-transparent mb-2"></div>
+                            <div><label class="text-[10px] font-bold text-slate-500 uppercase">Any Other Remarks</label><input type="text" id="admRemarks" placeholder="None or details..." class="w-full border-b border-slate-300 p-2 text-sm bg-transparent mb-2"></div>
+
+                            <div class="h-[1px] bg-slate-200 my-2"></div>
+                            
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-800 uppercase tracking-widest mb-1">Clerk of Works (Signatory Name)</label>
+                                <input type="text" id="cowName" placeholder="e.g. Emmanuel Kimwaki" class="w-full border-b border-[#D4AF37] p-2 text-sm font-semibold focus:bg-[#fffcf5] outline-none transition bg-transparent">
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <button id="exportBtn" onclick="executeExport()" class="w-full bg-[#D4AF37] hover:bg-[#c4a030] text-white font-medium tracking-widest py-4 rounded-sm transition shadow-md text-xs uppercase flex justify-center items-center gap-2 opacity-50 cursor-not-allowed" disabled>
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                     <span id="exportBtnText">EXPORT PHOTOS</span>
                 </button>
@@ -176,25 +261,35 @@
         let debounceTimer; 
         let customLogoImg = null;
         
-        // --- WEATHER ENGINE ---
         const weatherCache = {};
         let globalWeather = "Weather Unavailable";
 
+        function toggleReportFields() {
+            const mode = document.getElementById('exportMode').value;
+            const fields = document.getElementById('dailyReportFields');
+            const btnText = document.getElementById('exportBtnText');
+            
+            if(mode === 'daily') {
+                fields.classList.add('active');
+                if(batchData.length > 0) btnText.innerText = `GENERATE OFFICIAL PDF`;
+            } else {
+                fields.classList.remove('active');
+                if(batchData.length > 0) updateExportButton(); 
+            }
+        }
+
         async function fetchWeather(lat, lng) {
             if (!lat || !lng || isNaN(lat) || isNaN(lng)) return "Weather Unavailable";
-            
             const cacheKey = `${parseFloat(lat).toFixed(3)}_${parseFloat(lng).toFixed(3)}`;
             if (weatherCache[cacheKey]) return weatherCache[cacheKey];
 
             try {
                 const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current_weather=true`);
                 const data = await res.json();
-                
                 if (data && data.current_weather) {
                     const temp = data.current_weather.temperature;
                     const code = data.current_weather.weathercode;
                     let desc = "Clear";
-                    
                     if(code >= 1 && code <= 3) desc = "Partly Cloudy";
                     else if(code >= 45 && code <= 48) desc = "Fog";
                     else if(code >= 51 && code <= 67) desc = "Rain";
@@ -206,21 +301,22 @@
                     weatherCache[cacheKey] = weatherStr;
                     return weatherStr;
                 }
-            } catch(e) { 
-                console.warn("Weather API failed.", e); 
-            }
+            } catch(e) { console.warn("Weather API failed."); }
             return "Weather Unavailable";
         }
 
+        // --- OFFICIAL LOGO UPLOADER ---
+        let rawLogoBase64 = null; // Stored specifically for jsPDF usage
         function handleLogoUpload(event) {
             const file = event.target.files[0];
             if(!file) return;
             const reader = new FileReader();
             reader.onload = (e) => {
+                rawLogoBase64 = e.target.result; 
                 customLogoImg = new Image();
                 customLogoImg.onload = () => {
-                    document.getElementById('logoStatusText').innerText = "✅ Logo Loaded (Click to Change)";
-                    document.getElementById('logoStatusText').classList.add('text-[#D4AF37]');
+                    document.getElementById('logoStatusText').innerText = "✅ Official Logo Loaded";
+                    document.getElementById('logoStatusText').parentElement.classList.replace('border-slate-300', 'border-[#D4AF37]');
                     if(batchData.length > 0) renderBatch();
                 };
                 customLogoImg.src = e.target.result;
@@ -228,10 +324,7 @@
             reader.readAsDataURL(file);
         }
 
-        function debouncedRenderBatch() {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => { renderBatch(); }, 400); 
-        }
+        function debouncedRenderBatch() { clearTimeout(debounceTimer); debounceTimer = setTimeout(() => { renderBatch(); }, 400); }
 
         function checkApiKey() {
             const savedKey = localStorage.getItem('gmaps_api_key');
@@ -244,7 +337,6 @@
                 document.getElementById('mainAppContent').style.display = 'none';
             }
         }
-
         window.addEventListener('resize', () => {
             const savedKey = localStorage.getItem('gmaps_api_key');
             if(savedKey && document.getElementById('mainAppContent').style.display !== 'none') {
@@ -272,62 +364,48 @@
         function initMap() {
             geocoder = new google.maps.Geocoder();
             const defaultLoc = { lat: -1.2921, lng: 36.8219 };
-            
-            map = new google.maps.Map(document.getElementById("googleMap"), {
-                zoom: 12, center: defaultLoc, mapTypeId: 'hybrid', disableDefaultUI: true, zoomControl: true
-            });
+            map = new google.maps.Map(document.getElementById("googleMap"), { zoom: 12, center: defaultLoc, mapTypeId: 'hybrid', disableDefaultUI: true, zoomControl: true });
             marker = new google.maps.Marker({ position: defaultLoc, map: map, draggable: true, animation: google.maps.Animation.DROP });
             map.addListener("click", (e) => marker.setPosition(e.latLng));
             marker.addListener("position_changed", () => { tempLatLng = { lat: marker.getPosition().lat(), lng: marker.getPosition().lng() }; });
 
-            const searchInput = document.getElementById('smartSearch');
-            autocomplete = new google.maps.places.Autocomplete(searchInput);
+            autocomplete = new google.maps.places.Autocomplete(document.getElementById('smartSearch'));
             autocomplete.addListener('place_changed', async () => {
                 const place = autocomplete.getPlace();
                 if (!place.geometry || !place.geometry.location) return; 
-                
                 const loc = place.geometry.location;
-                const finalLat = loc.lat().toFixed(6);
-                const finalLng = loc.lng().toFixed(6);
+                const finalLat = loc.lat().toFixed(6); const finalLng = loc.lng().toFixed(6);
                 
-                document.getElementById('lat').value = finalLat;
-                document.getElementById('lng').value = finalLng;
+                document.getElementById('lat').value = finalLat; document.getElementById('lng').value = finalLng;
                 document.getElementById('locAddress').value = place.formatted_address;
-                
                 let projName = place.address_components?.find(c => c.types.includes('locality'))?.long_name || place.name || "";
                 if(projName) document.getElementById('locTitle').value = `${projName}`;
                 
                 if(map) { map.setCenter(loc); marker.setPosition(loc); }
-                
                 globalWeather = await fetchWeather(finalLat, finalLng);
                 renderBatch(); 
             });
         }
-
         window.onload = checkApiKey;
 
         function formatFullDate(dateStr) {
             if(!dateStr) return "Invalid Date";
             const d = new Date(dateStr);
             if (isNaN(d.getTime())) return "Invalid Date";
-            
             const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
             const dayName = days[d.getDay()];
             const dd = String(d.getDate()).padStart(2, '0');
             const mm = String(d.getMonth() + 1).padStart(2, '0');
             const yyyy = d.getFullYear();
-
             let hours = d.getHours();
             const minutes = String(d.getMinutes()).padStart(2, '0');
             const ampm = hours >= 12 ? 'PM' : 'AM';
             hours = hours % 12; hours = hours ? hours : 12;
             const strTime = String(hours).padStart(2, '0') + ':' + minutes + ' ' + ampm;
-
             const offset = -d.getTimezoneOffset();
             const offsetHours = String(Math.floor(Math.abs(offset) / 60)).padStart(2, '0');
             const offsetMins = String(Math.abs(offset) % 60).padStart(2, '0');
             const offsetSign = offset >= 0 ? '+' : '-';
-            
             return `${dayName}, ${dd}/${mm}/${yyyy} ${strTime} GMT ${offsetSign}${offsetHours}:${offsetMins}`;
         }
 
@@ -339,32 +417,22 @@
             document.getElementById('loadingOverlay').classList.remove('hidden');
             document.getElementById('loadingOverlay').classList.add('flex');
 
-            const coordRegex = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
-            const match = query.match(coordRegex);
-
+            const match = query.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
             if (match) {
                 const lat = parseFloat(match[1]).toFixed(6); const lng = parseFloat(match[2]).toFixed(6);
                 document.getElementById('lat').value = lat; document.getElementById('lng').value = lng;
                 fetchAddressFromCoords(lat, lng);
-            } else if (query.startsWith('http://') || query.startsWith('https://')) {
-                document.getElementById('loadingOverlay').classList.add('hidden');
-                document.getElementById('loadingOverlay').classList.remove('flex');
-                alert("It looks like you pasted a shortened link.\n\nPlease OPEN the link in your browser first to let the map load, then copy the FULL, long URL from the address bar (containing an '@' symbol) and paste it here.");
             } else {
                 geocoder.geocode({ address: query }, async (results, status) => {
                     if (status === "OK" && results[0]) {
                         const loc = results[0].geometry.location;
-                        const finalLat = loc.lat().toFixed(6);
-                        const finalLng = loc.lng().toFixed(6);
-                        
-                        document.getElementById('lat').value = finalLat;
-                        document.getElementById('lng').value = finalLng;
+                        const finalLat = loc.lat().toFixed(6); const finalLng = loc.lng().toFixed(6);
+                        document.getElementById('lat').value = finalLat; document.getElementById('lng').value = finalLng;
                         document.getElementById('locAddress').value = results[0].formatted_address;
                         let projName = results[0].address_components.find(c => c.types.includes('locality'))?.long_name || "";
                         if(projName) document.getElementById('locTitle').value = `${projName}`;
                         
                         if(map) { map.setCenter(loc); marker.setPosition(loc); }
-                        
                         globalWeather = await fetchWeather(finalLat, finalLng);
                         renderBatch();
                     } else { alert("Could not find location."); }
@@ -380,22 +448,17 @@
         function setDefaultTime() {
             const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             document.getElementById('dateTimeInput').value = now.toISOString().slice(0, 16);
+            document.getElementById('repStartDate').value = now.toISOString().slice(0, 10);
         }
         setDefaultTime();
 
         async function fetchAddressFromCoords(lat, lng) {
             if(!geocoder) return;
-            document.getElementById('loadingOverlay').classList.remove('hidden');
-            document.getElementById('loadingOverlay').classList.add('flex');
-            
+            document.getElementById('loadingOverlay').classList.remove('hidden'); document.getElementById('loadingOverlay').classList.add('flex');
             globalWeather = await fetchWeather(lat, lng);
-
             geocoder.geocode({ location: { lat: parseFloat(lat), lng: parseFloat(lng) } }, (results, status) => {
-                document.getElementById('loadingOverlay').classList.add('hidden');
-                document.getElementById('loadingOverlay').classList.remove('flex');
-                if (status === "OK" && results[0]) {
-                    document.getElementById('locAddress').value = results[0].formatted_address;
-                }
+                document.getElementById('loadingOverlay').classList.add('hidden'); document.getElementById('loadingOverlay').classList.remove('flex');
+                if (status === "OK" && results[0]) { document.getElementById('locAddress').value = results[0].formatted_address; }
                 renderBatch(); 
             });
         }
@@ -403,13 +466,8 @@
         dropZone.addEventListener('click', () => imageInput.click());
         dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
         dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault(); dropZone.classList.remove('dragover');
-            if(e.dataTransfer.files.length) processMultipleFiles(e.dataTransfer.files);
-        });
-        imageInput.addEventListener('change', (e) => { 
-            if(e.target.files.length) processMultipleFiles(e.target.files); 
-        });
+        dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); if(e.dataTransfer.files.length) processMultipleFiles(e.dataTransfer.files); });
+        imageInput.addEventListener('change', (e) => { if(e.target.files.length) processMultipleFiles(e.target.files); });
 
         function parseExifToDecimal(tag, ref) {
             if (!tag || !tag.length) return null;
@@ -422,47 +480,31 @@
             return dd.toFixed(6);
         }
 
-        // --- BULLETPROOF PROMISE PIPELINE ---
         async function processMultipleFiles(files) {
             document.getElementById('placeholder-text').classList.add('hidden');
             document.getElementById('previewGrid').classList.remove('hidden');
-            
             const overlay = document.getElementById('loadingOverlay');
             const overlayText = document.getElementById('loadingText');
-            overlay.classList.remove('hidden');
-            overlay.classList.add('flex');
-            overlayText.innerText = "Processing Files...";
+            overlay.classList.remove('hidden'); overlay.classList.add('flex'); overlayText.innerText = "Processing Files...";
 
             for (let i = 0; i < files.length; i++) {
-                let originalFile = files[i];
-                let renderFile = originalFile;
-
+                let originalFile = files[i]; let renderFile = originalFile;
                 if (originalFile.name.toLowerCase().endsWith('.heic')) {
                     overlayText.innerText = `Converting iPhone Photo ${i+1}...`;
                     try {
                         const convertedBlob = await heic2any({ blob: originalFile, toType: "image/jpeg" });
                         renderFile = new File([convertedBlob], originalFile.name.replace(/\.[^/.]+$/, ".jpg"), { type: "image/jpeg" });
-                    } catch (error) {
-                        console.error("HEIC conversion failed:", error);
-                        continue; 
-                    }
+                    } catch (error) { continue; }
                 }
 
                 let fileExif = { lat: null, lng: null, date: null, weather: null };
-                
                 await new Promise((resolve) => {
                     try {
                         EXIF.getData(renderFile, function() {
-                            const latDMS = EXIF.getTag(this, "GPSLatitude"); 
-                            const latRef = EXIF.getTag(this, "GPSLatitudeRef");
-                            const lngDMS = EXIF.getTag(this, "GPSLongitude"); 
-                            const lngRef = EXIF.getTag(this, "GPSLongitudeRef");
+                            const latDMS = EXIF.getTag(this, "GPSLatitude"); const latRef = EXIF.getTag(this, "GPSLatitudeRef");
+                            const lngDMS = EXIF.getTag(this, "GPSLongitude"); const lngRef = EXIF.getTag(this, "GPSLongitudeRef");
                             const dateTimeOriginal = EXIF.getTag(this, "DateTimeOriginal");
-
-                            if (latDMS && lngDMS) {
-                                fileExif.lat = parseExifToDecimal(latDMS, latRef);
-                                fileExif.lng = parseExifToDecimal(lngDMS, lngRef);
-                            }
+                            if (latDMS && lngDMS) { fileExif.lat = parseExifToDecimal(latDMS, latRef); fileExif.lng = parseExifToDecimal(lngDMS, lngRef); }
                             if (dateTimeOriginal) {
                                 const parts = dateTimeOriginal.split(' ');
                                 const dateParts = parts[0].replace(/:/g, '-');
@@ -471,17 +513,11 @@
                             }
                             resolve(); 
                         });
-                    } catch (e) {
-                        resolve(); 
-                    }
+                    } catch (e) { resolve(); }
                 });
 
                 if (fileExif.lat && fileExif.lng && parseFloat(fileExif.lat) !== 0 && parseFloat(fileExif.lng) !== 0) {
-                    try {
-                        fileExif.weather = await fetchWeather(fileExif.lat, fileExif.lng);
-                    } catch (e) {
-                        fileExif.weather = "Weather Unavailable";
-                    }
+                    try { fileExif.weather = await fetchWeather(fileExif.lat, fileExif.lng); } catch (e) { fileExif.weather = "Weather Unavailable"; }
                 }
 
                 await new Promise((resolve) => {
@@ -489,13 +525,7 @@
                     reader.onload = function(event) {
                         const img = new Image();
                         img.onload = function() {
-                            batchData.push({
-                                id: Date.now() + i,
-                                originalName: renderFile.name,
-                                originalImg: img,
-                                exif: fileExif,
-                                finalDataURL: null 
-                            });
+                            batchData.push({ id: Date.now() + i, originalName: renderFile.name, originalImg: img, exif: fileExif, finalDataURL: null });
                             resolve(); 
                         }
                         img.onerror = () => { resolve(); } 
@@ -505,9 +535,7 @@
                     reader.readAsDataURL(renderFile);
                 });
             }
-
-            overlay.classList.add('hidden');
-            overlay.classList.remove('flex');
+            overlay.classList.add('hidden'); overlay.classList.remove('flex');
             renderBatch();
         }
 
@@ -518,8 +546,7 @@
                         const lat = position.coords.latitude.toFixed(6); const lng = position.coords.longitude.toFixed(6);
                         document.getElementById('lat').value = lat; document.getElementById('lng').value = lng;
                         fetchAddressFromCoords(lat, lng);
-                    },
-                    function(error) { alert("Enable location permissions."); }, { enableHighAccuracy: true }
+                    }, function(error) { alert("Enable location permissions."); }, { enableHighAccuracy: true }
                 );
             }
         }
@@ -527,43 +554,35 @@
         function openMap() {
             document.getElementById('mapModal').classList.add('active');
             const currLat = document.getElementById('lat').value; const currLng = document.getElementById('lng').value;
-            if(currLat && currLng && map) {
-                const pos = { lat: parseFloat(currLat), lng: parseFloat(currLng) };
-                map.setCenter(pos); marker.setPosition(pos); tempLatLng = pos;
-            }
+            if(currLat && currLng && map) { const pos = { lat: parseFloat(currLat), lng: parseFloat(currLng) }; map.setCenter(pos); marker.setPosition(pos); tempLatLng = pos; }
         }
         function closeMap() { document.getElementById('mapModal').classList.remove('active'); }
         function confirmMapLocation() {
             if(tempLatLng) {
-                document.getElementById('lat').value = tempLatLng.lat.toFixed(6);
-                document.getElementById('lng').value = tempLatLng.lng.toFixed(6);
+                document.getElementById('lat').value = tempLatLng.lat.toFixed(6); document.getElementById('lng').value = tempLatLng.lng.toFixed(6);
                 fetchAddressFromCoords(tempLatLng.lat, tempLatLng.lng);
             }
             closeMap();
         }
 
         function updateExportButton() {
+            const mode = document.getElementById('exportMode').value;
             const btn = document.getElementById('exportBtn');
             const btnText = document.getElementById('exportBtnText');
             if (batchData.length === 0) return;
             
-            btn.disabled = false;
-            btn.classList.remove('opacity-50', 'cursor-not-allowed');
-            
-            if (batchData.length < 5) {
-                btnText.innerText = `DOWNLOAD ${batchData.length} PHOTO${batchData.length > 1 ? 'S' : ''}`;
+            btn.disabled = false; btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            if (mode === 'daily') {
+                btnText.innerText = `GENERATE OFFICIAL PDF`;
             } else {
-                btnText.innerText = `ZIP & EXPORT ${batchData.length} PHOTOS`;
+                if (batchData.length < 5) btnText.innerText = `DOWNLOAD ${batchData.length} PHOTO${batchData.length > 1 ? 'S' : ''}`;
+                else btnText.innerText = `ZIP & EXPORT ${batchData.length} PHOTOS`;
             }
         }
 
         function getFitFont(ctx, text, startSize, weight, fontFam, maxWidth) {
-            let size = startSize;
-            ctx.font = `${weight} ${size}px '${fontFam}', sans-serif`;
-            while(ctx.measureText(text).width > maxWidth && size > 10) {
-                size -= 1;
-                ctx.font = `${weight} ${size}px '${fontFam}', sans-serif`;
-            }
+            let size = startSize; ctx.font = `${weight} ${size}px '${fontFam}', sans-serif`;
+            while(ctx.measureText(text).width > maxWidth && size > 10) { size -= 1; ctx.font = `${weight} ${size}px '${fontFam}', sans-serif`; }
             return size; 
         }
 
@@ -576,129 +595,266 @@
         }
 
         function renderBatch() {
-            const grid = document.getElementById('previewGrid');
-            grid.innerHTML = ''; 
-
+            const grid = document.getElementById('previewGrid'); grid.innerHTML = ''; 
             const gTitle = document.getElementById('locTitle').value || "LOCATION REPORT";
             const gAddress = document.getElementById('locAddress').value || "Address Unavailable";
-            const gLat = document.getElementById('lat').value;
-            const gLng = document.getElementById('lng').value;
+            const gLat = document.getElementById('lat').value; const gLng = document.getElementById('lng').value;
             const gDate = document.getElementById('dateTimeInput').value;
 
             for (let i = 0; i < batchData.length; i++) {
                 const item = batchData[i];
+                let useLat = item.exif.lat; if (!useLat || useLat === "NaN" || parseFloat(useLat) === 0) useLat = gLat || "N/A";
+                let useLng = item.exif.lng; if (!useLng || useLng === "NaN" || parseFloat(useLng) === 0) useLng = gLng || "N/A";
+                const useDate = item.exif.date || gDate; const useWeather = item.exif.weather || globalWeather; 
                 
-                // --- THE ZERO OVERRIDE FIX ---
-                // If the coordinate is literally '0.000000', treat it as broken GPS and use the fallback
-                let useLat = item.exif.lat;
-                if (!useLat || useLat === "NaN" || parseFloat(useLat) === 0) useLat = gLat || "N/A";
-                
-                let useLng = item.exif.lng;
-                if (!useLng || useLng === "NaN" || parseFloat(useLng) === 0) useLng = gLng || "N/A";
-                
-                const useDate = item.exif.date || gDate;
-                const useWeather = item.exif.weather || globalWeather; 
-                
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                canvas.width = item.originalImg.width; 
-                canvas.height = item.originalImg.height;
-                
+                const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
+                canvas.width = item.originalImg.width; canvas.height = item.originalImg.height;
                 ctx.drawImage(item.originalImg, 0, 0);
 
                 const formattedDate = formatFullDate(useDate);
+                const margin = canvas.width * 0.03; const cardWidth = canvas.width - (margin * 2);
+                const padding = canvas.width * 0.02; const radius = canvas.width * 0.01; 
+                const titleSize = Math.floor(canvas.width * 0.030); const dataSize = Math.floor(canvas.width * 0.018);   
+                const lineGap = canvas.width * 0.01; const textBlockHeight = titleSize + (dataSize * 4) + (lineGap * 4); 
+                const cardHeight = textBlockHeight + (padding * 2); const startY = canvas.height - cardHeight - margin;
 
-                const margin = canvas.width * 0.03; 
-                const cardWidth = canvas.width - (margin * 2);
-                const padding = canvas.width * 0.02;
-                const radius = canvas.width * 0.01; 
-                const titleSize = Math.floor(canvas.width * 0.030); 
-                const dataSize = Math.floor(canvas.width * 0.018);   
-                const lineGap = canvas.width * 0.01;
-                const textBlockHeight = titleSize + (dataSize * 4) + (lineGap * 4); 
-                const cardHeight = textBlockHeight + (padding * 2);
-                const startY = canvas.height - cardHeight - margin;
+                ctx.save(); drawRoundedRect(ctx, margin, startY, cardWidth, cardHeight, radius); ctx.clip();
+                ctx.filter = 'blur(20px) brightness(60%)'; ctx.drawImage(item.originalImg, 0, 0, canvas.width, canvas.height);
+                ctx.filter = 'none'; ctx.fillStyle = 'rgba(15, 23, 42, 0.65)'; ctx.fillRect(margin, startY, cardWidth, cardHeight); ctx.restore(); 
 
-                ctx.save();
-                drawRoundedRect(ctx, margin, startY, cardWidth, cardHeight, radius);
-                ctx.clip();
-                ctx.filter = 'blur(20px) brightness(60%)'; 
-                ctx.drawImage(item.originalImg, 0, 0, canvas.width, canvas.height);
-                ctx.filter = 'none';
-                ctx.fillStyle = 'rgba(15, 23, 42, 0.65)'; 
-                ctx.fillRect(margin, startY, cardWidth, cardHeight);
-                ctx.restore(); 
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'; ctx.lineWidth = Math.max(1, canvas.width * 0.002);
+                drawRoundedRect(ctx, margin, startY, cardWidth, cardHeight, radius); ctx.stroke();
 
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-                ctx.lineWidth = Math.max(1, canvas.width * 0.002);
-                drawRoundedRect(ctx, margin, startY, cardWidth, cardHeight, radius);
-                ctx.stroke();
-
-                let textStartX = margin + padding;
-                ctx.fillStyle = '#D4AF37'; 
-                ctx.fillRect(textStartX, startY + padding, canvas.width * 0.006, textBlockHeight);
-                textStartX += (canvas.width * 0.02); 
-
-                let currentY = startY + padding;
-                ctx.textBaseline = 'top'; ctx.textAlign = 'left'; 
+                let textStartX = margin + padding; ctx.fillStyle = '#D4AF37'; 
+                ctx.fillRect(textStartX, startY + padding, canvas.width * 0.006, textBlockHeight); textStartX += (canvas.width * 0.02); 
+                let currentY = startY + padding; ctx.textBaseline = 'top'; ctx.textAlign = 'left'; 
                 
                 let logoReservedWidth = 0;
                 if (customLogoImg) {
-                    const maxLogoHeight = textBlockHeight; 
-                    const logoRatio = customLogoImg.width / customLogoImg.height;
-                    const finalLogoWidth = maxLogoHeight * logoRatio;
-                    const finalLogoHeight = maxLogoHeight;
-                    
+                    const maxLogoHeight = textBlockHeight; const logoRatio = customLogoImg.width / customLogoImg.height;
+                    const finalLogoWidth = maxLogoHeight * logoRatio; const finalLogoHeight = maxLogoHeight;
                     logoReservedWidth = finalLogoWidth + padding; 
-                    
-                    const logoX = margin + cardWidth - padding - finalLogoWidth;
-                    const logoY = startY + padding;
-                    
+                    const logoX = margin + cardWidth - padding - finalLogoWidth; const logoY = startY + padding;
                     ctx.drawImage(customLogoImg, logoX, logoY, finalLogoWidth, finalLogoHeight);
                 }
 
                 const availableTextWidth = (margin + cardWidth) - textStartX - padding - logoReservedWidth;
 
                 const finalTitleSize = getFitFont(ctx, gTitle, titleSize, 600, 'Montserrat', availableTextWidth);
-                ctx.fillStyle = '#FFFFFF'; 
-                ctx.fillText(gTitle, textStartX, currentY);
-
-                currentY += finalTitleSize + lineGap;
+                ctx.fillStyle = '#FFFFFF'; ctx.fillText(gTitle, textStartX, currentY); currentY += finalTitleSize + lineGap;
+                
                 const finalAddrSize = getFitFont(ctx, gAddress, dataSize, 400, 'Montserrat', availableTextWidth);
-                ctx.fillStyle = '#f8fafc';
-                ctx.fillText(gAddress, textStartX, currentY);
-
-                currentY += finalAddrSize + lineGap;
+                ctx.fillStyle = '#f8fafc'; ctx.fillText(gAddress, textStartX, currentY); currentY += finalAddrSize + lineGap;
+                
                 const coordString = `Lat ${useLat}° Long ${useLng}°`;
                 const finalCoordSize = getFitFont(ctx, coordString, dataSize, 400, 'Montserrat', availableTextWidth);
-                ctx.fillStyle = '#cbd5e1'; 
-                ctx.fillText(coordString, textStartX, currentY);
-
-                currentY += finalCoordSize + lineGap;
+                ctx.fillStyle = '#cbd5e1'; ctx.fillText(coordString, textStartX, currentY); currentY += finalCoordSize + lineGap;
+                
                 const weatherString = `Condition: ${useWeather}`;
                 const finalWeatherSize = getFitFont(ctx, weatherString, dataSize, 400, 'Montserrat', availableTextWidth);
-                ctx.fillStyle = '#D4AF37'; 
-                ctx.fillText(weatherString, textStartX, currentY);
-
-                currentY += finalWeatherSize + lineGap;
+                ctx.fillStyle = '#D4AF37'; ctx.fillText(weatherString, textStartX, currentY); currentY += finalWeatherSize + lineGap;
+                
                 const finalDateSize = getFitFont(ctx, formattedDate, dataSize, 400, 'Montserrat', availableTextWidth);
-                ctx.fillStyle = '#FFFFFF';
-                ctx.fillText(formattedDate, textStartX, currentY);
+                ctx.fillStyle = '#FFFFFF'; ctx.fillText(formattedDate, textStartX, currentY);
 
                 item.finalDataURL = canvas.toDataURL('image/jpeg', 1.0);
-
-                const imgElem = document.createElement('img');
-                imgElem.src = item.finalDataURL;
-                imgElem.className = 'preview-card';
+                const imgElem = document.createElement('img'); imgElem.src = item.finalDataURL; imgElem.className = 'preview-card';
                 grid.appendChild(imgElem);
             }
-            
             updateExportButton();
         }
 
-        function exportBatch() {
+        function executeExport() {
+            const mode = document.getElementById('exportMode').value;
+            if (mode === 'daily') exportDailyPDF(); else exportZip();
+        }
+
+        // --- 1:1 EXACT PDF REPLICA ENGINE ---
+        function exportDailyPDF() {
             if (batchData.length === 0) return alert("Please upload images first.");
             
+            const btn = document.getElementById('exportBtn');
+            const btnText = document.getElementById('exportBtnText');
+            btn.disabled = true; btnText.innerText = "GENERATING PDF...";
+
+            setTimeout(() => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Fetch UI Data
+                const title = document.getElementById('locTitle').value || "NOT SPECIFIED";
+                const startDate = document.getElementById('repStartDate').value || "";
+                const compDate = document.getElementById('repCompletionDate').value || "";
+                
+                // Formatted Report Date
+                const rDateObj = new Date(document.getElementById('dateTimeInput').value);
+                const rDate = isNaN(rDateObj) ? new Date().toLocaleDateString('en-GB') : rDateObj.toLocaleDateString('en-GB');
+
+                const wtr = globalWeather;
+                const sTime = document.getElementById('repStartTime').value || "08:00";
+                const cTime = document.getElementById('repCloseTime').value || "17:00";
+                const summary = document.getElementById('repSummary').value || "None";
+                
+                // Fetch Exact Labour Data
+                const vFix = parseInt(document.getElementById('labFixers').value) || 0;
+                const vMas = parseInt(document.getElementById('labMasons').value) || 0;
+                const vCar = parseInt(document.getElementById('labCarpenters').value) || 0;
+                const vSaf = parseInt(document.getElementById('labSafety').value) || 0;
+                const vOpe = parseInt(document.getElementById('labOperators').value) || 0;
+                const vPlu = parseInt(document.getElementById('labPlumbers').value) || 0;
+                const vEle = parseInt(document.getElementById('labElectricians').value) || 0;
+                const vAgt = parseInt(document.getElementById('labAgents').value) || 0;
+                const vCas = parseInt(document.getElementById('labCasuals').value) || 0;
+                
+                const totalSkilled = vFix + vMas + vCar + vSaf + vOpe + vPlu + vEle + vAgt;
+                const totalLabor = totalSkilled + vCas;
+
+                const materials = document.getElementById('repMaterials').value || "";
+                const equipment = document.getElementById('repEquipment').value || "";
+                
+                // Fetch Admin Data
+                const admVis = document.getElementById('admVisitors').value || "None";
+                const admDra = document.getElementById('admDrawings').value || "NA";
+                const admIns = document.getElementById('admInstructions').value || "None";
+                const admRem = document.getElementById('admRemarks').value || "None";
+                
+                const cowName = document.getElementById('cowName').value || "_________________________";
+
+                // --- PDF CONSTRUCTION ---
+                let currentY = 15;
+
+                // 1. Official Logo Stamp
+                if (rawLogoBase64 && customLogoImg) {
+                    // Try to center logo. Assume 20mm height, maintain ratio
+                    const ratio = customLogoImg.width / customLogoImg.height;
+                    const h = 20; const w = h * ratio;
+                    const x = (210 - w) / 2; // A4 width is 210mm
+                    doc.addImage(rawLogoBase64, 'PNG', x, currentY, w, h);
+                    currentY += h + 5;
+                } else {
+                    currentY += 10; // Space if no logo
+                }
+
+                // 2. Ministry Header
+                doc.setFont("helvetica", "bold"); doc.setFontSize(12);
+                doc.text("MINISTRY OF LANDS, PUBLIC WORKS, HOUSING AND URBAN DEVELOPMENT", 105, currentY, null, null, "center");
+                currentY += 6;
+                doc.setFont("helvetica", "normal"); doc.setFontSize(11);
+                doc.text("State Department for Housing and Urban Development", 105, currentY, null, null, "center");
+                currentY += 10;
+                
+                doc.setFont("helvetica", "bold"); doc.setFontSize(12);
+                doc.text("DAILY SITE REPORT", 105, currentY, null, null, "center");
+                currentY += 10;
+
+                // 3. Metadata block
+                doc.setFont("helvetica", "bold"); doc.setFontSize(10);
+                doc.text(`PROJECT TITLE: ${title.toUpperCase()}`, 14, currentY); currentY += 8;
+                
+                doc.text(`START DATE: ${startDate}`, 14, currentY); 
+                doc.text(`REPORT AS OF DATE: ${rDate}`, 105, currentY); currentY += 8;
+                
+                doc.text(`COMPLETION DATE: ${compDate}`, 14, currentY); currentY += 8;
+                
+                doc.text(`WEATHER: ${wtr}`, 14, currentY); currentY += 8;
+                
+                doc.text(`START TIME: ${sTime}`, 14, currentY); 
+                doc.text(`CLOSING TIME: ${cTime}`, 105, currentY); currentY += 12;
+
+                // 4. Work Summary
+                doc.text("SUMMARY OF WORK DONE", 14, currentY); currentY += 6;
+                doc.setFont("helvetica", "normal");
+                const splitSummary = doc.splitTextToSize(summary, 180);
+                doc.text(splitSummary, 14, currentY);
+                currentY += (splitSummary.length * 5) + 8;
+
+                // 5. Strict 1:1 Labor Matrix
+                doc.autoTable({
+                    startY: currentY,
+                    theme: 'grid',
+                    headStyles: { fillColor: [40, 40, 40], fontSize: 9, halign: 'center' },
+                    columnStyles: { 
+                        0: { cellWidth: 35 }, // Category
+                        1: { cellWidth: 25, halign: 'center' }, // Skilled
+                        2: { cellWidth: 20, halign: 'center' }, // Casuals
+                        3: { cellWidth: 50 }, // Materials
+                        4: { cellWidth: 50 }  // Equipment
+                    },
+                    head: [['CATEGORY OF WORK', 'SKILLED WORKERS', 'CASUALS', 'MATERIALS RECEIVED', 'PLANTS AND EQUIPMENT ON SITE']],
+                    body: [
+                        ['Steel Fixers', vFix, '', { content: materials, rowSpan: 9 }, { content: equipment, rowSpan: 9 }],
+                        ['Masons', vMas, '', '', ''],
+                        ['Carpenters', vCar, '', '', ''],
+                        ['Safety Officer', vSaf, '', '', ''],
+                        ['Operators', vOpe, '', '', ''],
+                        ['Plumbers', vPlu, '', '', ''],
+                        ['Electrician', vEle, '', '', ''],
+                        ['Site Agent', vAgt, '', '', ''],
+                        [{ content: 'Casuals', fontStyle: 'bold' }, '', { content: vCas, fontStyle: 'bold' }, '', ''],
+                        [{ content: 'Total', fontStyle: 'bold' }, { content: totalSkilled, fontStyle: 'bold' }, { content: totalLabor, fontStyle: 'bold' }, '', '']
+                    ]
+                });
+
+                currentY = doc.lastAutoTable.finalY + 10;
+
+                // 6. Strict Admin Table
+                doc.autoTable({
+                    startY: currentY,
+                    theme: 'grid',
+                    headStyles: { fillColor: [220, 220, 220], textColor: 0, fontSize: 9, fontStyle: 'bold' },
+                    bodyStyles: { fontSize: 9 },
+                    body: [
+                        ['VISITORS RECEIVED\n(Name & Title)', admVis],
+                        ['DRAWINGS/DETAILS ISSUED', admDra],
+                        ['SITE INSTRUCTION ISSUED', admIns],
+                        ['ANY OTHER REMARKS', admRem]
+                    ]
+                });
+
+                currentY = doc.lastAutoTable.finalY + 20;
+
+                // 7. Signature Block
+                // If it pushes too far down, add a new page for signature
+                if (currentY > 260) { doc.addPage(); currentY = 20; }
+                
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(10);
+                doc.text(`Clerk of Works: ${cowName}`, 14, currentY);
+                doc.text("Signature: __________________________", 100, currentY);
+                doc.text(`Date: ${rDate}`, 160, currentY);
+
+                // --- PAGE 2: PROGRESS PHOTOS ---
+                doc.addPage();
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(14);
+                doc.text("PROGRESS PHOTOS", 105, 20, null, null, "center");
+
+                let imgY = 30;
+                batchData.forEach((item, index) => {
+                    if (index > 0 && index % 2 === 0) {
+                        doc.addPage();
+                        imgY = 20;
+                    }
+                    const imgData = item.finalDataURL;
+                    const origW = item.originalImg.width;
+                    const origH = item.originalImg.height;
+                    const ratio = origH / origW;
+                    const renderW = 180;
+                    const renderH = renderW * ratio;
+
+                    doc.addImage(imgData, 'JPEG', 15, imgY, renderW, renderH);
+                    imgY += renderH + 10; 
+                });
+
+                // Final Save
+                doc.save(`Daily_Site_Report_${rDate.replace(/\//g, '-')}.pdf`);
+                updateExportButton();
+                
+            }, 500); 
+        }
+
+        function exportZip() {
+            if (batchData.length === 0) return alert("Please upload images first.");
             const btn = document.getElementById('exportBtn');
             const btnText = document.getElementById('exportBtnText');
             btn.disabled = true;
@@ -707,34 +863,22 @@
                 btnText.innerText = "DOWNLOADING...";
                 batchData.forEach((item, index) => {
                     setTimeout(() => {
-                        const link = document.createElement('a');
-                        link.href = item.finalDataURL;
-                        let safeName = item.originalName.replace(/\.[^/.]+$/, ""); 
-                        link.download = `MobillioLuxe_${safeName}_Geotagged.jpg`;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
+                        const link = document.createElement('a'); link.href = item.finalDataURL;
+                        let safeName = item.originalName.replace(/\.[^/.]+$/, ""); link.download = `MobillioLuxe_${safeName}_Geotagged.jpg`;
+                        document.body.appendChild(link); link.click(); document.body.removeChild(link);
                     }, index * 500); 
                 });
-                
                 setTimeout(() => { updateExportButton(); }, batchData.length * 500 + 500);
-
             } else {
                 btnText.innerText = "ZIPPING HIGH-RES FILES...";
-                const zip = new JSZip();
-                const folder = zip.folder("MobillioLuxe_Max_Quality");
-
+                const zip = new JSZip(); const folder = zip.folder("MobillioLuxe_Max_Quality");
                 batchData.forEach((item, index) => {
                     const base64Data = item.finalDataURL.split(',')[1];
                     folder.file(`Geotag_${index + 1}_${item.originalName}`, base64Data, {base64: true});
                 });
-
                 zip.generateAsync({type:"blob"}).then(function(content) {
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(content);
-                    link.download = `MobillioLuxe_MaxRes_Batch_${Date.now()}.zip`;
-                    link.click();
-                    updateExportButton();
+                    const link = document.createElement('a'); link.href = URL.createObjectURL(content);
+                    link.download = `MobillioLuxe_MaxRes_Batch_${Date.now()}.zip`; link.click(); updateExportButton();
                 });
             }
         }
